@@ -14,7 +14,7 @@ Permitir gerenciamento administrativo de eventos divulgados no Hub Karmaleões, 
 2. Administrador habilita o evento (enable `true`) para torná-lo visível no Hub.
 3. Usuários visualizam informações do evento.
 4. Usuários são redirecionados para plataforma externa de compra.
-5. Evento expira automaticamente no dia seguinte à data de referência para expiração (Enable `false`; status "Expirado" se lifecycle ainda for "Em aberto").
+5. A partir do dia seguinte à data de referência para expiração, o evento é considerado **expirado por campo virtual** (calculado na leitura): `enable` efetivo `false`; status efetivo "Expirado" se lifecycle ainda for "Em aberto". Não há job; nenhum dado armazenado é mutado.
 6. Administrador realiza encerramento manual do evento (lifecycle "Encerrado"), conforme regras de data e status.
 
 ### Fluxos alternativos
@@ -24,12 +24,12 @@ Permitir gerenciamento administrativo de eventos divulgados no Hub Karmaleões, 
 1. Evento visível no Hub (enable `true`).
 2. Administrador encerra como "Cancelado" (lifecycle "Encerrado", status "Cancelado"; Enable inalterado).
 3. Administrador pode setar Enable `false` manualmente a qualquer momento.
-4. Na data de expiração, o sistema seta Enable `false` automaticamente, mantendo lifecycle "Encerrado" e status "Cancelado".
+4. A partir da data de referência, o `enable` efetivo passa a `false` por campo virtual (o `enable` armazenado e o status "Cancelado" permanecem inalterados).
 
 **Encerramento como Sucesso (na data de referência ou depois)**
 
 1. Administrador encerra como "Sucesso" (lifecycle "Encerrado"; Enable inalterado).
-2. Na data de expiração, o sistema seta Enable `false` automaticamente, mantendo lifecycle "Encerrado" e status "Sucesso".
+2. A partir da data de referência, o `enable` efetivo passa a `false` por campo virtual (o `enable` armazenado e o status "Sucesso" permanecem inalterados).
 
 ## Requisitos Funcionais
 
@@ -81,7 +81,10 @@ O sistema deve permitir alteração manual do status do evento dentre os status 
 | Status | Atribuição | Definição protegida |
 |--------|------------|---------------------|
 | Adiado | Manual (exige `nova data`) | Sim |
-| Expirado | Exclusivamente pelo sistema (expiração automática) | Sim |
+
+**"Expirado" (rótulo virtual reservado)**
+
+"Expirado" **não** é um status armazenado: é um rótulo calculado (`status_efetivo`, ver RF-EVENTO-005). Não pode ser atribuído manualmente nem cadastrado como status; o nome é reservado.
 
 **Observação**
 
@@ -93,30 +96,39 @@ O sistema deve permitir cadastro, edição e exclusão de status vinculados a um
 
 **Restrições**
 
-- Os status "Expirado" e "Adiado" não podem ser editados nem excluídos (definição protegida).
+- O status "Adiado" não pode ser editado nem excluído (definição protegida).
+- "Expirado" não é um status armazenado (rótulo virtual reservado): não aparece no CRUD e não pode ser criado.
 - Status vinculados a eventos existentes não podem ser excluídos.
 
-### RF-EVENTO-005 — Expiração Automática
+### RF-EVENTO-005 — Expiração (campo virtual)
 
-O sistema deve expirar automaticamente eventos no dia seguinte à **data de referência para expiração**.
+O sistema deve considerar um evento **expirado** a partir do dia seguinte à **data de referência para expiração**. A expiração é **calculada na leitura por campos virtuais** (computados no backend), **não** por job agendado; nenhum dado armazenado é mutado.
 
 **Data de referência para expiração**
 
 - Padrão: campo `data`.
 - Se status for "Adiado" e `nova data` estiver preenchida: campo `nova data`.
 
-**Momento de execução**
+**Campos virtuais derivados**
 
-No primeiro instante do dia calendário seguinte à data de referência. O fuso horário será definido pelo time de desenvolvimento.
+| Campo virtual | Regra de cálculo |
+|---------------|------------------|
+| `expirado` | `true` quando a data atual ultrapassa a data de referência (dia seguinte em diante). |
+| `status_efetivo` | "Expirado" quando `expirado` **e** lifecycle "Em aberto"; caso contrário, o status armazenado. |
+| `enable_efetivo` | `enable` armazenado **E NÃO** `expirado`. É o valor que rege a visibilidade no Hub. |
 
-**Comportamento da expiração automática**
+**Comportamento por situação**
 
-A job de expiração **sempre** seta Enable para `false`, independentemente do lifecycle:
+| Situação (após a data de referência) | LifeCycle | `status_efetivo` | `enable_efetivo` |
+|--------------------------------------|-----------|------------------|------------------|
+| Lifecycle "Em aberto" | Permanece "Em aberto" | "Expirado" | `false` |
+| Lifecycle "Encerrado" | Permanece "Encerrado" | Status armazenado (Sucesso/Cancelado) | `false` |
 
-| Situação no momento da expiração | LifeCycle | Status | Enable |
-|-----------------------------------|-----------|--------|--------|
-| Lifecycle "Em aberto" | Permanece "Em aberto" | Alterado para "Expirado" | `false` |
-| Lifecycle "Encerrado" | Permanece "Encerrado" | Permanece inalterado | `false` |
+**Observações**
+
+- O `enable` **armazenado** nunca é alterado pelo sistema; apenas o `enable_efetivo` reflete a expiração.
+- Como é reativo à data de referência, alterar a data (ex.: status "Adiado" com `nova data` futura) faz o evento deixar de ser expirado automaticamente.
+- A data corrente e o fuso horário de comparação serão definidos pelo time de desenvolvimento.
 
 ### RF-EVENTO-006 — Encerramento Manual
 
@@ -168,10 +180,10 @@ O sistema deve permitir habilitar ou desabilitar a visualização do evento no H
 
 **Regras**
 
-- O campo Enable controla exclusivamente se o evento é visível no Hub, independentemente do lifecycle ou status.
+- O campo Enable (armazenado) controla a intenção do admin de exibir o evento no Hub, independentemente do lifecycle ou status.
 - Default ao cadastrar: `false`.
 - O administrador pode alterar manualmente o valor do Enable a qualquer momento.
-- A expiração automática seta Enable para `false`.
+- A visibilidade real no Hub usa o `enable_efetivo` = `enable` armazenado **E NÃO** `expirado` (RF-EVENTO-005). Quando expirado, o `enable_efetivo` é `false` sem alterar o `enable` armazenado.
 - O encerramento manual não altera o Enable.
 
 ## Regras de Negócio
@@ -179,20 +191,20 @@ O sistema deve permitir habilitar ou desabilitar a visualização do evento no H
 | ID | Regra |
 |----|-------|
 | RN-EVENTO-001 | Eventos serão cadastrados exclusivamente por administradores do sistema. |
-| RN-EVENTO-002 | Eventos somente serão visíveis no Hub quando o campo Enable estiver como `true`. |
+| RN-EVENTO-002 | Eventos somente serão visíveis no Hub quando o `enable_efetivo` for `true` (ou seja, `enable` armazenado `true` e evento não expirado). |
 | RN-EVENTO-003 | O Hub não realizará venda de ingressos diretamente. |
 | RN-EVENTO-004 | Toda compra deverá ocorrer em plataforma externa. |
-| RN-EVENTO-005 | A expiração automática ocorre no dia seguinte à data de referência para expiração. Se lifecycle "Em aberto": status "Expirado", lifecycle permanece "Em aberto". Se lifecycle "Encerrado": lifecycle e status permanecem inalterados. Em ambos os casos, Enable é setado para `false`. |
-| RN-EVENTO-006 | A visibilidade no Hub é controlada exclusivamente pelo campo Enable. |
+| RN-EVENTO-005 | A expiração é calculada por campo virtual a partir do dia seguinte à data de referência (sem job, sem mutação de dados). Se lifecycle "Em aberto": `status_efetivo` = "Expirado", lifecycle permanece "Em aberto". Se lifecycle "Encerrado": lifecycle e status permanecem inalterados. Em ambos os casos, `enable_efetivo` = `false`. |
+| RN-EVENTO-006 | A visibilidade no Hub é controlada exclusivamente pelo `enable_efetivo` (deriva de `enable` armazenado e da expiração calculada). |
 | RN-EVENTO-007 | O encerramento de um evento consiste em transicionar o lifecycle de "Em aberto" para "Encerrado", com observação e seleção de status do lifecycle "Encerrado" obrigatórios. |
 | RN-EVENTO-008 | Ao alterar o status para "Adiado", o preenchimento do campo "nova data" é obrigatório. A data de referência para expiração passa a ser `nova data`. |
-| RN-EVENTO-009 | Os status "Expirado" e "Adiado" são protegidos: não podem ser editados nem excluídos. |
+| RN-EVENTO-009 | O status "Adiado" é protegido: não pode ser editado nem excluído. "Expirado" é rótulo virtual reservado (não armazenado, não cadastrável). |
 | RN-EVENTO-010 | Os status são dinâmicos e gerenciáveis pelo admin, vinculados a um LifeCycle ("Em aberto" ou "Encerrado"). |
-| RN-EVENTO-011 | O encerramento manual não altera o Enable. Apenas a expiração automática seta Enable para `false`. O administrador pode alterar Enable manualmente a qualquer momento. |
+| RN-EVENTO-011 | O encerramento manual não altera o Enable armazenado. Nenhuma rotina do sistema altera o `enable` armazenado; a expiração apenas zera o `enable_efetivo` (campo virtual). O administrador pode alterar Enable manualmente a qualquer momento. |
 | RN-EVENTO-012 | O campo Enable tem default `false` ao cadastrar um evento. |
 | RN-EVENTO-013 | Status vinculados a eventos existentes não podem ser excluídos. |
 | RN-EVENTO-014 | Encerramento como Sucesso somente é permitido na data de referência para expiração ou depois. |
-| RN-EVENTO-015 | Encerramento como Cancelado antes da data de referência: lifecycle "Encerrado", status "Cancelado", Enable inalterado. Na expiração automática, Enable é setado para `false`; lifecycle e status permanecem inalterados. |
+| RN-EVENTO-015 | Encerramento como Cancelado antes da data de referência: lifecycle "Encerrado", status "Cancelado", Enable inalterado. A partir da data de referência, o `enable_efetivo` passa a `false` por campo virtual; lifecycle, status e `enable` armazenado permanecem inalterados. |
 
 ## Estrutura Conceitual das Entidades
 
@@ -215,13 +227,21 @@ Representa um evento divulgado no Hub.
 | Link externo | URL da plataforma de compra |
 | LifeCycle | Em aberto / Encerrado |
 | Status | Referência à entidade Status de Evento |
-| Enable | true / false (controle de visibilidade no Hub, default false) |
+| Enable | true / false (armazenado; intenção do admin, default false) |
 | Prioridade de exibição | Ordem ou destaque no Hub |
 | Nova data | Nova data do evento (obrigatório quando status for "Adiado") |
-| Data de referência para expiração | Derivada: `data` ou `nova data` (se Adiado) |
 | Observação de encerramento | Texto obrigatório preenchido no encerramento |
 | Data de criação | Registro de criação |
 | Data de atualização | Última modificação |
+
+**Campos virtuais (calculados na leitura — não persistidos, ver RF-EVENTO-005)**
+
+| Campo | Descrição |
+|-------|-----------|
+| Data de referência para expiração | Derivada: `data` ou `nova data` (se Adiado) |
+| `expirado` | `true` a partir do dia seguinte à data de referência |
+| `status_efetivo` | "Expirado" se `expirado` e lifecycle "Em aberto"; senão o status armazenado |
+| `enable_efetivo` | `enable` armazenado **E NÃO** `expirado` (rege a visibilidade no Hub) |
 
 ### Status de Evento
 
@@ -234,7 +254,7 @@ Representa os status dinâmicos que podem ser atribuídos a eventos.
 | Identificador | ID único do status |
 | Nome | Nome do status |
 | LifeCycle vinculado | Em aberto / Encerrado |
-| Protegido | Booleano (`true` para "Expirado" e "Adiado"; impede edição e exclusão da definição) |
+| Protegido | Booleano (`true` para "Adiado"; impede edição e exclusão da definição) |
 
 **Status iniciais pré-cadastrados**
 
@@ -243,6 +263,7 @@ Representa os status dinâmicos que podem ser atribuídos a eventos.
 | Ingressos a venda | Em aberto | Manual | Não |
 | Esgotado | Em aberto | Manual | Não |
 | Adiado | Em aberto | Manual | Sim |
-| Expirado | Em aberto | Sistema (expiração) | Sim |
 | Sucesso | Encerrado | Manual (encerramento) | Não |
 | Cancelado | Encerrado | Manual (encerramento) | Não |
+
+> "Expirado" **não** consta como status armazenado: é um rótulo virtual (`status_efetivo`) calculado na leitura (RF-EVENTO-005). O nome é reservado e não pode ser cadastrado.

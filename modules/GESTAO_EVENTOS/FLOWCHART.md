@@ -11,12 +11,12 @@ flowchart TD
     E --> F[Usuário clica no link externo]
     F --> G[Redirecionado para plataforma de compra — nova aba]
 
-    D --> H{Data de referência atingida?}
+    D --> H{"Leitura: passou da data de referência?"}
     H -- Não --> D
-    H -- Sim, dia seguinte --> I["Expiração automática\n(Enable: false)"]
-    I --> J{Lifecycle no momento?}
-    J -- Em aberto --> K["Status → Expirado\nLifecycle permanece Em aberto"]
-    J -- Encerrado --> L["Lifecycle e status inalterados\nEnable → false"]
+    H -- "Sim (dia seguinte+)" --> I["Campo virtual: expirado = true\nenable_efetivo = false → oculto no Hub"]
+    I --> J{Lifecycle armazenado?}
+    J -- Em aberto --> K["status_efetivo = Expirado\n(dados armazenados inalterados)"]
+    J -- Encerrado --> L["status_efetivo = status armazenado\n(dados armazenados inalterados)"]
 ```
 
 ## Fluxo de Encerramento Manual
@@ -33,8 +33,8 @@ flowchart TD
     G --> I[Admin preenche observação de encerramento]
     H --> I
     I --> J[Evento encerrado]
-    J --> K{Data de expiração chega?}
-    K -- Sim --> L["Enable → false\n(automático)"]
+    J --> K{"Leitura: passou da data de referência?"}
+    K -- Sim --> L["enable_efetivo = false\n(campo virtual; armazenado inalterado)"]
 ```
 
 ## Fluxo de Alteração de Status (Lifecycle Em Aberto)
@@ -58,7 +58,7 @@ flowchart TD
     B -- Cadastrar --> C[Informa nome + Lifecycle vinculado]
     C --> D[Status criado]
     B -- Editar --> E{Status protegido?}
-    E -- Sim --> F["Edição bloqueada\n(Expirado / Adiado)"]
+    E -- Sim --> F["Edição bloqueada\n(Adiado)"]
     E -- Não --> G[Status editado]
     B -- Excluir --> H{Status protegido?}
     H -- Sim --> F
@@ -73,9 +73,9 @@ flowchart TD
 flowchart TD
     A[Evento cadastrado] --> B["Enable = false\n(default)"]
     B --> C{Admin altera Enable?}
-    C -- true --> D[Evento visível no Hub]
+    C -- true --> D[Evento visível no Hub se não expirado]
     C -- false --> E[Evento oculto no Hub]
-    D --> F{Expiração automática?}
-    F -- Sim --> G["Enable → false\n(automático)"]
+    D --> F{"Leitura: expirado (campo virtual)?"}
+    F -- Sim --> G["enable_efetivo = false → oculto\n(enable armazenado inalterado)"]
     G --> E
 ```
