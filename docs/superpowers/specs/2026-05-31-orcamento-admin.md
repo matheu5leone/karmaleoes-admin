@@ -5,6 +5,12 @@
 **Stack:** Next.js (App Router) + Supabase (Postgres / Storage) + Redis.
 **Fonte:** `docs/superpowers/specs/2026-05-25-karmaleoes-admin-design.md` + `modules/*`.
 
+> ## 💰 Preço fechado (decisão comercial)
+> **R$ 6.200,00 — valor fechado (flat fee) pelo escopo completo.**
+> O esforço estimado real é de **565 h** (ver tabelas abaixo); o preço **não** segue a referência de R$ 110/h.
+> Taxa efetiva implícita ≈ **R$ 11/h**. Custos operacionais recorrentes (Supabase, Upstash, Vercel, e-mail) correm por fora.
+> As estimativas em horas a seguir são mantidas para planejamento/cronograma — não para faturamento.
+
 ---
 
 ## 1. Premissas
@@ -66,11 +72,42 @@
 | Tracks: testes + design + infra (§4) | 156 | 196 | 236 |
 | **TOTAL (horas)** | **460** | **565** | **690** |
 | **TOTAL (homem-dia, 8h)** | **≈ 58 hd** | **≈ 71 hd** | **≈ 86 hd** |
-| **TOTAL (R$ a R$ 110/h)** | **R$ 50.600** | **R$ 62.150** | **R$ 75.900** |
+| **TOTAL (R$ a R$ 110/h — referência)** | **R$ 50.600** | **R$ 62.150** | **R$ 75.900** |
+
+> **Faturamento:** **R$ 6.200 fechado** (ver callout no topo). Os valores em R$ acima são apenas a referência de custo a R$ 110/h.
 
 ### Cronograma indicativo (1 dev + designer em paralelo)
 - ~6 h produtivas/dia útil → **base ≈ 94 dias úteis ≈ 19 semanas** solo.
 - Com 2 devs fullstack: **≈ 10–12 semanas** (após a fundação, módulos paralelizam bem).
+
+---
+
+## 5b. Entrega em 3 meses (prazo fechado)
+
+**Premissas:** 3 meses ≈ 13 semanas úteis ≈ 65 dias úteis · ~6 h produtivas/dia/dev → **~130 h/mês por dev** (~390 h em 3 meses).
+**Esforço:** dev = **501 h** (módulos 297 + fundação 72 + testes 96 + infra 36) · design = **64 h** (track paralelo).
+
+### Time necessário para o prazo
+
+| Cenário | Capacidade dev (3 meses) | Cobre 501 h? | Veredito |
+|---------|------------------------:|:------------:|----------|
+| 1 dev (6 h/dia) | ~390 h | ❌ | Estoura — ~4,3 meses |
+| 1 dev (8 h/dia cheio) | ~520 h | ⚠️ | No limite, sem buffer — risco alto |
+| **2 devs (6 h/dia)** | ~780 h | ✅ (+55%) | **Recomendado** — folga p/ QA/homologação |
+
+➡️ **Time para 3 meses: 2 devs fullstack + 1 designer (meio período).**
+
+### Cronograma (13 semanas)
+
+| Mês | Foco | Entregas | Dev (h) |
+|-----|------|----------|--------:|
+| **1** | Base & autenticação | Plano 00 (Fundação) · Infra/CI/CD · Plano 01 (Auth completo) · Design: identidade + telas-chave | ~151 |
+| **2** | Módulos núcleo (paralelo) | Dev A: Telas/Marquees → Banners · Dev B: Eventos + Conteúdos · testes acompanham cada módulo | ~180 |
+| **3** | Módulos finais & fechamento | Obras + Propostas · suíte e2e completa · QA/homologação · deploy produção · ajustes de design | ~170 |
+
+- **Cadeia crítica:** 00 → 01 → (02→03). Módulos 04/05/06/07 paralelizam entre os 2 devs após a Auth.
+- **Buffer:** com 2 devs o dev "real" encerra ~fim do Mês 2 / início do Mês 3; a folga vira margem de QA e correções, protegendo a data.
+- **Custo real × preço:** um time de 2 devs + designer por 3 meses tem custo muito acima do **preço fechado de R$ 6.200** (taxa efetiva ~R$ 11/h) — viabilidade econômica é decisão comercial.
 
 ---
 
@@ -97,7 +134,9 @@ Aplicando ~**+30%** sobre a base: **≈ 735 h ≈ 92 homem-dia ≈ R$ 80.850**.
 
 ---
 
-## 8. Estimativa por funcionalidade (R$ 110,00/h)
+## 8. Estimativa por funcionalidade (R$ 110,00/h — referência de custo)
+
+> Tabela de **referência** (custo a R$ 110/h). O **faturamento é R$ 6.200 fechado** pelo escopo completo (callout no topo).
 
 ### Módulos
 
