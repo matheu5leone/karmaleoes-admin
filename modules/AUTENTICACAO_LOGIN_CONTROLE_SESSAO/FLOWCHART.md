@@ -34,11 +34,11 @@ flowchart TD
 ```mermaid
 flowchart TD
     A[Usuário solicita recuperação] --> B[Informa E-mail]
-    B --> C{E-mail cadastrado com telefone?}
+    B --> C{E-mail cadastrado e ativo?}
     C -- Não --> D[Fluxo interrompido com orientação]
-    C -- Sim --> E[Sistema envia código temporário via SMS]
-    E --> F[Usuário informa código recebido]
-    F --> G{Código válido?}
+    C -- Sim --> E[Sistema envia link/código de redefinição por e-mail]
+    E --> F[Usuário acessa link / informa código]
+    F --> G{Link/código válido?}
     G -- Não --> H[Redefinição bloqueada]
     G -- Sim --> I[Usuário redefine nova senha]
     I --> J[Senha alterada com sucesso]
@@ -50,7 +50,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A[Admin autenticado] --> B{Ação desejada?}
-    B -- Cadastrar --> C[Informa E-mail + Telefone + Senha temporária]
+    B -- Cadastrar --> C[Informa E-mail + Senha temporária + Telefone opcional]
     C --> D{E-mail já existe?}
     D -- Sim --> E[Operação bloqueada — e-mail duplicado]
     D -- Não --> F[Usuário criado com status ativo]

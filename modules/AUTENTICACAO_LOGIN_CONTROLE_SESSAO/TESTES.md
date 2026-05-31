@@ -4,7 +4,7 @@
 
 ## Escopo
 
-Validar autenticação administrativa (e-mail, senha, 2FA), configuração inicial do 2FA, recuperação de senha, sessão única com expiração por inatividade, gestão de usuários (com telefone obrigatório), bootstrap e auditoria conforme RF-LOGIN-001 a 007 e RN-LOGIN-001 a 007.
+Validar autenticação administrativa (e-mail, senha, 2FA), configuração inicial do 2FA, recuperação de senha **por e-mail**, sessão única com expiração por inatividade, gestão de usuários (telefone opcional), bootstrap e auditoria conforme RF-LOGIN-001 a 007 e RN-LOGIN-001 a 007.
 
 ## Legenda
 
@@ -18,7 +18,7 @@ Validar autenticação administrativa (e-mail, senha, 2FA), configuração inici
 |------|-------------|
 | Positivo | Fluxo válido esperado |
 | Negativo | Validação de rejeição/erro |
-| Integração | Admin + Hub ou serviços externos (SMS, TOTP) |
+| Integração | Admin + Hub ou serviços externos (e-mail, TOTP) |
 
 ---
 
@@ -43,9 +43,9 @@ Validar autenticação administrativa (e-mail, senha, 2FA), configuração inici
 
 | ID | Prioridade | Tipo | Cenário | Pré-condições | Passos | Resultado esperado |
 |----|------------|------|---------|---------------|--------|-------------------|
-| TC-LOGIN-008 | P0 | Positivo | Fluxo completo de recuperação | Usuário com telefone cadastrado | 1) Informar e-mail 2) Receber SMS 3) Validar código 4) Redefinir senha | Senha alterada; login possível com nova senha |
-| TC-LOGIN-009 | P1 | Negativo | Código SMS inválido | Código enviado | Informar código errado | Redefinição bloqueada |
-| TC-LOGIN-010 | P1 | Negativo | e-mail sem telefone cadastrado | Usuário sem número | Solicitar recuperação | Fluxo interrompido com orientação adequada |
+| TC-LOGIN-008 | P0 | Positivo | Fluxo completo de recuperação | Usuário ativo | 1) Informar e-mail 2) Receber link/código por e-mail 3) Acessar link/validar 4) Redefinir senha | Senha alterada; login possível com nova senha |
+| TC-LOGIN-009 | P1 | Negativo | Link/código de e-mail inválido ou expirado | Link/código enviado | Usar link/código inválido ou expirado | Redefinição bloqueada |
+| TC-LOGIN-010 | P1 | Negativo | E-mail não cadastrado/inativo | E-mail inexistente ou usuário inativo | Solicitar recuperação | Fluxo interrompido sem revelar existência da conta |
 
 ## RF-LOGIN-004 — Sessão Única
 
@@ -58,8 +58,8 @@ Validar autenticação administrativa (e-mail, senha, 2FA), configuração inici
 
 | ID | Prioridade | Tipo | Cenário | Pré-condições | Passos | Resultado esperado |
 |----|------------|------|---------|---------------|--------|-------------------|
-| TC-LOGIN-013 | P0 | Positivo | Cadastro de usuário | Admin autenticado | Cadastrar com e-mail, telefone e senha temporária | Usuário criado e apto a autenticar |
-| TC-LOGIN-013b | P0 | Negativo | Cadastro sem telefone | Admin autenticado | Tentar cadastrar sem telefone | Operação bloqueada; campo obrigatório |
+| TC-LOGIN-013 | P0 | Positivo | Cadastro de usuário | Admin autenticado | Cadastrar com e-mail e senha temporária (telefone opcional) | Usuário criado e apto a autenticar |
+| TC-LOGIN-013b | P1 | Positivo | Cadastro sem telefone | Admin autenticado | Cadastrar sem informar telefone | Usuário criado normalmente (telefone opcional) |
 | TC-LOGIN-013c | P0 | Negativo | e-mail duplicado | e-mail já cadastrado | Tentar cadastrar com mesmo e-mail | Operação bloqueada (RN-LOGIN-007) |
 | TC-LOGIN-014 | P0 | Positivo | Edição de telefone | Usuário existente | Alterar telefone | Alteração persistida |
 | TC-LOGIN-014b | P1 | Negativo | Edição de e-mail | Usuário existente | Tentar alterar e-mail | Operação bloqueada; e-mail imutável |
@@ -78,7 +78,7 @@ Validar autenticação administrativa (e-mail, senha, 2FA), configuração inici
 
 | ID | Prioridade | Tipo | Cenário | Pré-condições | Passos | Resultado esperado |
 |----|------------|------|---------|---------------|--------|-------------------|
-| TC-LOGIN-022 | P0 | Positivo | Primeiro login com senha temporária | Usuário recém-cadastrado (e-mail + telefone + senha temp.) | 1) Login com e-mail + senha temporária 2) Sistema exibe QR code 3) Configurar app 4) Validar primeiro código | 2FA configurado; logins seguintes exigem TOTP |
+| TC-LOGIN-022 | P0 | Positivo | Primeiro login com senha temporária | Usuário recém-cadastrado (e-mail + senha temp.) | 1) Login com e-mail + senha temporária 2) Sistema exibe QR code 3) Configurar app 4) Validar primeiro código | 2FA configurado; logins seguintes exigem TOTP |
 | TC-LOGIN-023 | P0 | Negativo | Código inválido na configuração | QR code exibido | Informar código errado na configuração | Configuração não concluída |
 
 ## Regras de Negócio
@@ -94,8 +94,8 @@ Validar autenticação administrativa (e-mail, senha, 2FA), configuração inici
 
 - [ ] Fluxo login + 2FA (P0)
 - [ ] Configuração inicial do 2FA no primeiro acesso (P0)
-- [ ] Cadastro de usuário com e-mail + telefone + senha temporária (P0)
-- [ ] Recuperação de senha via SMS (P0)
+- [ ] Cadastro de usuário com e-mail + senha temporária (telefone opcional) (P0)
+- [ ] Recuperação de senha por e-mail (P0)
 - [ ] Sessão única entre dispositivos (P0)
 - [ ] Expiração de sessão por inatividade (P0)
 - [ ] CRUD e ativação de usuários (P0)

@@ -24,7 +24,7 @@ flowchart TD
 | # | Plano | Depende de | Esforço base (h)¹ | Entrega testável |
 |---|-------|------------|------------------:|------------------|
 | 00 | Fundação & Infra | — | 72 (fundação) + 40 (infra) | App sobe, shell autenticável (stub), CI verde, Storage e auditoria prontos |
-| 01 | Autenticação & Sessão | 00 | 48 | Login e-mail+TOTP, recuperação, sessão única, CRUD usuários |
+| 01 | Autenticação & Sessão | 00 | 43 | Login e-mail+TOTP, recuperação por e-mail, sessão única, CRUD usuários |
 | 02 | Telas, Navegação & Marquees | 01 | 44 | CRUD telas + marquees + itens |
 | 03 | Banners por Tela | 02 | 36 | Banner asset + publicação por tela |
 | 04 | Eventos | 01 | 62 | CRUD + status dinâmicos + expiração virtual |
@@ -59,9 +59,9 @@ flowchart TD
 
 ## Plano 01 — Autenticação & Controle de Sessão (Módulo 1)
 
-**Goal:** autenticação e-mail+senha+TOTP, recuperação por SMS, sessão única, timeout e CRUD de usuários, com auditoria.
+**Goal:** autenticação e-mail+senha+TOTP, recuperação **por e-mail**, sessão única, timeout e CRUD de usuários, com auditoria.
 **Specs:** `modules/AUTENTICACAO_LOGIN_CONTROLE_SESSAO/*` (RF-LOGIN-001..007, RN-LOGIN-001..007).
-**Tabelas:** `admin_user` (id, email único/imutável, telefone, status ativo/inativo, two_factor_configured, timestamps) — integrado ao Supabase Auth; `seed.sql` 1º admin.
+**Tabelas:** `admin_user` (id, email único/imutável, telefone **opcional**, status ativo/inativo, two_factor_configured, timestamps) — integrado ao Supabase Auth; `seed.sql` 1º admin.
 
 **Outline de tarefas:**
 - Migration `admin_user` + RLS + vínculo com `auth.users`; seed do 1º admin (RN-LOGIN-006).
@@ -69,12 +69,12 @@ flowchart TD
 - 1º acesso: senha temporária → enroll TOTP (QR) → validação do 1º código (RF-LOGIN-007).
 - Sessão única via Redis: grava sessão atual, invalida anterior; `middleware.ts` valida (RF-LOGIN-004/RN-003).
 - Timeout de inatividade: TTL renovável (RN-LOGIN-005).
-- Recuperação: e-mail → `SmsSender` envia código → valida → nova senha (RF-LOGIN-003).
-- CRUD de usuários: cadastrar (email+telefone+senha temp), editar telefone, ativar/desativar (RF-LOGIN-005); e-mail imutável/único; inativo não loga (RN-004).
+- Recuperação **por e-mail** (Supabase Auth nativo: reset/magic link) → nova senha (RF-LOGIN-003). Sem SMS.
+- CRUD de usuários: cadastrar (email+senha temp, telefone opcional), editar telefone, ativar/desativar (RF-LOGIN-005); e-mail imutável/único; inativo não loga (RN-004).
 - Auditoria em todas as escritas; acesso integral sem perfis (RN-LOGIN-002).
 - E2E do `TESTES.md` (TC-LOGIN-001..025).
 
-**Riscos:** sessão única (Redis) e gateway SMS (homologação). Alternativa registrada: recuperação por e-mail nativa do Supabase.
+**Riscos:** sessão única (Redis) é o principal custom. Recuperação e 2FA usam recursos nativos do Supabase Auth (e-mail + TOTP), sem dependências externas de SMS.
 
 ---
 

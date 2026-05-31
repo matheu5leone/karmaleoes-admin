@@ -38,14 +38,14 @@ flowchart LR
     Admin -->|"Configura conteúdo"| Hub
     Hub -->|"Formulários"| Admin
     Hub -->|"Links (nova aba)"| Ext
-    Admin -->|"SMS / TOTP"| Ext
+    Admin -->|"E-mail / TOTP"| Ext
 ```
 
 | Superfície | Papel |
 |------------|-------|
 | **Admin** | Autenticação, CRUD, configuração, visualização de dados recebidos |
 | **Hub** | Consumo público, formulários de captação |
-| **Externo** | Ticketing, streaming, conteúdo, SMS |
+| **Externo** | Ticketing, streaming, conteúdo, e-mail (TOTP via app) |
 
 ### 2.2 Origem dos dados
 
@@ -72,7 +72,7 @@ Hub → Propostas (7), Fãs (8)
 
 - Login: e-mail + senha + TOTP (após configuração inicial).
 - Sessão única por usuário; expiração por inatividade (timeout definido pelo dev).
-- Recuperação de senha via SMS no telefone cadastrado.
+- Recuperação de senha **por e-mail** (Supabase Auth nativo). Sem SMS.
 - Primeiro admin: seed/migration na implantação (RN-LOGIN-006).
 - Sem perfis de acesso no MVP — acesso integral para todos os usuários autenticados.
 
@@ -123,17 +123,17 @@ Cada módulo usa mecanismo próprio — não há flag global de publicação.
 | Campo | Regra |
 |-------|-------|
 | E-mail | Obrigatório, único, imutável — identificador de login |
-| Telefone | Obrigatório (SMS recuperação) |
+| Telefone | Opcional (contato) — recuperação é por e-mail |
 | Senha | Temporária no cadastro |
 | Status | ativo / inativo |
 | 2FA configurado | false até primeiro acesso |
 
 **Fluxos principais**
 
-1. Admin cadastra usuário (e-mail + telefone + senha temp.)
+1. Admin cadastra usuário (e-mail + senha temp.; telefone opcional)
 2. Primeiro login → QR TOTP → validação → 2FA ativo
 3. Logins seguintes → e-mail + senha + TOTP
-4. Recuperação → e-mail → SMS → código → nova senha
+4. Recuperação → e-mail → link/código por e-mail → nova senha
 
 ---
 
@@ -297,7 +297,7 @@ erDiagram
 | 3 | Sucesso antes da data permitido implicitamente | Bloqueado (RN-EVENTO-014) |
 | 4 | Cancelado: Enable forçado vs. inalterado | Encerramento não altera Enable |
 | 5 | Expiração após Adiado: qual data? | Data de referência = nova data |
-| 6 | Auth: SMS sem telefone no cadastro | Telefone obrigatório + entidade Usuário |
+| 6 | Auth: canal de recuperação de senha | Recuperação por e-mail (Supabase Auth); sem SMS; telefone opcional |
 | 7 | Fãs: 3 consentimentos vs. 1 opt-in | Três booleanos independentes |
 | 8 | Auditoria: escopo indefinido | Escrita nos módulos 1–8 |
 | 9 | Protegido: só Expirado na descrição | Expirado e Adiado |

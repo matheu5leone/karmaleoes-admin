@@ -30,13 +30,13 @@ O sistema deve exigir validação secundária via aplicativo autenticador após 
 
 ### RF-LOGIN-003 — Recuperação de Senha
 
-O sistema deve permitir redefinição de senha via SMS utilizando o número previamente cadastrado ao usuário.
+O sistema deve permitir redefinição de senha **por e-mail**, usando o fluxo nativo do Supabase Auth (link/código de redefinição enviado ao e-mail cadastrado do usuário).
 
 **Fluxo esperado**
 
 1. Usuário informa e-mail.
-2. Sistema envia código temporário via SMS.
-3. Usuário valida código.
+2. Sistema envia link/código de redefinição por e-mail.
+3. Usuário acessa o link / valida o código.
 4. Usuário redefine senha.
 
 ### RF-LOGIN-004 — Sessão Única
@@ -59,14 +59,14 @@ O sistema deve possuir funcionalidade administrativa para:
 
 | Operação | Campos |
 |----------|--------|
-| Cadastrar | E-mail, telefone, senha temporária |
+| Cadastrar | E-mail, senha temporária (telefone opcional) |
 | Editar | Telefone |
 | Ativar/desativar | Status (ativo / inativo) |
 
 **Observações**
 
 - E-mail é o identificador de login (único, imutável após a criação do usuário).
-- Telefone é obrigatório no cadastro (utilizado na recuperação de senha via SMS).
+- Telefone é **opcional** (contato). A recuperação de senha é por e-mail; não há SMS.
 - Neste momento não haverá níveis de permissão diferenciados. Todos os usuários autenticados possuirão acesso total à plataforma administrativa.
 
 ### RF-LOGIN-006 — Auditoria
@@ -96,7 +96,7 @@ O sistema deve permitir a configuração do autenticador TOTP no primeiro acesso
 
 **Fluxo esperado**
 
-1. Admin cadastra o usuário (e-mail + telefone + senha temporária).
+1. Admin cadastra o usuário (e-mail + senha temporária; telefone opcional).
 2. No primeiro login, após validar e-mail e senha temporária, o sistema exibe o QR code para configuração do TOTP.
 3. Usuário configura o aplicativo autenticador e valida com o primeiro código gerado.
 4. A partir desse momento, o 2FA é exigido em todo login subsequente.
@@ -125,7 +125,7 @@ Representa um operador com acesso à plataforma administrativa.
 |-------------|-----------|
 | Identificador | ID único do usuário |
 | E-mail | Identificador de login (obrigatório, único, imutável após criação) |
-| Telefone | Número para recuperação de senha via SMS (obrigatório) |
+| Telefone | Contato (opcional) — recuperação de senha é por e-mail |
 | Senha | Credencial de autenticação (temporária no cadastro) |
 | Status | ativo / inativo |
 | 2FA configurado | Booleano interno; `false` até conclusão do primeiro acesso (RF-LOGIN-007) |

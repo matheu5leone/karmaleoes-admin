@@ -18,7 +18,7 @@
 | UI | **shadcn/ui** + Tailwind. Formulários com **react-hook-form** + **zod**. |
 | Validação | **zod** (compartilhada entre form e server action). |
 | Testes | **Vitest** (unit/integration) + **Playwright** (e2e), rodando contra **Supabase local** (`supabase start`). |
-| SMS (recuperação) | Provider externo (Twilio/Zenvia) atrás de uma **interface** `SmsSender` — trocável e mockável. |
+| Recuperação de senha | **Por e-mail** (fluxo nativo do Supabase Auth — reset/magic link). Sem SMS. |
 | Gerenciador de pacotes | **pnpm**. |
 | Lint/format | ESLint + Prettier. |
 | CI/CD | GitHub Actions (lint, typecheck, unit, e2e) → deploy **Vercel**. |
@@ -49,7 +49,6 @@ lib/
   redis.ts                 # client Upstash + helpers de sessão
   audit.ts                 # helper de auditoria de escrita
   storage.ts               # helpers de upload (Supabase Storage)
-  sms/ index.ts twilio.ts  # SmsSender + impl
   validation/              # schemas zod por entidade
 components/
   ui/                      # shadcn
@@ -87,8 +86,8 @@ Toda leitura de eventos (admin e futuro Hub) consome a **view**, nunca recalcula
 - Login **e-mail + senha** via Supabase Auth; **MFA TOTP** nativo (enroll no 1º acesso, challenge nos seguintes).
 - **Sessão única:** ao logar, grava `session:{user_id}` no Redis com o id da sessão atual; `middleware.ts` rejeita requisições cujo id não bate (login novo invalida o anterior).
 - **Timeout de inatividade:** TTL no Redis renovado a cada request autenticado; expirado → redireciona para login.
-- **Recuperação:** por SMS (informa e-mail → SMS no telefone cadastrado → código → nova senha) via `SmsSender`.
-- **Usuários:** sem auto-registro; CRUD interno; e-mail único/imutável; CPF **não** existe no admin.
+- **Recuperação:** **por e-mail** (informa e-mail → link/código de redefinição por e-mail → nova senha), via Supabase Auth nativo. Sem SMS.
+- **Usuários:** sem auto-registro; CRUD interno; e-mail único/imutável; **telefone opcional** (contato); CPF **não** existe no admin.
 
 ---
 
