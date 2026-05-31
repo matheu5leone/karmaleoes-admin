@@ -1,0 +1,340 @@
+# Design — Plataforma Administrativa Karmaleões
+
+**Data:** 2026-05-25  
+**Status:** Aprovado  
+**Fonte:** `karmaleoes-admin-functional-specs/` (revisão consolidada)
+
+## 1. Objetivo
+
+Centralizar a gestão operacional do ecossistema Karmaleões em uma plataforma administrativa que configura o **Hub público** — telas, navegação, banners, eventos, conteúdos digitais e obras — e recebe dados de **fãs** e **propostas comerciais** originados no Hub.
+
+### Escopo do MVP
+
+| Incluído | Excluído |
+|----------|----------|
+| Auth admin (CPF + senha + 2FA TOTP) | Níveis de permissão / RBAC |
+| CRUD dos módulos 2–6 | Hospedagem de mídia no Hub |
+| Visualização de propostas e fãs | Pipeline comercial / CRM automatizado |
+| Auditoria de escritas administrativas | LGPD completa (exportação/exclusão) |
+| Formulários públicos no Hub (fãs, propostas) | Agendamento/versionamento de banners |
+| Links externos (nova aba) | Auto-registro de admin |
+
+### Referência modular
+
+Especificações detalhadas (RF, RN, testes) permanecem em `karmaleoes-admin-functional-specs/modules/`. Este documento consolida decisões de design e inconsistências resolvidas.
+
+---
+
+## 2. Arquitetura funcional
+
+### 2.1 Superfícies
+
+```mermaid
+flowchart LR
+    Admin["Plataforma Admin"]
+    Hub["Hub Karmaleões"]
+    Ext["Plataformas externas"]
+
+    Admin -->|"Configura conteúdo"| Hub
+    Hub -->|"Formulários"| Admin
+    Hub -->|"Links (nova aba)"| Ext
+    Admin -->|"SMS / TOTP"| Ext
+```
+
+| Superfície | Papel |
+|------------|-------|
+| **Admin** | Autenticação, CRUD, configuração, visualização de dados recebidos |
+| **Hub** | Consumo público, formulários de captação |
+| **Externo** | Ticketing, streaming, conteúdo, SMS |
+
+### 2.2 Origem dos dados
+
+| Entidade | Origem | Admin |
+|----------|--------|-------|
+| Telas, marquees, banners, eventos, conteúdos, obras | Cadastro manual | CRUD |
+| Propostas comerciais | Formulário Hub | Somente leitura |
+| Fãs | Formulário Hub | Leitura + filtros geográficos |
+
+### 2.3 Dependências entre módulos
+
+```
+Autenticação (1) → protege módulos 2–8
+Telas (2) → Banners (3), Marquees (2)
+Conteúdos (5) ⊥ Obras (6)
+Hub → Propostas (7), Fãs (8)
+```
+
+---
+
+## 3. Padrões transversais
+
+### 3.1 Autenticação
+
+- Login: CPF + senha + TOTP (após configuração inicial).
+- Sessão única por usuário; expiração por inatividade (timeout definido pelo dev).
+- Recuperação de senha via SMS no telefone cadastrado.
+- Primeiro admin: seed/migration na implantação (RN-LOGIN-006).
+- Sem perfis de acesso no MVP — acesso integral para todos os usuários autenticados.
+
+### 3.2 Auditoria (RF-LOGIN-006)
+
+Toda operação de **escrita** (create, update, delete) gera log:
+
+- Módulo 1: gestão de usuários
+- Módulos 2–8: entidades configuráveis
+
+Campos: usuário, data/hora, ação, entidade, ID do registro. Leituras não auditadas no MVP.
+
+### 3.3 Visibilidade no Hub
+
+Cada módulo usa mecanismo próprio — não há flag global de publicação.
+
+| Módulo | Mecanismo | Oculto quando |
+|--------|-----------|---------------|
+| Telas | habilitada / desabilitada | desabilitada |
+| Banners | status da associação Banner×Tela | draft ou tela desabilitada |
+| Eventos | Enable (boolean) | false |
+| Conteúdos | draft / pendente / publicado / desabilitado | ≠ publicado |
+| Obras | — | sempre visível (MVP) |
+
+### 3.4 Links e mídia
+
+- Links externos sempre abrem em **nova aba**.
+- Hub não hospeda mídia (vídeo/áudio/streaming) — apenas metadados + URLs.
+- Imagens admin (banner, thumbnail, capa): upload na plataforma admin; formatos/limites a definir pelo dev.
+
+### 3.5 Glossário resumido
+
+| Termo | Significado |
+|-------|-------------|
+| Enable | Visibilidade de evento no Hub (independe de lifecycle/status) |
+| LifeCycle | Evento: Em aberto / Encerrado |
+| Data de referência para expiração | `data` ou `nova data` (se Adiado) |
+| Asset | Recurso sem status de publicação (ex.: banner) |
+
+---
+
+## 4. Módulos — decisões de design
+
+### 4.1 Autenticação (Módulo 1)
+
+**Entidade: Usuário Administrativo**
+
+| Campo | Regra |
+|-------|-------|
+| CPF | Obrigatório, único, imutável |
+| Telefone | Obrigatório (SMS recuperação) |
+| Senha | Temporária no cadastro |
+| Status | ativo / inativo |
+| 2FA configurado | false até primeiro acesso |
+
+**Fluxos principais**
+
+1. Admin cadastra usuário (CPF + telefone + senha temp.)
+2. Primeiro login → QR TOTP → validação → 2FA ativo
+3. Logins seguintes → CPF + senha + TOTP
+4. Recuperação → CPF → SMS → código → nova senha
+
+---
+
+### 4.2 Telas, Navegação e Marquees (Módulo 2)
+
+- Telas representam rotas existentes no código do Hub — cadastro manual, não dinâmico.
+- Marquees: entidade independente, reutilizável (N:N com telas).
+- Itens de marquee: um destino por vez (interno ou externo).
+- Navegação interna bloqueada para telas desabilitadas.
+
+---
+
+### 4.3 Banners (Módulo 3) — decisão revisada
+
+**Problema resolvido:** status global no banner conflitava com regra "um ativo por tela" em associações multi-tela.
+
+**Modelo adotado: status na associação Banner × Tela**
+
+| Entidade | Responsabilidade |
+|----------|------------------|
+| **Banner** | Asset: nome + imagem (sem status) |
+| **Associação Banner×Tela** | status draft/publicado por tela |
+
+**Regras**
+
+- Publicação independente por tela.
+- Ao publicar na tela X, associação anterior **da mesma tela** → draft; outras telas inalteradas.
+- Banner não exibido em telas desabilitadas (RN-BANNER-007).
+- Associação só em telas habilitadas (RN-BANNER-008).
+
+---
+
+### 4.4 Eventos (Módulo 4) — decisão revisada
+
+**Três eixos independentes**
+
+| Eixo | Valores | Controle |
+|------|---------|----------|
+| LifeCycle | Em aberto, Encerrado | Admin (encerramento) |
+| Status | Por lifecycle + Expirado (sistema) | Admin + job |
+| Enable | true/false | Admin + job |
+
+**Expiração automática** (dia seguinte à data de referência)
+
+| Situação | LifeCycle | Status | Enable |
+|----------|-----------|--------|--------|
+| Em aberto | Em aberto | → Expirado | → false |
+| Encerrado (Cancelado ou Sucesso) | inalterado | inalterado | → false |
+
+A job **sempre** seta Enable=false. Só altera status para Expirado se lifecycle ainda for Em aberto.
+
+**Encerramento manual**
+
+| Status | Quando permitido | Enable |
+|--------|------------------|--------|
+| Cancelado | A qualquer momento (incl. antes da data) | inalterado |
+| Sucesso | Na data de referência ou depois | inalterado |
+
+- Encerramento **nunca** altera Enable; admin pode setar Enable=false manualmente.
+- Cancelado antecipado: visível (Enable=true) até expiração automática ocultar.
+- Sucesso antes da data de referência: **bloqueado** (RN-EVENTO-014).
+- Status protegidos (definição): Expirado, Adiado — não editáveis/excluíveis.
+- Status em uso: não excluíveis (RN-EVENTO-013).
+
+**Data de referência:** `data` padrão; `nova data` se status Adiado.
+
+---
+
+### 4.5 Conteúdos Digitais (Módulo 5)
+
+- Tipos fixos (enum): vídeo, playlist, notícia, entrevista, podcast.
+- Categorias temáticas gerenciáveis pelo admin (CRUD na implementação).
+- Status: draft (rascunho), pendente (revisão), publicado (visível), desabilitado (retirado).
+- Destaque e ordenação manual no Hub.
+- Independente do módulo Obras (RN-CONT-008).
+
+---
+
+### 4.6 Obras e Colaborações (Módulo 6)
+
+- Músicas, coleções (álbum/EP), colaboradores, roles dinâmicos.
+- Música → no máximo uma coleção (N:1).
+- Links de plataforma (Spotify, Deezer, etc.) por música ou coleção.
+- Sem controle de status/visibilidade no MVP — visível após cadastro.
+
+---
+
+### 4.7 Propostas Comerciais (Módulo 7)
+
+- Recebidas exclusivamente via formulário Hub.
+- Somente leitura no admin — sem pipeline, status ou edição.
+- Tipos de proposta: enum fixo no Hub (RN-PROP-010).
+- Consentimento de armazenamento obrigatório no formulário.
+
+---
+
+### 4.8 Fãs / CRM Inicial (Módulo 8)
+
+**Entidade: Fã**
+
+| Campo | Regra |
+|-------|-------|
+| CPF | Obrigatório, único, dígitos validados |
+| consentimento_armazenamento | Obrigatório true |
+| consentimento_comunicacoes | Opt-in opcional |
+| consentimento_marketing | Opt-in opcional |
+
+- Cadastro exclusivamente via Hub (MVP).
+- CPF duplicado: mensagem informativa, sem criar/atualizar silenciosamente (RN-FAN-009).
+- Filtros por estado/cidade no admin.
+- Sem automações, comunicações automáticas ou status de fã no MVP.
+
+---
+
+## 5. Modelo conceitual consolidado
+
+```mermaid
+erDiagram
+    UsuarioAdmin ||--o{ AuditLog : gera
+    Tela ||--o{ BannerTela : possui
+    Banner ||--o{ BannerTela : associado
+    Tela ||--o{ MarqueeTela : possui
+    Marquee ||--o{ MarqueeItem : contem
+    Evento }o--|| StatusEvento : tem
+    Musica }o--o| Colecao : pertence
+    Musica ||--o{ LinkPlataforma : tem
+    Colecao ||--o{ LinkPlataforma : tem
+    Musica ||--o{ ObraColaborador : tem
+    Colaborador ||--o{ ObraColaborador : participa
+    Role ||--o{ ObraColaborador : define
+
+    Banner {
+        string nome
+        string imagem
+    }
+    BannerTela {
+        enum status "draft|publicado"
+    }
+    Evento {
+        boolean enable
+        enum lifecycle "Em aberto|Encerrado"
+        date data_referencia_expiracao
+    }
+    Fa {
+        string cpf
+        boolean consentimento_armazenamento
+        boolean consentimento_comunicacoes
+        boolean consentimento_marketing
+    }
+```
+
+---
+
+## 6. Inconsistências resolvidas nesta revisão
+
+| # | Problema | Resolução |
+|---|----------|-----------|
+| 1 | Banner: status global vs. regra por tela | Status na associação Banner×Tela |
+| 2 | Eventos: expiração vs. encerramento confusos | Três eixos; job sempre seta Enable=false |
+| 3 | Sucesso antes da data permitido implicitamente | Bloqueado (RN-EVENTO-014) |
+| 4 | Cancelado: Enable forçado vs. inalterado | Encerramento não altera Enable |
+| 5 | Expiração após Adiado: qual data? | Data de referência = nova data |
+| 6 | Auth: SMS sem telefone no cadastro | Telefone obrigatório + entidade Usuário |
+| 7 | Fãs: 3 consentimentos vs. 1 opt-in | Três booleanos independentes |
+| 8 | Auditoria: escopo indefinido | Escrita nos módulos 1–8 |
+| 9 | Protegido: só Expirado na descrição | Expirado e Adiado |
+| 10 | Tipos de proposta: CRUD implícito | Enum fixo no Hub (RN-PROP-010) |
+
+---
+
+## 7. Fora de escopo / adiado para implementação
+
+- CRUD de categorias de conteúdo (detalhar na implementação)
+- Validação de formato telefone/e-mail
+- Fuso horário exato da job de expiração
+- Timeout de sessão por inatividade
+- Upload: formatos, tamanhos, storage backend
+- Reset de 2FA pelo admin
+- Direitos LGPD (portabilidade, exclusão)
+
+---
+
+## 8. Critérios de aceite transversais
+
+- [ ] Admin exige auth em todas as rotas protegidas
+- [ ] Escritas administrativas geram audit log
+- [ ] Links externos abrem em nova aba no Hub
+- [ ] Hub não hospeda mídia streaming
+- [ ] Visibilidade respeita mecanismo por módulo (tabela §3.3)
+- [ ] Formulários Hub (fãs, propostas) persistem dados conforme RF/RN
+- [ ] Roteiros de teste em `karmaleoes-admin-functional-specs/modules/*/TESTES.md` passam
+
+---
+
+## 9. Próximo passo
+
+Gerar plano de implementação em `docs/superpowers/plans/` via skill **writing-plans**, priorizando:
+
+1. Autenticação + bootstrap
+2. Telas + marquees
+3. Banners (modelo associação)
+4. Eventos (lifecycle + job expiração)
+5. Conteúdos + obras
+6. Integração Hub (propostas + fãs)
