@@ -37,7 +37,7 @@ Especificação funcional de desenvolvimento da plataforma administrativa centra
 
 ### Autenticação e acesso
 
-- Todo acesso à plataforma administrativa exige autenticação (CPF + senha + 2FA).
+- Todo acesso à plataforma administrativa exige autenticação (e-mail + senha + 2FA).
 - Não há níveis de permissão no MVP: usuários autenticados têm acesso integral a todos os módulos.
 - O primeiro usuário administrativo é criado via seed ou migration na implantação (RN-LOGIN-006).
 
@@ -60,7 +60,7 @@ Cada módulo usa o mecanismo adequado ao seu ciclo de vida. A visibilidade no Hu
 |--------|-----------|---------|----------------------|
 | Telas | Status da tela | habilitada / desabilitada | desabilitada |
 | Banners | Status da associação Banner × Tela | draft / publicado | draft ou tela desabilitada |
-| Eventos | Enable (boolean) | true / false | false |
+| Eventos | `enable_efetivo` (campo virtual) | enable armazenado e não expirado | enable false ou expirado |
 | Conteúdos digitais | Status | draft / publicado / pendente / desabilitado | draft, pendente ou desabilitado |
 | Obras e coleções | — | Sem controle no MVP | Sempre visível após cadastro |
 
@@ -81,7 +81,7 @@ Todos os links externos configurados nos módulos administrativos devem abrir em
 
 ### Hospedagem de dados sensíveis
 
-- CPF de fãs e usuários administrativos é identificador crítico; validação de dígitos verificadores aplicável onde especificado.
+- CPF de fãs é identificador crítico; validação de dígitos verificadores aplicável onde especificado. Usuários administrativos são identificados por e-mail.
 - Consentimentos de fãs são registrados como campos booleanos independentes.
 - Propostas e fãs: dados coletados via Hub com finalidade administrativa e operacional.
 
@@ -94,7 +94,7 @@ Todos os links externos configurados nos módulos administrativos devem abrir em
 | **Enable** | Campo booleano de visibilidade de eventos no Hub (independente de lifecycle e status) |
 | **LifeCycle** | Estado de alto nível do evento: Em aberto ou Encerrado |
 | **Status** | Estado operacional do evento, vinculado a um LifeCycle |
-| **Data de referência para expiração** | Data usada para calcular expiração automática de eventos (`data` ou `nova data` se Adiado) |
+| **Data de referência para expiração** | Data usada para calcular a expiração de eventos via campo virtual (`data` ou `nova data` se Adiado) |
 | **Habilitada / desabilitada** | Controle de visibilidade de telas no Hub |
 | **draft / publicado** | Ciclo de publicação de banners (por associação) e conteúdos digitais |
 | **pendente** | Status editorial de conteúdo aguardando revisão antes de publicar |
@@ -116,7 +116,7 @@ Todos os links externos configurados nos módulos administrativos devem abrir em
 |--------|---------|
 | Tipos de proposta comercial | Enum fixo definido no formulário do Hub; admin apenas visualiza |
 | Categorias de conteúdo digital | Gerenciáveis pelo admin; CRUD dedicado será detalhado na implementação |
-| Timings automáticos (expiração de eventos, sessão por inatividade) | Dia calendário / timeout definido pelo time de desenvolvimento |
+| Expiração de eventos (campo virtual) e timeout de sessão por inatividade | Dia calendário / data corrente e timeout definidos pelo time de desenvolvimento |
 | Formato de telefone e e-mail | Validação de formato a cargo do time de desenvolvimento |
 
 ## Mapa de dependências entre módulos

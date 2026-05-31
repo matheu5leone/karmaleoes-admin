@@ -12,7 +12,7 @@ Centralizar a gestão operacional do ecossistema Karmaleões em uma plataforma a
 
 | Incluído | Excluído |
 |----------|----------|
-| Auth admin (CPF + senha + 2FA TOTP) | Níveis de permissão / RBAC |
+| Auth admin (e-mail + senha + 2FA TOTP) | Níveis de permissão / RBAC |
 | CRUD dos módulos 2–6 | Hospedagem de mídia no Hub |
 | Visualização de propostas e fãs | Pipeline comercial / CRM automatizado |
 | Auditoria de escritas administrativas | LGPD completa (exportação/exclusão) |
@@ -70,7 +70,7 @@ Hub → Propostas (7), Fãs (8)
 
 ### 3.1 Autenticação
 
-- Login: CPF + senha + TOTP (após configuração inicial).
+- Login: e-mail + senha + TOTP (após configuração inicial).
 - Sessão única por usuário; expiração por inatividade (timeout definido pelo dev).
 - Recuperação de senha via SMS no telefone cadastrado.
 - Primeiro admin: seed/migration na implantação (RN-LOGIN-006).
@@ -93,7 +93,7 @@ Cada módulo usa mecanismo próprio — não há flag global de publicação.
 |--------|-----------|---------------|
 | Telas | habilitada / desabilitada | desabilitada |
 | Banners | status da associação Banner×Tela | draft ou tela desabilitada |
-| Eventos | Enable (boolean) | false |
+| Eventos | `enable_efetivo` (enable armazenado e não expirado) | enable false **ou** expirado |
 | Conteúdos | draft / pendente / publicado / desabilitado | ≠ publicado |
 | Obras | — | sempre visível (MVP) |
 
@@ -101,7 +101,7 @@ Cada módulo usa mecanismo próprio — não há flag global de publicação.
 
 - Links externos sempre abrem em **nova aba**.
 - Hub não hospeda mídia (vídeo/áudio/streaming) — apenas metadados + URLs.
-- Imagens admin (banner, thumbnail, capa): upload na plataforma admin; formatos/limites a definir pelo dev.
+- Imagens admin (banner, thumbnail, capa): upload na plataforma admin via **Supabase Storage** (S3-compatível, mesmo projeto/Auth/RLS, CDN e transformação de imagem inclusos). S3/Cloudflare R2 ficam como saída futura, viável pela compatibilidade S3. Formatos/limites a definir pelo dev.
 
 ### 3.5 Glossário resumido
 
@@ -122,7 +122,7 @@ Cada módulo usa mecanismo próprio — não há flag global de publicação.
 
 | Campo | Regra |
 |-------|-------|
-| CPF | Obrigatório, único, imutável |
+| E-mail | Obrigatório, único, imutável — identificador de login |
 | Telefone | Obrigatório (SMS recuperação) |
 | Senha | Temporária no cadastro |
 | Status | ativo / inativo |
@@ -130,10 +130,10 @@ Cada módulo usa mecanismo próprio — não há flag global de publicação.
 
 **Fluxos principais**
 
-1. Admin cadastra usuário (CPF + telefone + senha temp.)
+1. Admin cadastra usuário (e-mail + telefone + senha temp.)
 2. Primeiro login → QR TOTP → validação → 2FA ativo
-3. Logins seguintes → CPF + senha + TOTP
-4. Recuperação → CPF → SMS → código → nova senha
+3. Logins seguintes → e-mail + senha + TOTP
+4. Recuperação → e-mail → SMS → código → nova senha
 
 ---
 
@@ -173,17 +173,18 @@ Cada módulo usa mecanismo próprio — não há flag global de publicação.
 | Eixo | Valores | Controle |
 |------|---------|----------|
 | LifeCycle | Em aberto, Encerrado | Admin (encerramento) |
-| Status | Por lifecycle + Expirado (sistema) | Admin + job |
-| Enable | true/false | Admin + job |
+| Status (armazenado) | Por lifecycle | Admin |
+| Enable (armazenado) | true/false | Admin |
 
-**Expiração automática** (dia seguinte à data de referência)
+**Expiração por campo virtual** (sem job — calculada na leitura, dia seguinte à data de referência). Nenhum dado armazenado é mutado:
 
-| Situação | LifeCycle | Status | Enable |
-|----------|-----------|--------|--------|
-| Em aberto | Em aberto | → Expirado | → false |
-| Encerrado (Cancelado ou Sucesso) | inalterado | inalterado | → false |
+| Situação | LifeCycle | `status_efetivo` | `enable_efetivo` |
+|----------|-----------|------------------|------------------|
+| Em aberto | Em aberto | "Expirado" | false |
+| Encerrado (Cancelado ou Sucesso) | inalterado | status armazenado | false |
 
-A job **sempre** seta Enable=false. Só altera status para Expirado se lifecycle ainda for Em aberto.
+- `expirado` = data atual passou da data de referência. `enable_efetivo` = `enable` armazenado **E NÃO** `expirado` (rege a visibilidade no Hub). "Expirado" é rótulo virtual, não status armazenado.
+- Por ser reativo, mudar a data de referência (ex.: Adiado + nova data futura) faz o evento deixar de ser expirado automaticamente.
 
 **Encerramento manual**
 
@@ -193,9 +194,9 @@ A job **sempre** seta Enable=false. Só altera status para Expirado se lifecycle
 | Sucesso | Na data de referência ou depois | inalterado |
 
 - Encerramento **nunca** altera Enable; admin pode setar Enable=false manualmente.
-- Cancelado antecipado: visível (Enable=true) até expiração automática ocultar.
+- Cancelado antecipado: visível (`enable_efetivo`=true) até a data de referência ocultar via cálculo virtual.
 - Sucesso antes da data de referência: **bloqueado** (RN-EVENTO-014).
-- Status protegidos (definição): Expirado, Adiado — não editáveis/excluíveis.
+- Status protegido (definição): Adiado — não editável/excluível. "Expirado" é rótulo virtual reservado (não armazenado, não cadastrável).
 - Status em uso: não excluíveis (RN-EVENTO-013).
 
 **Data de referência:** `data` padrão; `nova data` se status Adiado.
@@ -292,7 +293,7 @@ erDiagram
 | # | Problema | Resolução |
 |---|----------|-----------|
 | 1 | Banner: status global vs. regra por tela | Status na associação Banner×Tela |
-| 2 | Eventos: expiração vs. encerramento confusos | Três eixos; job sempre seta Enable=false |
+| 2 | Eventos: expiração vs. encerramento confusos | Três eixos; expiração por campo virtual (`enable_efetivo`/`status_efetivo`), sem job |
 | 3 | Sucesso antes da data permitido implicitamente | Bloqueado (RN-EVENTO-014) |
 | 4 | Cancelado: Enable forçado vs. inalterado | Encerramento não altera Enable |
 | 5 | Expiração após Adiado: qual data? | Data de referência = nova data |
@@ -308,7 +309,7 @@ erDiagram
 
 - CRUD de categorias de conteúdo (detalhar na implementação)
 - Validação de formato telefone/e-mail
-- Fuso horário exato da job de expiração
+- Fuso horário / data corrente usados no cálculo de expiração (campo virtual)
 - Timeout de sessão por inatividade
 - Upload: formatos, tamanhos, storage backend
 - Reset de 2FA pelo admin
@@ -335,6 +336,6 @@ Gerar plano de implementação em `docs/superpowers/plans/` via skill **writing-
 1. Autenticação + bootstrap
 2. Telas + marquees
 3. Banners (modelo associação)
-4. Eventos (lifecycle + job expiração)
+4. Eventos (lifecycle + expiração por campo virtual)
 5. Conteúdos + obras
 6. Integração Hub (propostas + fãs)

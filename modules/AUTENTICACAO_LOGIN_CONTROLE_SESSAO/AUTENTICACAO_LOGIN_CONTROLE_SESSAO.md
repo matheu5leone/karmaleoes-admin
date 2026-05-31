@@ -12,13 +12,13 @@ Permitir autenticação segura de usuários administrativos responsáveis pela g
 
 O sistema deve permitir autenticação utilizando:
 
-- CPF
+- E-mail
 - Senha
 - Código de autenticação em 2 fatores (2FA)
 
 ### RF-LOGIN-002 — Autenticação em 2 Fatores
 
-O sistema deve exigir validação secundária via aplicativo autenticador após validação correta de CPF e senha.
+O sistema deve exigir validação secundária via aplicativo autenticador após validação correta de e-mail e senha.
 
 **Observações**
 
@@ -34,7 +34,7 @@ O sistema deve permitir redefinição de senha via SMS utilizando o número prev
 
 **Fluxo esperado**
 
-1. Usuário informa CPF.
+1. Usuário informa e-mail.
 2. Sistema envia código temporário via SMS.
 3. Usuário valida código.
 4. Usuário redefine senha.
@@ -59,13 +59,13 @@ O sistema deve possuir funcionalidade administrativa para:
 
 | Operação | Campos |
 |----------|--------|
-| Cadastrar | CPF, telefone, senha temporária |
+| Cadastrar | E-mail, telefone, senha temporária |
 | Editar | Telefone |
 | Ativar/desativar | Status (ativo / inativo) |
 
 **Observações**
 
-- CPF é imutável após a criação do usuário.
+- E-mail é o identificador de login (único, imutável após a criação do usuário).
 - Telefone é obrigatório no cadastro (utilizado na recuperação de senha via SMS).
 - Neste momento não haverá níveis de permissão diferenciados. Todos os usuários autenticados possuirão acesso total à plataforma administrativa.
 
@@ -96,8 +96,8 @@ O sistema deve permitir a configuração do autenticador TOTP no primeiro acesso
 
 **Fluxo esperado**
 
-1. Admin cadastra o usuário (CPF + telefone + senha temporária).
-2. No primeiro login, após validar CPF e senha temporária, o sistema exibe o QR code para configuração do TOTP.
+1. Admin cadastra o usuário (e-mail + telefone + senha temporária).
+2. No primeiro login, após validar e-mail e senha temporária, o sistema exibe o QR code para configuração do TOTP.
 3. Usuário configura o aplicativo autenticador e valida com o primeiro código gerado.
 4. A partir desse momento, o 2FA é exigido em todo login subsequente.
 
@@ -111,7 +111,7 @@ O sistema deve permitir a configuração do autenticador TOTP no primeiro acesso
 | RN-LOGIN-004 | Usuários desativados não poderão autenticar no sistema. |
 | RN-LOGIN-005 | Sessões inativas por período definido devem ser expiradas automaticamente, redirecionando o usuário para a tela de login. O tempo de inatividade será definido pelo time de desenvolvimento. |
 | RN-LOGIN-006 | O primeiro usuário administrativo será criado via seed ou migration na implantação. Não haverá tela de auto-registro no MVP. |
-| RN-LOGIN-007 | CPF de usuários administrativos deve ser único no sistema. |
+| RN-LOGIN-007 | E-mail de usuários administrativos deve ser único no sistema. |
 
 ## Estrutura Conceitual das Entidades
 
@@ -124,7 +124,7 @@ Representa um operador com acesso à plataforma administrativa.
 | Propriedade | Descrição |
 |-------------|-----------|
 | Identificador | ID único do usuário |
-| CPF | Identificador de login (obrigatório, único, imutável após criação) |
+| E-mail | Identificador de login (obrigatório, único, imutável após criação) |
 | Telefone | Número para recuperação de senha via SMS (obrigatório) |
 | Senha | Credencial de autenticação (temporária no cadastro) |
 | Status | ativo / inativo |

@@ -1,10 +1,10 @@
 # Fluxograma — Autenticação, Login e Controle de Sessão
 
-## Fluxo de Login (CPF + Senha + 2FA)
+## Fluxo de Login (E-mail + Senha + 2FA)
 
 ```mermaid
 flowchart TD
-    A[Usuário acessa tela de login] --> B[Informa CPF e Senha]
+    A[Usuário acessa tela de login] --> B[Informa E-mail e Senha]
     B --> C{Credenciais válidas?}
     C -- Não --> D[Acesso negado]
     C -- Sim --> E{Usuário ativo?}
@@ -33,8 +33,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Usuário solicita recuperação] --> B[Informa CPF]
-    B --> C{CPF cadastrado com telefone?}
+    A[Usuário solicita recuperação] --> B[Informa E-mail]
+    B --> C{E-mail cadastrado com telefone?}
     C -- Não --> D[Fluxo interrompido com orientação]
     C -- Sim --> E[Sistema envia código temporário via SMS]
     E --> F[Usuário informa código recebido]
@@ -50,9 +50,9 @@ flowchart TD
 ```mermaid
 flowchart TD
     A[Admin autenticado] --> B{Ação desejada?}
-    B -- Cadastrar --> C[Informa CPF + Telefone + Senha temporária]
-    C --> D{CPF já existe?}
-    D -- Sim --> E[Operação bloqueada — CPF duplicado]
+    B -- Cadastrar --> C[Informa E-mail + Telefone + Senha temporária]
+    C --> D{E-mail já existe?}
+    D -- Sim --> E[Operação bloqueada — e-mail duplicado]
     D -- Não --> F[Usuário criado com status ativo]
     F --> G[Registro de auditoria]
     B -- Editar --> H[Altera telefone do usuário]
