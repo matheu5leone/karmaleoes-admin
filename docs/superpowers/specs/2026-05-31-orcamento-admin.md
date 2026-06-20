@@ -1,7 +1,7 @@
 # Orçamento de Desenvolvimento — Portal Admin Karmaleões
 
 **Data:** 2026-05-31
-**Escopo:** Plataforma administrativa (Admin) **apenas**. Hub público e módulo de Fãs ficam **fora**.
+**Escopo:** Plataforma administrativa (Admin) **apenas**. Hub público e os módulos de Fãs e Propostas Comerciais ficam **fora**.
 **Stack:** Next.js (App Router) + Supabase (Postgres / Storage) + Redis.
 **Fonte:** `docs/superpowers/specs/2026-05-25-karmaleoes-admin-design.md` + `modules/*`.
 
@@ -20,7 +20,7 @@
 - Base de UI sobre **shadcn/ui** + Tailwind (não é design do zero pixel a pixel).
 - Auth com **Supabase Auth nativo**: login por **e-mail + senha**, MFA **TOTP** nativo, **recuperação de senha por e-mail** (nativa). Sem SMS. CPF **removido** do usuário admin; telefone **opcional** (contato). Único custom relevante: sessão única em Redis.
 - Estimativas em faixa **otimista–pessimista**; o valor "Base" é o ponto de planejamento.
-- **Excluídos:** Hub, módulo de Fãs (8), gestão de projeto, QA manual e buffer de risco (ver §5).
+- **Excluídos:** Hub, gestão de projeto, QA manual e buffer de risco (ver §5).
 
 ---
 
@@ -34,8 +34,7 @@
 | 4 | **Eventos** | CRUD, status dinâmicos por lifecycle (protegidos), encerramento manual com regras de data, Adiado/nova data, Enable, prioridade, **expiração por campos virtuais** (`status_efetivo`/`enable_efetivo`, sem job) | 50 | 62 | 74 |
 | 5 | **Conteúdos Digitais** | CRUD conteúdo, CRUD categorias, status editorial, destaque, ordenação manual | 32 | 38 | 46 |
 | 6 | **Obras e Colaborações** | CRUD músicas/coleções/colaboradores/roles, relação N:1 e N:N, links de plataforma (discriminador), ordenação por lançamento | 48 | 58 | 68 |
-| 7 | **Propostas Comerciais** | Tabela + listagem + detalhe + filtros (estado/cidade) — **somente leitura** | 12 | 16 | 20 |
-| | **Subtotal módulos** | | **244** | **297** | **360** |
+| | **Subtotal módulos** | | **232** | **281** | **340** |
 
 ---
 
@@ -67,12 +66,12 @@
 
 | Bloco | Otim. (h) | Base (h) | Pess. (h) |
 |-------|----------:|---------:|----------:|
-| Módulos (§2) | 244 | 297 | 360 |
+| Módulos (§2) | 232 | 281 | 340 |
 | Fundação (§3) | 60 | 72 | 94 |
 | Tracks: testes + design + infra (§4) | 156 | 196 | 236 |
-| **TOTAL (horas)** | **460** | **565** | **690** |
-| **TOTAL (homem-dia, 8h)** | **≈ 58 hd** | **≈ 71 hd** | **≈ 86 hd** |
-| **TOTAL (R$ a R$ 110/h — referência)** | **R$ 50.600** | **R$ 62.150** | **R$ 75.900** |
+| **TOTAL (horas)** | **448** | **549** | **670** |
+| **TOTAL (homem-dia, 8h)** | **≈ 56 hd** | **≈ 69 hd** | **≈ 84 hd** |
+| **TOTAL (R$ a R$ 110/h — referência)** | **R$ 49.280** | **R$ 60.390** | **R$ 73.700** |
 
 > **Faturamento:** **R$ 6.200 fechado** (ver callout no topo). Os valores em R$ acima são apenas a referência de custo a R$ 110/h.
 
@@ -85,15 +84,15 @@
 ## 5b. Entrega em 3 meses (prazo fechado)
 
 **Premissas:** 3 meses ≈ 13 semanas úteis ≈ 65 dias úteis · ~6 h produtivas/dia/dev → **~130 h/mês por dev** (~390 h em 3 meses).
-**Esforço:** dev = **501 h** (módulos 297 + fundação 72 + testes 96 + infra 36) · design = **64 h** (track paralelo).
+**Esforço:** dev = **485 h** (módulos 281 + fundação 72 + testes 96 + infra 36) · design = **64 h** (track paralelo).
 
 ### Time necessário para o prazo
 
-| Cenário | Capacidade dev (3 meses) | Cobre 501 h? | Veredito |
+| Cenário | Capacidade dev (3 meses) | Cobre 485 h? | Veredito |
 |---------|------------------------:|:------------:|----------|
-| 1 dev (6 h/dia) | ~390 h | ❌ | Estoura — ~4,3 meses |
-| 1 dev (8 h/dia cheio) | ~520 h | ⚠️ | No limite, sem buffer — risco alto |
-| **2 devs (6 h/dia)** | ~780 h | ✅ (+55%) | **Recomendado** — folga p/ QA/homologação |
+| 1 dev (6 h/dia) | ~390 h | ❌ | Estoura — ~4,2 meses |
+| 1 dev (8 h/dia cheio) | ~520 h | ✅ | No limite, sem buffer — risco moderado |
+| **2 devs (6 h/dia)** | ~780 h | ✅ (+61%) | **Recomendado** — folga p/ QA/homologação |
 
 ➡️ **Time para 3 meses: 2 devs fullstack + 1 designer (meio período).**
 
@@ -103,9 +102,9 @@
 |-----|------|----------|--------:|
 | **1** | Base & autenticação | Plano 00 (Fundação) · Infra/CI/CD · Plano 01 (Auth completo) · Design: identidade + telas-chave | ~151 |
 | **2** | Módulos núcleo (paralelo) | Dev A: Telas/Marquees → Banners · Dev B: Eventos + Conteúdos · testes acompanham cada módulo | ~180 |
-| **3** | Módulos finais & fechamento | Obras + Propostas · suíte e2e completa · QA/homologação · deploy produção · ajustes de design | ~170 |
+| **3** | Módulos finais & fechamento | Obras · suíte e2e completa · QA/homologação · deploy produção · ajustes de design | ~154 |
 
-- **Cadeia crítica:** 00 → 01 → (02→03). Módulos 04/05/06/07 paralelizam entre os 2 devs após a Auth.
+- **Cadeia crítica:** 00 → 01 → (02→03). Módulos 04/05/06 paralelizam entre os 2 devs após a Auth.
 - **Buffer:** com 2 devs o dev "real" encerra ~fim do Mês 2 / início do Mês 3; a folga vira margem de QA e correções, protegendo a data.
 - **Custo real × preço:** um time de 2 devs + designer por 3 meses tem custo muito acima do **preço fechado de R$ 6.200** (taxa efetiva ~R$ 11/h) — viabilidade econômica é decisão comercial.
 
@@ -178,11 +177,7 @@ Aplicando ~**+30%** sobre a base: **≈ 735 h ≈ 92 homem-dia ≈ R$ 80.850**.
 | | Vínculo obra×colaborador×role (N:N) | 12 | 1.320 |
 | | Links de plataforma + ordenação por lançamento | 10 | 1.100 |
 | | **Subtotal** | **58** | **6.380** |
-| **7 · Propostas** | Schema + RLS (read-only) | 4 | 440 |
-| | Listagem + filtros (estado/cidade) | 8 | 880 |
-| | Detalhe da proposta | 4 | 440 |
-| | **Subtotal** | **16** | **1.760** |
-| | **Subtotal MÓDULOS** | **297** | **32.670** |
+| | **Subtotal MÓDULOS** | **281** | **30.910** |
 
 ### Transversais
 
@@ -197,11 +192,11 @@ Aplicando ~**+30%** sobre a base: **≈ 735 h ≈ 92 homem-dia ≈ R$ 80.850**.
 
 | | Horas | Valor (R$) |
 |---|------:|-----------:|
-| Módulos | 297 | 32.670 |
+| Módulos | 281 | 30.910 |
 | Fundação | 72 | 7.920 |
 | Testes | 96 | 10.560 |
 | Design | 64 | 7.040 |
 | Infra | 36 | 3.960 |
-| **TOTAL (base)** | **565** | **R$ 62.150,00** |
+| **TOTAL (base)** | **549** | **R$ 60.390,00** |
 
-Faixa: **460 h (otimista, R$ 50.600)** a **690 h (pessimista, R$ 75.900)**. Com +30% (gestão/QA/buffer): ~735 h → **R$ 80.850**.
+Faixa: **448 h (otimista, R$ 49.280)** a **670 h (pessimista, R$ 73.700)**. Com +30% (gestão/QA/buffer): ~714 h → **R$ 78.540**.

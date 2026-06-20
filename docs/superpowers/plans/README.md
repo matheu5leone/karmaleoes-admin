@@ -3,7 +3,7 @@
 > **Status:** roadmap macro (engatilhado). Os planos TDD detalhados de cada subsistema serão
 > gerados sob demanda, expandindo cada outline abaixo via skill `superpowers:writing-plans`.
 
-**Escopo:** apenas o Admin (Hub e Fãs fora). Stack e padrões transversais: **[CONVENTIONS.md](./CONVENTIONS.md)**.
+**Escopo:** apenas o Admin. Stack e padrões transversais: **[CONVENTIONS.md](./CONVENTIONS.md)**.
 **Specs-fonte:** [design consolidado](../specs/2026-05-25-karmaleoes-admin-design.md) · [orçamento](../specs/2026-05-31-orcamento-admin.md) · `modules/*`.
 
 ---
@@ -18,7 +18,6 @@ flowchart TD
     P01 --> P04["04 · Eventos"]
     P01 --> P05["05 · Conteúdos Digitais"]
     P01 --> P06["06 · Obras & Colaborações"]
-    P01 --> P07["07 · Propostas (leitura)"]
 ```
 
 | # | Plano | Depende de | Esforço base (h)¹ | Entrega testável |
@@ -30,9 +29,8 @@ flowchart TD
 | 04 | Eventos | 01 | 62 | CRUD + status dinâmicos + expiração virtual |
 | 05 | Conteúdos Digitais | 01 | 38 | CRUD conteúdo + categorias + status editorial |
 | 06 | Obras & Colaborações | 01 | 58 | Músicas/coleções/colaboradores/roles/links |
-| 07 | Propostas Comerciais | 01 | 16 | Listagem + detalhe + filtros (read-only) |
 
-¹ Esforço de **dev** por módulo (do orçamento); testes/design/infra somam nos tracks. Após o plano 01, os planos 02–07 podem ser paralelizados (02→03 é a única cadeia).
+¹ Esforço de **dev** por módulo (do orçamento); testes/design/infra somam nos tracks. Após o plano 01, os planos 02–06 podem ser paralelizados (02→03 é a única cadeia).
 
 ---
 
@@ -156,20 +154,6 @@ flowchart TD
 - Links de plataforma por música **ou** coleção (discriminador), nova aba (RF-010/011).
 - Ordenação por data de lançamento (RF-012); sem status no MVP (RN-009).
 - Auditoria; E2E do `TESTES.md`.
-
----
-
-## Plano 07 — Propostas Comerciais (Módulo 7, read-only)
-
-**Goal:** listagem, detalhe e filtros de propostas recebidas (somente leitura; origem é o Hub, fora de escopo).
-**Specs:** `modules/GESTAO_PROPOSTAS_COMERCIAIS/*` (RF-PROP-001..005, RN-PROP-001..010).
-**Tabelas:** `proposta` (nome, estado, cidade, empresa, cnpj?, email, telefone, mensagem, tipo, data_hora) — schema criado aqui; gravação é responsabilidade futura do Hub.
-
-**Outline de tarefas:**
-- Migration `proposta` + RLS (somente leitura no admin; sem create/update/delete — RN-002/009).
-- Listagem com filtros (estado/cidade) + detalhe (RF-003/004).
-- Tipo como enum fixo, só exibição (RN-010).
-- E2E do `TESTES.md` (cenários de leitura/filtro).
 
 ---
 

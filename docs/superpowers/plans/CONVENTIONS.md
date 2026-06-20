@@ -3,7 +3,7 @@
 > Documento de referência compartilhado por **todos** os planos em `docs/superpowers/plans/`.
 > Cada plano assume estas convenções e **não** as repete. Atualize aqui quando uma decisão transversal mudar.
 
-**Escopo:** apenas o Admin. Hub público e módulo de Fãs estão fora (ver [design](../specs/2026-05-25-karmaleoes-admin-design.md)).
+**Escopo:** apenas o Admin. Hub público e os módulos de Fãs e Propostas Comerciais estão fora (ver [design](../specs/2026-05-25-karmaleoes-admin-design.md)).
 
 ---
 
@@ -40,7 +40,6 @@ app/
     eventos/  eventos/status/
     conteudos/  conteudos/categorias/
     obras/  obras/colaboradores/  obras/roles/
-    propostas/
     layout.tsx
   layout.tsx
   middleware.ts            # valida sessão + sessão única (Redis)
@@ -94,7 +93,7 @@ Toda leitura de eventos (admin e futuro Hub) consome a **view**, nunca recalcula
 ## 5. Auditoria de escrita (RF-LOGIN-006)
 
 - Tabela `audit_log` (id, user_id, acao `create|update|delete`, entidade, registro_id, data_hora, diff opcional).
-- **Nível de aplicação:** helper `audit(...)` chamado dentro de **toda Server Action de escrita** (módulos 1–7). Leituras não auditadas.
+- **Nível de aplicação:** helper `audit(...)` chamado dentro de **toda Server Action de escrita** (módulos 1–6). Leituras não auditadas.
 - Centralizado em `lib/audit.ts`; cada plano de módulo invoca o helper em create/update/delete.
 
 ---

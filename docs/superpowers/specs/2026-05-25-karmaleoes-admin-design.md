@@ -6,7 +6,7 @@
 
 ## 1. Objetivo
 
-Centralizar a gestão operacional do ecossistema Karmaleões em uma plataforma administrativa que configura o **Hub público** — telas, navegação, banners, eventos, conteúdos digitais e obras — e recebe dados de **fãs** e **propostas comerciais** originados no Hub.
+Centralizar a gestão operacional do ecossistema Karmaleões em uma plataforma administrativa que configura o **Hub público** — telas, navegação, banners, eventos, conteúdos digitais e obras.
 
 ### Escopo do MVP
 
@@ -14,9 +14,7 @@ Centralizar a gestão operacional do ecossistema Karmaleões em uma plataforma a
 |----------|----------|
 | Auth admin (e-mail + senha + 2FA TOTP) | Níveis de permissão / RBAC |
 | CRUD dos módulos 2–6 | Hospedagem de mídia no Hub |
-| Visualização de propostas e fãs | Pipeline comercial / CRM automatizado |
-| Auditoria de escritas administrativas | LGPD completa (exportação/exclusão) |
-| Formulários públicos no Hub (fãs, propostas) | Agendamento/versionamento de banners |
+| Auditoria de escritas administrativas | Agendamento/versionamento de banners |
 | Links externos (nova aba) | Auto-registro de admin |
 
 ### Referência modular
@@ -52,16 +50,13 @@ flowchart LR
 | Entidade | Origem | Admin |
 |----------|--------|-------|
 | Telas, marquees, banners, eventos, conteúdos, obras | Cadastro manual | CRUD |
-| Propostas comerciais | Formulário Hub | Somente leitura |
-| Fãs | Formulário Hub | Leitura + filtros geográficos |
 
 ### 2.3 Dependências entre módulos
 
 ```
-Autenticação (1) → protege módulos 2–8
+Autenticação (1) → protege módulos 2–6
 Telas (2) → Banners (3), Marquees (2)
 Conteúdos (5) ⊥ Obras (6)
-Hub → Propostas (7), Fãs (8)
 ```
 
 ---
@@ -81,7 +76,7 @@ Hub → Propostas (7), Fãs (8)
 Toda operação de **escrita** (create, update, delete) gera log:
 
 - Módulo 1: gestão de usuários
-- Módulos 2–8: entidades configuráveis
+- Módulos 2–6: entidades configuráveis
 
 Campos: usuário, data/hora, ação, entidade, ID do registro. Leituras não auditadas no MVP.
 
@@ -222,31 +217,6 @@ Cada módulo usa mecanismo próprio — não há flag global de publicação.
 
 ---
 
-### 4.7 Propostas Comerciais (Módulo 7)
-
-- Recebidas exclusivamente via formulário Hub.
-- Somente leitura no admin — sem pipeline, status ou edição.
-- Tipos de proposta: enum fixo no Hub (RN-PROP-010).
-- Consentimento de armazenamento obrigatório no formulário.
-
----
-
-### 4.8 Fãs / CRM Inicial (Módulo 8)
-
-**Entidade: Fã**
-
-| Campo | Regra |
-|-------|-------|
-| CPF | Obrigatório, único, dígitos validados |
-| consentimento_armazenamento | Obrigatório true |
-| consentimento_comunicacoes | Opt-in opcional |
-| consentimento_marketing | Opt-in opcional |
-
-- Cadastro exclusivamente via Hub (MVP).
-- CPF duplicado: mensagem informativa, sem criar/atualizar silenciosamente (RN-FAN-009).
-- Filtros por estado/cidade no admin.
-- Sem automações, comunicações automáticas ou status de fã no MVP.
-
 ---
 
 ## 5. Modelo conceitual consolidado
@@ -278,12 +248,6 @@ erDiagram
         enum lifecycle "Em aberto|Encerrado"
         date data_referencia_expiracao
     }
-    Fa {
-        string cpf
-        boolean consentimento_armazenamento
-        boolean consentimento_comunicacoes
-        boolean consentimento_marketing
-    }
 ```
 
 ---
@@ -298,10 +262,8 @@ erDiagram
 | 4 | Cancelado: Enable forçado vs. inalterado | Encerramento não altera Enable |
 | 5 | Expiração após Adiado: qual data? | Data de referência = nova data |
 | 6 | Auth: canal de recuperação de senha | Recuperação por e-mail (Supabase Auth); sem SMS; telefone opcional |
-| 7 | Fãs: 3 consentimentos vs. 1 opt-in | Três booleanos independentes |
-| 8 | Auditoria: escopo indefinido | Escrita nos módulos 1–8 |
-| 9 | Protegido: só Expirado na descrição | Expirado e Adiado |
-| 10 | Tipos de proposta: CRUD implícito | Enum fixo no Hub (RN-PROP-010) |
+| 7 | Auditoria: escopo indefinido | Escrita nos módulos 1–6 |
+| 8 | Protegido: só Expirado na descrição | Expirado e Adiado |
 
 ---
 
@@ -324,7 +286,6 @@ erDiagram
 - [ ] Links externos abrem em nova aba no Hub
 - [ ] Hub não hospeda mídia streaming
 - [ ] Visibilidade respeita mecanismo por módulo (tabela §3.3)
-- [ ] Formulários Hub (fãs, propostas) persistem dados conforme RF/RN
 - [ ] Roteiros de teste em `karmaleoes-admin-functional-specs/modules/*/TESTES.md` passam
 
 ---
@@ -338,4 +299,3 @@ Gerar plano de implementação em `docs/superpowers/plans/` via skill **writing-
 3. Banners (modelo associação)
 4. Eventos (lifecycle + expiração por campo virtual)
 5. Conteúdos + obras
-6. Integração Hub (propostas + fãs)

@@ -76,7 +76,7 @@ O sistema deve registrar logs de auditoria para operações administrativas de e
 **Escopo**
 
 - Módulo 1: gestão de usuários.
-- Módulos 2–8: alterações em entidades configuráveis.
+- Módulos 2–6: alterações em entidades configuráveis.
 
 Operações de leitura não exigem auditoria no MVP. Detalhes transversais em [VISAO_GERAL.md](../../VISAO_GERAL.md).
 
