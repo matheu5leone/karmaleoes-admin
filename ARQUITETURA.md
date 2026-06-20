@@ -5,6 +5,7 @@
 >
 > **Camadas de documentação** (cada uma referencia as outras, sem duplicar):
 > - [`VISAO_GERAL.md`](./VISAO_GERAL.md) — visão de produto e fronteira Admin↔Hub.
+> - [`DESIGN.md`](./DESIGN.md) — identidade visual, tokens, componentes e estados (UI).
 > - `modules/<MODULO>/*` — **specs funcionais** (RF/RN, FLOWCHART, TESTES). Fonte da verdade do _o quê_.
 > - [`docs/superpowers/plans/CONVENTIONS.md`](./docs/superpowers/plans/CONVENTIONS.md) — stack e regras transversais fixadas.
 > - [`docs/superpowers/plans/README.md`](./docs/superpowers/plans/README.md) — roadmap macro, sequência e esforço.
