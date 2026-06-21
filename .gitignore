@@ -15,10 +15,11 @@ build/
 dist/
 next-env.d.ts
 
-# Ambiente — NUNCA versionar segredos. `.env.example` é mantido (exceção abaixo).
+# Ambiente — NUNCA versionar segredos. Apenas os *.example são mantidos.
 .env
 .env.*
 !.env.example
+!.env.docker.example
 
 # Supabase (local / temporários gerados pela CLI)
 supabase/.branches/

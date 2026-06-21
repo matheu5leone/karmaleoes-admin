@@ -1,0 +1,57 @@
+# =============================================================================
+# Stack de DESENVOLVIMENTO local — Portal Admin Karmaleões
+# -----------------------------------------------------------------------------
+# `docker compose up` sobe tudo o que o localhost precisa:
+#   - web        : Next.js (dev server) na porta 3000
+#   - redis      : Redis local (sessão única / timeout)
+#   - redis-http : shim REST compatível com Upstash (para @upstash/redis em local)
+#
+# REGRA: local = Docker (este arquivo); produção = Vercel NATIVO (sem Docker).
+# Supabase permanece REMOTO (projeto hospedado) também em local.
+# Variáveis: copie .env.docker.example para .env.docker e preencha.
+# =============================================================================
+name: karmaleoes-admin
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file:
+      - .env.docker
+    environment:
+      # Hot-reload confiável em bind-mount (host Windows -> container Linux)
+      - WATCHPACK_POLLING=true
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules # usa node_modules do container (binários Linux)
+      - /app/.next
+    depends_on:
+      - redis-http
+    command: pnpm dev
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  # Expõe a API REST do Upstash sobre o Redis local, para o cliente @upstash/redis.
+  # Token local (não é segredo): use o mesmo em UPSTASH_REDIS_REST_TOKEN no .env.docker.
+  redis-http:
+    image: hiett/serverless-redis-http:latest
+    restart: unless-stopped
+    environment:
+      - SRH_MODE=env
+      - SRH_TOKEN=local_dev_token
+      - SRH_CONNECTION_STRING=redis://redis:6379
+    depends_on:
+      - redis
+    ports:
+      - "8079:80"
+
+volumes:
+  redis-data:

@@ -27,6 +27,16 @@ esqueleto onde os módulos 1–6 plugam.
 - `lib/storage.ts` — upload/remover/URL (ver [`transversal-storage-imagens.md`](./transversal-storage-imagens.md)); buckets `banners`, `conteudos`, `obras`, `marquees`.
 - `middleware.ts` — **stub** de guarda de sessão (ativado no Plano 01; ver [`transversal-totp-e-sessao.md`](./transversal-totp-e-sessao.md)).
 
+### Execução local (Docker) vs. produção (Vercel nativo)
+
+> **Regra:** o dev local roda **em Docker**; a produção na **Vercel é nativa** (sem Docker). Ver [`ARQUITETURA.md §7`](../../ARQUITETURA.md).
+
+- `Dockerfile.dev` + `docker-compose.yml`: sobem `web` (Next dev, 3000), `redis` e `redis-http`
+  (shim REST Upstash-compatível p/ `@upstash/redis`). `docker compose up` deixa o localhost funcional.
+- **Supabase remoto** também em local (projeto hospedado); apenas o Redis é containerizado.
+- Variáveis do stack local em `.env.docker` (`.env.docker.example`). Na Vercel, as mesmas variáveis vão
+  no painel, com `UPSTASH_*` apontando para o Upstash real.
+
 ## 4. Shell & padrões de UI
 
 - `app/(admin)/layout.tsx` — navegação lateral + área protegida.

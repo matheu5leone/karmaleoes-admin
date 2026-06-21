@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens — DESIGN.md §4 (identidade minimalista serifada, fundo cinza claro) */
+:root {
+  --background: 220 14% 96%;
+  --foreground: 220 20% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 12%;
+
+  --primary: 220 20% 14%;
+  --primary-foreground: 220 14% 98%;
+
+  --secondary: 220 14% 92%;
+  --secondary-foreground: 220 20% 18%;
+  --muted: 220 14% 93%;
+  --muted-foreground: 220 9% 46%;
+  --accent: 220 14% 92%;
+  --accent-foreground: 220 20% 18%;
+
+  --brand: 25 55% 42%;
+  --brand-foreground: 0 0% 100%;
+  --brand-subtle: 25 50% 94%;
+
+  --destructive: 0 62% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 145 45% 34%;
+  --warning: 35 75% 42%;
+  --info: 215 50% 44%;
+
+  --border: 220 13% 88%;
+  --input: 220 13% 85%;
+  --ring: 25 55% 42%;
+
+  --radius: 0.375rem;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "tnum" 0;
+  }
+  /* Foco sempre visível (DESIGN.md §6) */
+  :where(button, a, [role="button"], input, select, textarea):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}

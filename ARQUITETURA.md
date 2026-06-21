@@ -218,10 +218,18 @@ Detalhe em [`docs/arquitetura/transversal-*.md`](./docs/arquitetura/). Resumo:
 
 ## 7. Ambientes & deploy
 
-- **Local:** `supabase start` (Postgres/Auth/Storage local) + Upstash (ou Redis local) + `pnpm dev`.
-- **CI:** GitHub Actions — lint, typecheck, Vitest, Playwright (contra Supabase local).
-- **Produção:** Vercel (app) + Supabase cloud (banco/auth/storage) + Upstash (Redis) + e-mail
-  transacional nativo do Supabase Auth (reset de senha / TOTP).
+> **Regra de execução:** **local = Docker · produção = Vercel nativo.** O desenvolvimento local sobe em
+> containers (`docker-compose`: `web` + `redis` + `redis-http`); a Vercel faz build/serve do Next.js
+> **nativamente, sem Docker**. Os arquivos `Dockerfile.dev`/`docker-compose.yml` servem **apenas** ao dev
+> local e **não** participam do deploy.
+
+- **Local (Docker):** `docker compose up` sobe `web` (Next.js dev, porta 3000), `redis` e `redis-http`
+  (shim REST compatível com Upstash, para o `@upstash/redis` funcionar local). **Supabase permanece
+  remoto** (projeto hospedado) também em local. Variáveis em `.env.docker` (ver `.env.docker.example`).
+- **CI:** GitHub Actions — lint, typecheck, Vitest, Playwright.
+- **Produção (Vercel, nativo):** Vercel (app — build nativo do Next) + Supabase cloud + Upstash (Redis) +
+  e-mail nativo do Supabase Auth. As mesmas variáveis do `.env.*` são configuradas no painel da Vercel
+  (lá `UPSTASH_REDIS_REST_URL`/`TOKEN` apontam para o Upstash real, não para o `redis-http` local).
 - **Migrations** versionadas em `supabase/migrations/`; nunca editar migration aplicada — criar nova.
 
 ---

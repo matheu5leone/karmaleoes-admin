@@ -1,0 +1,23 @@
+# =============================================================================
+# Dockerfile de DESENVOLVIMENTO — Portal Admin Karmaleões
+# -----------------------------------------------------------------------------
+# Usado APENAS para rodar o localhost via docker-compose. A produção (Vercel)
+# NÃO usa este arquivo — lá o build/serve do Next.js é nativo.
+# =============================================================================
+FROM node:24-alpine
+
+WORKDIR /app
+
+# pnpm via corepack (versão fixada pelo campo packageManager do package.json)
+RUN corepack enable
+
+# Instala dependências primeiro (camada cacheável)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Código (em dev é sobreposto pelo bind-mount do compose; mantido p/ build standalone)
+COPY . .
+
+EXPOSE 3000
+
+CMD ["pnpm", "dev"]

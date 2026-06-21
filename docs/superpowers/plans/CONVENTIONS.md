@@ -21,7 +21,8 @@
 | Recuperação de senha | **Por e-mail** (fluxo nativo do Supabase Auth — reset/magic link). Sem SMS. |
 | Gerenciador de pacotes | **pnpm**. |
 | Lint/format | ESLint + Prettier. |
-| CI/CD | GitHub Actions (lint, typecheck, unit, e2e) → deploy **Vercel**. |
+| Execução | **Local em Docker** (`docker-compose`: `web` + `redis` + `redis-http`); **deploy na Vercel é nativo** (sem Docker). Supabase é remoto em ambos. |
+| CI/CD | GitHub Actions (lint, typecheck, unit, e2e) → deploy **Vercel** (build nativo do Next). |
 
 ---
 
