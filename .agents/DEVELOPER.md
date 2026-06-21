@@ -47,6 +47,7 @@ mantém esse contexto ativo durante toda a tarefa.
 | Arquivo | Conteúdo | Quando ler |
 |---------|----------|-----------|
 | `ARQUITETURA.md` | Porta de entrada: stack, visão de camadas, ERD consolidado, estrutura de pastas, riscos/lacunas, índice | Sempre |
+| `supabase/schema.sql` | **Schema SQL consolidado** (referência): todas as tabelas/colunas/FKs/CHECKs, RLS, triggers, `eventos_view`, seed de status. **Não executar direto** — espelho do modelo; aplicar via migrations incrementais | Antes de qualquer migration/Server Action |
 | `docs/superpowers/plans/CONVENTIONS.md` | **Stack fixada**, estrutura de pastas, RLS, migrations, auditoria, storage, TDD/DoD, commits | Sempre |
 | `docs/superpowers/plans/README.md` | Roadmap macro, sequência (00→06), dependências | Ordenação de trabalho |
 | `docs/arquitetura/00-fundacao-e-infra.md` | Scaffold, clients, migration base, padrões reutilizáveis, CI | Fundação |
@@ -106,6 +107,8 @@ Não introduza dependências, padrões ou serviços fora desta stack sem justifi
 2. **Banco:** `snake_case`, PK `uuid`, `created_at`/`updated_at` + trigger `set_updated_at`. **RLS habilitado
    em toda tabela** com política `is_active_admin()`. Migration `NNNN_descricao.sql`, **nunca** editar
    migration aplicada. Eventos sempre lidos pela **view** (sem recalcular regra na app, sem job).
+   **`supabase/schema.sql` é o espelho canônico do modelo** — consulte-o antes de criar migrations/queries
+   e **mantenha-o em sincronia** quando o schema evoluir (é referência, não fonte de execução).
 3. **Escrita = auditoria.** Toda Server Action de create/update/delete chama `audit(...)` (`lib/audit.ts`).
 4. **Validação compartilhada:** schema **zod** único entre client (react-hook-form) e Server Action.
 5. **UI:** consumir `DESIGN.md` — tokens, variantes de botão, estados, badges de status por domínio,
