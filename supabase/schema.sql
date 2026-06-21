@@ -176,6 +176,26 @@ create table public.banner_tela (
 create unique index banner_tela_um_publicado_por_tela
   on public.banner_tela (tela_id) where status = 'publicado';
 
+-- Máquina de publicação atômica (RF-BANNER-005/RN-006): rebaixa a publicada da
+-- mesma tela e publica a alvo. SECURITY INVOKER → RLS do admin aplica.
+create or replace function public.publicar_banner_tela(assoc_id uuid)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+declare v_tela uuid;
+begin
+  select tela_id into v_tela from public.banner_tela where id = assoc_id;
+  if v_tela is null then
+    raise exception 'Associação não encontrada';
+  end if;
+  update public.banner_tela
+    set status = 'draft'
+    where tela_id = v_tela and status = 'publicado' and id <> assoc_id;
+  update public.banner_tela set status = 'publicado' where id = assoc_id;
+end;
+$$;
+
 -- =============================================================================
 -- 4. Eventos (Plano 04) — modules/GESTAO_EVENTOS
 -- =============================================================================
@@ -413,8 +433,12 @@ revoke select on public.tela from anon;
 revoke select on public.marquee from anon;
 revoke select on public.marquee_tela from anon;
 revoke select on public.marquee_item from anon;
+revoke select on public.banner from anon;
+revoke select on public.banner_tela from anon;
 revoke execute on function public.is_active_admin() from public, anon;
 grant execute on function public.is_active_admin() to authenticated;
+revoke execute on function public.publicar_banner_tela(uuid) from public, anon;
+grant execute on function public.publicar_banner_tela(uuid) to authenticated;
 
 -- =============================================================================
 -- Seed mínimo — status de evento pré-cadastrados (RF-EVENTO-004)

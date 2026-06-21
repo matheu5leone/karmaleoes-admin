@@ -72,6 +72,72 @@ export type Database = {
         }
         Relationships: []
       }
+      banner: {
+        Row: {
+          created_at: string
+          id: string
+          imagem: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imagem: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imagem?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      banner_tela: {
+        Row: {
+          banner_id: string
+          created_at: string
+          id: string
+          status: string
+          tela_id: string
+          updated_at: string
+        }
+        Insert: {
+          banner_id: string
+          created_at?: string
+          id?: string
+          status?: string
+          tela_id: string
+          updated_at?: string
+        }
+        Update: {
+          banner_id?: string
+          created_at?: string
+          id?: string
+          status?: string
+          tela_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_tela_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "banner"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_tela_tela_id_fkey"
+            columns: ["tela_id"]
+            isOneToOne: false
+            referencedRelation: "tela"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marquee: {
         Row: {
           created_at: string
@@ -222,6 +288,7 @@ export type Database = {
     }
     Functions: {
       is_active_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
+      publicar_banner_tela: { Args: { assoc_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
