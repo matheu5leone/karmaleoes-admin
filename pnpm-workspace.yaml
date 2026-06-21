@@ -2,5 +2,6 @@
 # sharp: otimização de imagem do Next (opcional em dev; há fallback automático).
 # unrs-resolver: resolver nativo do eslint-import (binário pré-compilado já incluso).
 allowBuilds:
+  esbuild: true
   sharp: false
   unrs-resolver: false
