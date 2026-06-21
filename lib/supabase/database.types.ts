@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_user: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          status: string
+          telefone: string | null
+          two_factor_configured: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          status?: string
+          telefone?: string | null
+          two_factor_configured?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          status?: string
+          telefone?: string | null
+          two_factor_configured?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           acao: string
@@ -49,7 +79,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_active_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

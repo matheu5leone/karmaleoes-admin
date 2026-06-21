@@ -40,7 +40,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select exists (
     select 1 from public.admin_user
@@ -82,6 +82,7 @@ create table public.admin_user (
 create or replace function public.prevent_email_update()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   if new.email is distinct from old.email then
@@ -402,6 +403,14 @@ begin
     $f$, t);
   end loop;
 end $$;
+
+-- Reduz superfície de descoberta para o papel anon (advisors 0026/0028):
+-- admin_user/audit_log não devem ser visíveis sem login; is_active_admin é uso
+-- interno de RLS (o papel authenticated mantém execute, exigido pelas policies).
+revoke select on public.admin_user from anon;
+revoke select on public.audit_log from anon;
+revoke execute on function public.is_active_admin() from public, anon;
+grant execute on function public.is_active_admin() to authenticated;
 
 -- =============================================================================
 -- Seed mínimo — status de evento pré-cadastrados (RF-EVENTO-004)
