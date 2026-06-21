@@ -23,6 +23,9 @@ services:
       # Hot-reload confiável em bind-mount (host Windows -> container Linux)
       - WATCHPACK_POLLING=true
       - NODE_ENV=development
+      # Impede o pnpm de reinstalar/purgar node_modules ao rodar `pnpm dev`
+      # (lockfile muda por deps de teste; o volume do container fica como está).
+      - npm_config_verify_deps_before_run=false
     ports:
       - "3000:3000"
     volumes:
