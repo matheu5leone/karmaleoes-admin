@@ -5,6 +5,7 @@ import {
   Image as ImageIcon,
   LayoutGrid,
   LogOut,
+  Megaphone,
   PlayCircle,
   Users,
 } from "lucide-react";
@@ -14,7 +15,8 @@ import { logout } from "@/app/(auth)/actions";
 // conforme os módulos forem entregues. Tokens/estilo seguem DESIGN.md.
 const NAV = [
   { href: "/usuarios", label: "Usuários", icon: Users },
-  { href: "/telas", label: "Telas & Marquees", icon: LayoutGrid },
+  { href: "/telas", label: "Telas", icon: LayoutGrid },
+  { href: "/marquees", label: "Marquees", icon: Megaphone },
   { href: "/banners", label: "Banners", icon: ImageIcon },
   { href: "/eventos", label: "Eventos", icon: CalendarDays },
   { href: "/conteudos", label: "Conteúdos", icon: PlayCircle },
