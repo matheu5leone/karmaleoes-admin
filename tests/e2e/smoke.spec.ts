@@ -1,9 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test("home carrega com a identidade Karmaleões", async ({ page }) => {
+test("raiz redireciona para /login quando não autenticado", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/Karmaleões/);
-  await expect(page.getByRole("heading", { name: "Karmaleões" })).toBeVisible();
+  await expect(page).toHaveURL(/\/login/);
 });
 
 test("rota /login carrega", async ({ page }) => {
