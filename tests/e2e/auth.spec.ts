@@ -36,6 +36,13 @@ test("autenticação: 1º acesso (enroll), challenge e sessão única", async ({
   await a.waitForURL("**/usuarios");
   await expect(a.getByRole("heading", { name: "Usuários" })).toBeVisible();
 
+  // 1b) CRUD de usuários: cadastra e confere na lista (RF-LOGIN-005)
+  const novoEmail = `teste.${Date.now()}@karma.local`;
+  await a.getByLabel("E-mail").fill(novoEmail);
+  await a.getByLabel("Senha temporária").fill("Teste#Senha123");
+  await a.getByRole("button", { name: "Cadastrar" }).click();
+  await expect(a.getByText(novoEmail)).toBeVisible();
+
   // 2) Logout → login de novo → challenge TOTP
   await a.getByRole("button", { name: "Sair" }).click();
   await a.waitForURL("**/login");
