@@ -101,6 +101,24 @@ comportamento (ex.: `404`, redirect para a home, ou página "indisponível"). A 
 
 ---
 
+## Plano 05 — Conteúdos Digitais
+
+**O que o Hub consome**
+
+| Entidade | Uso no Hub |
+|----------|-----------|
+| `conteudo` (`titulo`, `descricao`, `thumbnail`, `tipo`, `plataforma`, `link`, `status`, `destaque`, `ordem`, `data`, `categoria_id`) | Itens de conteúdo externo. `thumbnail` = URL pública (bucket `conteudos`). |
+| `categoria_conteudo` (`nome`) | Agrupamento temático (opcional; `categoria_id` pode ser nulo). |
+
+**Regras de exibição**
+- Exibir **apenas** conteúdos com **`status = 'publicado'`** (draft/pendente/desabilitado ficam ocultos).
+- `tipo` é enum fixo: `video | playlist | noticia | entrevista | podcast`.
+- **Ordenar por `ordem`** (asc); `destaque = true` para priorização visual.
+- O Hub **não hospeda mídia**: usar `link` (externo) em **nova aba** + `plataforma`/`thumbnail`.
+- Independente de Obras (sem relação cruzada).
+
+---
+
 ## Pendências de integração (consolidado)
 
 | # | Item | Responsável | Status |
