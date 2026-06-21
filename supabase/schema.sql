@@ -409,6 +409,10 @@ end $$;
 -- interno de RLS (o papel authenticated mantém execute, exigido pelas policies).
 revoke select on public.admin_user from anon;
 revoke select on public.audit_log from anon;
+revoke select on public.tela from anon;
+revoke select on public.marquee from anon;
+revoke select on public.marquee_tela from anon;
+revoke select on public.marquee_item from anon;
 revoke execute on function public.is_active_admin() from public, anon;
 grant execute on function public.is_active_admin() to authenticated;
 

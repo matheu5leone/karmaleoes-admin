@@ -7,8 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
@@ -71,6 +69,150 @@ export type Database = {
           id?: string
           registro_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      marquee: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          props_visuais: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          props_visuais?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          props_visuais?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marquee_item: {
+        Row: {
+          created_at: string
+          id: string
+          imagem: string | null
+          marquee_id: string
+          ordem: number
+          tela_destino_id: string | null
+          tipo_nav: string
+          titulo: string
+          updated_at: string
+          url_externa: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imagem?: string | null
+          marquee_id: string
+          ordem?: number
+          tela_destino_id?: string | null
+          tipo_nav: string
+          titulo: string
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imagem?: string | null
+          marquee_id?: string
+          ordem?: number
+          tela_destino_id?: string | null
+          tipo_nav?: string
+          titulo?: string
+          updated_at?: string
+          url_externa?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marquee_item_marquee_id_fkey"
+            columns: ["marquee_id"]
+            isOneToOne: false
+            referencedRelation: "marquee"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marquee_item_tela_destino_id_fkey"
+            columns: ["tela_destino_id"]
+            isOneToOne: false
+            referencedRelation: "tela"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marquee_tela: {
+        Row: {
+          created_at: string
+          id: string
+          marquee_id: string
+          tela_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          marquee_id: string
+          tela_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          marquee_id?: string
+          tela_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marquee_tela_marquee_id_fkey"
+            columns: ["marquee_id"]
+            isOneToOne: false
+            referencedRelation: "marquee"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marquee_tela_tela_id_fkey"
+            columns: ["tela_id"]
+            isOneToOne: false
+            referencedRelation: "tela"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tela: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          rota: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          rota: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          rota?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
