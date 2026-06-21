@@ -1,0 +1,57 @@
+# =============================================================================
+# Portal Administrativo Karmaleões — .gitignore
+# =============================================================================
+
+# Dependências
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+
+# Build / Next.js
+.next/
+out/
+build/
+dist/
+next-env.d.ts
+
+# Ambiente — NUNCA versionar segredos. `.env.example` é mantido (exceção abaixo).
+.env
+.env.*
+!.env.example
+
+# Supabase (local / temporários gerados pela CLI)
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# Testes / cobertura
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+/blob-report/
+.playwright/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache de ferramentas
+.cache/
+.turbo/
+.eslintcache
+*.tsbuildinfo
+
+# Editores / SO
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Deploy
+.vercel
