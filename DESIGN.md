@@ -310,6 +310,16 @@ Pílula `caption` (12px), peso 500, padding `2px 8px`, radius `9999px`, fundo `*
 
 ---
 
+## 7.10 Loading — Skeleton (shimmer)
+
+Estados de carregamento de dados usam **skeleton screens com shimmer** (brilho que varre o placeholder,
+estilo feed do Facebook/Instagram), não spinners — preservam o layout e reduzem a percepção de espera.
+
+- Base `hsl(var(--muted))`; sweep `linear-gradient` com `hsl(var(--foreground) / 0.06)` animado (`1.5s`).
+- Componente `components/ui/skeleton.tsx` (classe `.skeleton` em `globals.css`).
+- No App Router, cada página de dados expõe um `loading.tsx` (Suspense) que **espelha a estrutura real**
+  (cabeçalho, card de form, linhas da tabela). Respeita `prefers-reduced-motion` (sem animação).
+
 ## 8. Movimento
 
 - **Durações:** micro-hover `120ms`; transições de superfície/cor `150ms`; entrada de dialog `200ms`.
