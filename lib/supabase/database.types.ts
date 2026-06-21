@@ -138,6 +138,74 @@ export type Database = {
           },
         ]
       }
+      evento: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data: string
+          descricao: string | null
+          enable: boolean
+          horario: string | null
+          id: string
+          lifecycle: string
+          link_externo: string | null
+          local: string | null
+          nome: string
+          nova_data: string | null
+          obs_encerramento: string | null
+          organizador: string | null
+          prioridade: number
+          status_id: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data: string
+          descricao?: string | null
+          enable?: boolean
+          horario?: string | null
+          id?: string
+          lifecycle?: string
+          link_externo?: string | null
+          local?: string | null
+          nome: string
+          nova_data?: string | null
+          obs_encerramento?: string | null
+          organizador?: string | null
+          prioridade?: number
+          status_id: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          enable?: boolean
+          horario?: string | null
+          id?: string
+          lifecycle?: string
+          link_externo?: string | null
+          local?: string | null
+          nome?: string
+          nova_data?: string | null
+          obs_encerramento?: string | null
+          organizador?: string | null
+          prioridade?: number
+          status_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "status_evento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marquee: {
         Row: {
           created_at: string
@@ -255,6 +323,33 @@ export type Database = {
           },
         ]
       }
+      status_evento: {
+        Row: {
+          created_at: string
+          id: string
+          lifecycle: string
+          nome: string
+          protegido: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lifecycle: string
+          nome: string
+          protegido?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lifecycle?: string
+          nome?: string
+          protegido?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tela: {
         Row: {
           created_at: string
@@ -284,7 +379,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      eventos_view: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          data: string | null
+          data_referencia: string | null
+          descricao: string | null
+          enable: boolean | null
+          enable_efetivo: boolean | null
+          expirado: boolean | null
+          horario: string | null
+          id: string | null
+          lifecycle: string | null
+          link_externo: string | null
+          local: string | null
+          nome: string | null
+          nova_data: string | null
+          obs_encerramento: string | null
+          organizador: string | null
+          prioridade: number | null
+          status_efetivo: string | null
+          status_id: string | null
+          status_lifecycle: string | null
+          status_nome: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "status_evento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       is_active_admin: { Args: Record<PropertyKey, never>; Returns: boolean }

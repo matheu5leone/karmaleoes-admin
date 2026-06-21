@@ -240,7 +240,8 @@ create index evento_prioridade_idx on public.evento (prioridade desc, data);
 -- Toda leitura de eventos (admin e futuro Hub) consome esta view.
 -- LACUNA: a data corrente/fuso de comparação é definida pelo time (APP_TIMEZONE).
 --         Aqui usa-se current_date; ajustar para (now() at time zone <tz>)::date se necessário.
-create or replace view public.eventos_view as
+-- security_invoker → a RLS do chamador (admin) aplica. Fuso America/Sao_Paulo.
+create or replace view public.eventos_view with (security_invoker = true) as
 select
   e.*,
   s.nome      as status_nome,
@@ -248,18 +249,18 @@ select
   -- data de referência: nova_data se status 'Adiado' e preenchida; senão data
   case when s.nome = 'Adiado' and e.nova_data is not null then e.nova_data else e.data end
     as data_referencia,
-  -- expirado: dia seguinte à data de referência em diante
-  (current_date > case when s.nome = 'Adiado' and e.nova_data is not null then e.nova_data else e.data end)
+  -- expirado: dia seguinte à data de referência em diante (fuso de São Paulo)
+  ((now() at time zone 'America/Sao_Paulo')::date > case when s.nome = 'Adiado' and e.nova_data is not null then e.nova_data else e.data end)
     as expirado,
   -- status_efetivo: 'Expirado' se expirado e lifecycle 'Em aberto'; senão status armazenado
   case
-    when (current_date > case when s.nome = 'Adiado' and e.nova_data is not null then e.nova_data else e.data end)
+    when ((now() at time zone 'America/Sao_Paulo')::date > case when s.nome = 'Adiado' and e.nova_data is not null then e.nova_data else e.data end)
          and e.lifecycle = 'Em aberto'
     then 'Expirado'
     else s.nome
   end as status_efetivo,
   -- enable_efetivo: enable armazenado E NÃO expirado (rege a visibilidade no Hub)
-  (e.enable and not (current_date > case when s.nome = 'Adiado' and e.nova_data is not null then e.nova_data else e.data end))
+  (e.enable and not ((now() at time zone 'America/Sao_Paulo')::date > case when s.nome = 'Adiado' and e.nova_data is not null then e.nova_data else e.data end))
     as enable_efetivo
 from public.evento e
 join public.status_evento s on s.id = e.status_id;
@@ -435,6 +436,9 @@ revoke select on public.marquee_tela from anon;
 revoke select on public.marquee_item from anon;
 revoke select on public.banner from anon;
 revoke select on public.banner_tela from anon;
+revoke select on public.status_evento from anon;
+revoke select on public.evento from anon;
+revoke select on public.eventos_view from anon;
 revoke execute on function public.is_active_admin() from public, anon;
 grant execute on function public.is_active_admin() to authenticated;
 revoke execute on function public.publicar_banner_tela(uuid) from public, anon;
