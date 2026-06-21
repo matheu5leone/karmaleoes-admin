@@ -138,6 +138,86 @@ export type Database = {
           },
         ]
       }
+      categoria_conteudo: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      conteudo: {
+        Row: {
+          categoria_id: string | null
+          created_at: string
+          data: string | null
+          descricao: string | null
+          destaque: boolean
+          id: string
+          link: string
+          ordem: number
+          plataforma: string | null
+          status: string
+          thumbnail: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          created_at?: string
+          data?: string | null
+          descricao?: string | null
+          destaque?: boolean
+          id?: string
+          link: string
+          ordem?: number
+          plataforma?: string | null
+          status?: string
+          thumbnail?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria_id?: string | null
+          created_at?: string
+          data?: string | null
+          descricao?: string | null
+          destaque?: boolean
+          id?: string
+          link?: string
+          ordem?: number
+          plataforma?: string | null
+          status?: string
+          thumbnail?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conteudo_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categoria_conteudo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evento: {
         Row: {
           categoria: string | null

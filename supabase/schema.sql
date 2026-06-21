@@ -439,6 +439,8 @@ revoke select on public.banner_tela from anon;
 revoke select on public.status_evento from anon;
 revoke select on public.evento from anon;
 revoke select on public.eventos_view from anon;
+revoke select on public.categoria_conteudo from anon;
+revoke select on public.conteudo from anon;
 revoke execute on function public.is_active_admin() from public, anon;
 grant execute on function public.is_active_admin() to authenticated;
 revoke execute on function public.publicar_banner_tela(uuid) from public, anon;
