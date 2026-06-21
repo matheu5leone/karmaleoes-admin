@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
+import { useToast } from "@/components/ui/toast";
 import { criarMarquee, excluirMarquee } from "./actions";
 
 export type MarqueeRow = {
@@ -19,6 +20,7 @@ export type MarqueeRow = {
 
 export function MarqueesManager({ marquees }: { marquees: MarqueeRow[] }) {
   const router = useRouter();
+  const toast = useToast();
   const [novo, setNovo] = useState(false);
   const [del, setDel] = useState<MarqueeRow | null>(null);
   const [pending, start] = useTransition();
@@ -76,7 +78,8 @@ export function MarqueesManager({ marquees }: { marquees: MarqueeRow[] }) {
             if (!del) return;
             const r = await excluirMarquee(del.id);
             setDel(null);
-            if (!r.ok) alert(r.error);
+            if (!r.ok) toast.error(r.error);
+            else toast.success("Marquee excluído.");
             router.refresh();
           })
         }

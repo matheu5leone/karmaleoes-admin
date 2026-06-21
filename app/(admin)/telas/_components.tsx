@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
+import { useToast } from "@/components/ui/toast";
 import {
   alternarStatusTela,
   criarTela,
@@ -31,6 +32,7 @@ function StatusBadge({ status }: { status: string }) {
 
 export function TelasManager({ telas }: { telas: Tela[] }) {
   const router = useRouter();
+  const toast = useToast();
   const [form, setForm] = useState<{ open: boolean; tela: Tela | null }>({
     open: false,
     tela: null,
@@ -124,7 +126,8 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
             if (!del) return;
             const r = await excluirTela(del.id);
             setDel(null);
-            if (!r.ok) alert(r.error);
+            if (!r.ok) toast.error(r.error);
+            else toast.success("Tela excluída.");
             router.refresh();
           })
         }
