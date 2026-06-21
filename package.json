@@ -29,7 +29,8 @@
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.6.0",
     "lucide-react": "^0.460.0",
-    "@radix-ui/react-slot": "^1.1.2"
+    "@radix-ui/react-slot": "^1.1.2",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
