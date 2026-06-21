@@ -159,6 +159,69 @@ export type Database = {
         }
         Relationships: []
       }
+      colaborador: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          instagram: string | null
+          linkedin: string | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      colecao: {
+        Row: {
+          cover_image: string | null
+          created_at: string
+          data_lancamento: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string
+          data_lancamento?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string
+          data_lancamento?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conteudo: {
         Row: {
           categoria_id: string | null
@@ -286,6 +349,51 @@ export type Database = {
           },
         ]
       }
+      link_plataforma: {
+        Row: {
+          colecao_id: string | null
+          created_at: string
+          id: string
+          musica_id: string | null
+          plataforma: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          colecao_id?: string | null
+          created_at?: string
+          id?: string
+          musica_id?: string | null
+          plataforma: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          colecao_id?: string | null
+          created_at?: string
+          id?: string
+          musica_id?: string | null
+          plataforma?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_plataforma_colecao_id_fkey"
+            columns: ["colecao_id"]
+            isOneToOne: false
+            referencedRelation: "colecao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "link_plataforma_musica_id_fkey"
+            columns: ["musica_id"]
+            isOneToOne: false
+            referencedRelation: "musica"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marquee: {
         Row: {
           created_at: string
@@ -402,6 +510,130 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      musica: {
+        Row: {
+          colecao_id: string | null
+          cover_image: string | null
+          created_at: string
+          data_lancamento: string | null
+          duracao: string | null
+          id: string
+          isrc: string | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          colecao_id?: string | null
+          cover_image?: string | null
+          created_at?: string
+          data_lancamento?: string | null
+          duracao?: string | null
+          id?: string
+          isrc?: string | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          colecao_id?: string | null
+          cover_image?: string | null
+          created_at?: string
+          data_lancamento?: string | null
+          duracao?: string | null
+          id?: string
+          isrc?: string | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "musica_colecao_id_fkey"
+            columns: ["colecao_id"]
+            isOneToOne: false
+            referencedRelation: "colecao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_colaborador: {
+        Row: {
+          colaborador_id: string
+          colecao_id: string | null
+          created_at: string
+          id: string
+          musica_id: string | null
+          role_id: string
+          updated_at: string
+        }
+        Insert: {
+          colaborador_id: string
+          colecao_id?: string | null
+          created_at?: string
+          id?: string
+          musica_id?: string | null
+          role_id: string
+          updated_at?: string
+        }
+        Update: {
+          colaborador_id?: string
+          colecao_id?: string | null
+          created_at?: string
+          id?: string
+          musica_id?: string | null
+          role_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_colaborador_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaborador"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_colaborador_colecao_id_fkey"
+            columns: ["colecao_id"]
+            isOneToOne: false
+            referencedRelation: "colecao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_colaborador_musica_id_fkey"
+            columns: ["musica_id"]
+            isOneToOne: false
+            referencedRelation: "musica"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_colaborador_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       status_evento: {
         Row: {

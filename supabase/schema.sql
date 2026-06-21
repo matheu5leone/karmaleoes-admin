@@ -317,7 +317,7 @@ create table public.musica (
   id              uuid primary key default gen_random_uuid(),
   nome            text not null,
   data_lancamento date,
-  duracao         interval,                    -- tempo da faixa
+  duracao         text,                        -- tempo da faixa (ex.: "3:45")
   isrc            text,                         -- código internacional de gravação
   cover_image     text,                        -- path/URL (bucket obras)
   colecao_id      uuid references public.colecao (id) on delete set null,
@@ -441,6 +441,12 @@ revoke select on public.evento from anon;
 revoke select on public.eventos_view from anon;
 revoke select on public.categoria_conteudo from anon;
 revoke select on public.conteudo from anon;
+revoke select on public.colecao from anon;
+revoke select on public.musica from anon;
+revoke select on public.colaborador from anon;
+revoke select on public.role from anon;
+revoke select on public.obra_colaborador from anon;
+revoke select on public.link_plataforma from anon;
 revoke execute on function public.is_active_admin() from public, anon;
 grant execute on function public.is_active_admin() to authenticated;
 revoke execute on function public.publicar_banner_tela(uuid) from public, anon;
