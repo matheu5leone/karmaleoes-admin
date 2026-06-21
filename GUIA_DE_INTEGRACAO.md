@@ -119,6 +119,26 @@ comportamento (ex.: `404`, redirect para a home, ou página "indisponível"). A 
 
 ---
 
+## Plano 06 — Obras & Colaborações
+
+**O que o Hub consome**
+
+| Entidade | Uso no Hub |
+|----------|-----------|
+| `musica` (`nome`, `data_lancamento`, `duracao`, `isrc`, `cover_image`, `colecao_id`) | Faixa individual. `cover_image` = URL pública (bucket `obras`). `colecao_id` (N:1, opcional). |
+| `colecao` (`nome`, `descricao`, `tipo` `album\|EP`, `cover_image`, `data_lancamento`) | Álbum/EP que agrupa músicas. |
+| `colaborador` (`nome`, `instagram`, `linkedin`, `descricao`) + `role` (`nome`) | Participantes e seus papéis. |
+| `obra_colaborador` (`musica_id` **XOR** `colecao_id`, `colaborador_id`, `role_id`) | Vínculo N:N: quem participou de cada obra e em qual papel. |
+| `link_plataforma` (`musica_id` **XOR** `colecao_id`, `plataforma`, `url`) | Links de streaming (Spotify, Deezer…) por música **ou** coleção. |
+
+**Regras de exibição**
+- **Sem controle de status no MVP**: toda obra cadastrada é visível.
+- **Ordenar por `data_lancamento`** (mais recente primeiro).
+- "Obra" é polimórfica: `obra_colaborador`/`link_plataforma` referenciam **música XOR coleção** (nunca ambos).
+- Links de plataforma abrem em **nova aba**; o Hub **não hospeda** áudio (só metadados + links).
+
+---
+
 ## Pendências de integração (consolidado)
 
 | # | Item | Responsável | Status |
