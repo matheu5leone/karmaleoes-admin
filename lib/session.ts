@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 import { invalidateSession, setSession } from "@/lib/redis";
+import { GATE_COOKIE_NAME } from "@/lib/auth-gate";
 
 /**
  * Sessão única (server). Após o login atingir AAL2 (2FA), geramos um `sessionId`,
@@ -25,5 +26,6 @@ export async function establishSession(userId: string): Promise<void> {
 export async function clearSession(userId: string | null): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(KARMA_SID);
+  cookieStore.delete(GATE_COOKIE_NAME);
   if (userId) await invalidateSession(userId);
 }

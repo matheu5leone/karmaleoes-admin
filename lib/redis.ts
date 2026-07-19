@@ -42,6 +42,18 @@ export async function getSession(userId: string): Promise<string | null> {
   return getRedis().get<string>(sessionKey(userId));
 }
 
+/**
+ * Lê a sessão ativa **e** renova o TTL de inatividade num único round-trip
+ * (Redis GETEX). Substitui o par `getSession` + `touchSession` no caminho
+ * quente do middleware (uma ida à rede em vez de duas).
+ */
+export async function touchAndGetSession(
+  userId: string,
+  ttlSeconds: number = SESSION_TTL_SECONDS,
+): Promise<string | null> {
+  return getRedis().getex<string>(sessionKey(userId), { ex: ttlSeconds });
+}
+
 /** Invalida a sessão do usuário (logout / desativação). */
 export async function invalidateSession(userId: string): Promise<void> {
   await getRedis().del(sessionKey(userId));
