@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   CalendarDays,
   Disc3,
@@ -11,6 +10,8 @@ import {
 } from "lucide-react";
 import { logout } from "@/app/(auth)/actions";
 import { ToastProvider } from "@/components/ui/toast";
+import { NavProgress } from "@/components/nav-progress";
+import { NavLink } from "@/components/nav-link";
 
 // Shell administrativo (Plano 00). Navegação placeholder — itens habilitados
 // conforme os módulos forem entregues. Tokens/estilo seguem DESIGN.md.
@@ -31,6 +32,7 @@ export default function AdminLayout({
 }) {
   return (
     <ToastProvider>
+    <NavProgress>
     <div className="flex min-h-screen">
       <aside className="hidden w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
         <div className="px-5 py-5">
@@ -41,14 +43,14 @@ export default function AdminLayout({
         </div>
         <nav className="flex flex-col gap-1 px-2">
           {NAV.map(({ href, label, icon: Icon }) => (
-            <Link
+            <NavLink
               key={href}
               href={href}
               className="flex h-9 items-center gap-2 rounded-md px-3 text-sm text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
             >
               <Icon className="size-[18px] text-muted-foreground" />
               {label}
-            </Link>
+            </NavLink>
           ))}
         </nav>
         <form action={logout} className="mt-auto p-2">
@@ -63,6 +65,7 @@ export default function AdminLayout({
       </aside>
       <main className="flex-1 px-6 py-8">{children}</main>
     </div>
+    </NavProgress>
     </ToastProvider>
   );
 }
