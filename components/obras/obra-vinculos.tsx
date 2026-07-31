@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import type { ObraTipo } from "@/lib/validation/obras";
+import { PLATAFORMAS, type ObraTipo } from "@/lib/validation/obras";
 import {
   adicionarLink,
   removerColaborador,
@@ -139,12 +139,18 @@ export function ObraVinculos({
           ))}
         </ul>
         <div className="flex flex-wrap items-end gap-2">
-          <Input
+          <Select
             value={plataforma}
             onChange={(e) => setPlataforma(e.target.value)}
-            placeholder="Spotify"
-            className="w-32"
-          />
+            className="w-40"
+          >
+            <option value="">Plataforma…</option>
+            {PLATAFORMAS.map((p) => (
+              <option key={p.nome} value={p.nome}>
+                {p.nome}
+              </option>
+            ))}
+          </Select>
           <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -154,7 +160,14 @@ export function ObraVinculos({
           <Button
             disabled={pending || !plataforma || !url}
             onClick={() =>
-              run(() => adicionarLink(tipo, obraId, { plataforma, url }), "Link adicionado.")
+              run(async () => {
+                const r = await adicionarLink(tipo, obraId, { plataforma, url });
+                if (r.ok) {
+                  setPlataforma("");
+                  setUrl("");
+                }
+                return r;
+              }, "Link adicionado.")
             }
           >
             Adicionar
