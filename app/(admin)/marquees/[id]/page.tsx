@@ -16,26 +16,31 @@ export default async function MarqueeDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: marquee } = await supabase
-    .from("marquee")
-    .select("id, nome, props_visuais")
-    .eq("id", id)
-    .single();
+  // Tudo em paralelo (o marquee inclusive) — o notFound é checado depois.
+  const [
+    { data: marquee },
+    { data: telas },
+    { data: assoc },
+    { data: itens },
+    { data: icons },
+  ] = await Promise.all([
+    supabase
+      .from("marquee")
+      .select("id, nome, props_visuais")
+      .eq("id", id)
+      .single(),
+    supabase.from("tela").select("id, nome, status").order("nome"),
+    supabase.from("marquee_tela").select("tela_id").eq("marquee_id", id),
+    supabase
+      .from("marquee_item")
+      .select(
+        "id, titulo, icon_id, icons(name, extension), tipo_nav, tela_destino_id, url_externa, ordem",
+      )
+      .eq("marquee_id", id)
+      .order("ordem", { ascending: true }),
+    supabase.from("icons").select("id, name, extension").order("name"),
+  ]);
   if (!marquee) notFound();
-
-  const [{ data: telas }, { data: assoc }, { data: itens }, { data: icons }] =
-    await Promise.all([
-      supabase.from("tela").select("id, nome, status").order("nome"),
-      supabase.from("marquee_tela").select("tela_id").eq("marquee_id", id),
-      supabase
-        .from("marquee_item")
-        .select(
-          "id, titulo, icon_id, icons(name, extension), tipo_nav, tela_destino_id, url_externa, ordem",
-        )
-        .eq("marquee_id", id)
-        .order("ordem", { ascending: true }),
-      supabase.from("icons").select("id, name, extension").order("name"),
-    ]);
 
   const itensMapped: EditorItem[] = (itens ?? []).map((it) => ({
     id: it.id,
