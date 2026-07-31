@@ -24,7 +24,7 @@ export async function criarMusica(
     .insert({
       nome: p.data.nome,
       data_lancamento: p.data.data_lancamento || null,
-      duracao: p.data.duracao || null,
+      duracao: p.data.duracao ?? null,
       isrc: p.data.isrc || null,
       cover_image: p.data.cover_image || null,
       colecao_id: p.data.colecao_id || null,
@@ -49,7 +49,7 @@ export async function editarMusica(
     .update({
       nome: p.data.nome,
       data_lancamento: p.data.data_lancamento || null,
-      duracao: p.data.duracao || null,
+      duracao: p.data.duracao ?? null,
       isrc: p.data.isrc || null,
       cover_image: p.data.cover_image || null,
       colecao_id: p.data.colecao_id || null,

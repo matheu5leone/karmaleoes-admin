@@ -25,7 +25,7 @@ export type MusicaRow = {
   id: string;
   nome: string;
   data_lancamento: string | null;
-  duracao: string | null;
+  duracao: number | null;
   isrc: string | null;
   cover_image: string | null;
   colecao_id: string | null;
@@ -39,6 +39,13 @@ export type ColecaoRow = {
   cover_image: string | null;
   data_lancamento: string | null;
 };
+
+/** Segundos → "m:ss" para exibir/editar a duração (persistida como integer). */
+function formatDuracao(totalSegundos: number): string {
+  const min = Math.floor(totalSegundos / 60);
+  const seg = totalSegundos % 60;
+  return `${min}:${String(seg).padStart(2, "0")}`;
+}
 
 export function ObrasManager({
   musicas,
@@ -235,7 +242,7 @@ function MusicaFormModal({
   const [v, setV] = useState({
     nome: m?.nome ?? "",
     data_lancamento: m?.data_lancamento ?? "",
-    duracao: m?.duracao ?? "",
+    duracao: m?.duracao != null ? formatDuracao(m.duracao) : "",
     isrc: m?.isrc ?? "",
     colecao_id: m?.colecao_id ?? "",
   });

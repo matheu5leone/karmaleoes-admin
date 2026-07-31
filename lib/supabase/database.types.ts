@@ -579,7 +579,7 @@ export type Database = {
           cover_image: string | null
           created_at: string
           data_lancamento: string | null
-          duracao: string | null
+          duracao: number | null
           id: string
           isrc: string | null
           nome: string
@@ -590,7 +590,7 @@ export type Database = {
           cover_image?: string | null
           created_at?: string
           data_lancamento?: string | null
-          duracao?: string | null
+          duracao?: number | null
           id?: string
           isrc?: string | null
           nome: string
@@ -601,7 +601,7 @@ export type Database = {
           cover_image?: string | null
           created_at?: string
           data_lancamento?: string | null
-          duracao?: string | null
+          duracao?: number | null
           id?: string
           isrc?: string | null
           nome?: string
