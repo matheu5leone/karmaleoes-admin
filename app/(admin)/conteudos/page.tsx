@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ConteudosManager, type CategoriaOpt, type ConteudoRow } from "./_components";
 
@@ -30,20 +29,12 @@ export default async function ConteudosPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Conteúdos</h1>
-          <p className="mb-6 mt-1 text-muted-foreground">
-            Curadoria de conteúdos externos. Só <code>publicado</code> aparece no
-            Hub.
-          </p>
-        </div>
-        <Link
-          href="/conteudos/categorias"
-          className="text-sm text-brand hover:underline"
-        >
-          Gerenciar categorias
-        </Link>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Conteúdos</h1>
+        <p className="mb-6 mt-1 text-muted-foreground">
+          Curadoria de conteúdos externos. Só <code>publicado</code> aparece no
+          Hub. Categorias são geridas no modal de conteúdo.
+        </p>
       </div>
       <ConteudosManager
         conteudos={lista}

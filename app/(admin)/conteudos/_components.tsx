@@ -12,6 +12,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/ui/toast";
 import { STATUS, TIPOS } from "@/lib/validation/conteudos";
 import { criarConteudo, editarConteudo, excluirConteudo } from "./actions";
+import { criarCategoria, excluirCategoria } from "./categorias/actions";
 
 export type CategoriaOpt = { id: string; nome: string };
 export type ConteudoRow = {
@@ -223,27 +224,22 @@ function ConteudoFormModal({
         <Field label="Thumbnail">
           <ImageUpload bucket="conteudos" value={thumbnail} onChange={setThumbnail} />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Tipo" htmlFor="ct-tipo">
-            <Select id="ct-tipo" value={v.tipo} onChange={(e) => set("tipo", e.target.value)}>
-              {TIPOS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Categoria" htmlFor="ct-cat">
-            <Select id="ct-cat" value={v.categoria_id} onChange={(e) => set("categoria_id", e.target.value)}>
-              <option value="">Sem categoria</option>
-              {categorias.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
+        <Field label="Tipo" htmlFor="ct-tipo">
+          <Select id="ct-tipo" value={v.tipo} onChange={(e) => set("tipo", e.target.value)}>
+            {TIPOS.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Categoria">
+          <CategoriaControl
+            categorias={categorias}
+            value={v.categoria_id}
+            onChange={(id) => set("categoria_id", id)}
+          />
+        </Field>
         <Field label="Link (externo)" htmlFor="ct-link">
           <Input id="ct-link" value={v.link} onChange={(e) => set("link", e.target.value)} placeholder="https://…" required />
         </Field>
@@ -297,6 +293,135 @@ function ConteudoFormModal({
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/**
+ * Seleção + CRUD de categorias de conteúdo dentro do modal (substitui a página
+ * /conteudos/categorias, removida). Criar auto-seleciona; excluir via ConfirmDialog.
+ */
+function CategoriaControl({
+  categorias,
+  value,
+  onChange,
+}: {
+  categorias: CategoriaOpt[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const router = useRouter();
+  const toast = useToast();
+  const [nova, setNova] = useState("");
+  const [gerenciar, setGerenciar] = useState(false);
+  const [del, setDel] = useState<CategoriaOpt | null>(null);
+  const [pending, start] = useTransition();
+
+  function criar() {
+    if (!nova.trim()) return;
+    start(async () => {
+      const r = await criarCategoria({ nome: nova });
+      if (!r.ok) return toast.error(r.error);
+      setNova("");
+      onChange(r.id);
+      toast.success("Categoria criada.");
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <Select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1"
+        >
+          <option value="">Sem categoria</option>
+          {categorias.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nome}
+            </option>
+          ))}
+        </Select>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setGerenciar((g) => !g)}
+        >
+          {gerenciar ? "Fechar" : "Gerenciar"}
+        </Button>
+      </div>
+
+      {gerenciar && (
+        <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3">
+          <div className="flex gap-2">
+            <Input
+              value={nova}
+              onChange={(e) => setNova(e.target.value)}
+              placeholder="Nova categoria"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  criar();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              disabled={pending || !nova.trim()}
+              onClick={criar}
+            >
+              Criar
+            </Button>
+          </div>
+          <ul className="divide-y divide-border text-sm">
+            {categorias.length === 0 && (
+              <li className="py-1 text-muted-foreground">Nenhuma categoria.</li>
+            )}
+            {categorias.map((c) => (
+              <li key={c.id} className="flex items-center justify-between py-1">
+                <span>{c.nome}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDel(c)}
+                >
+                  Excluir
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!del}
+        title="Excluir categoria"
+        description={
+          del ? `Remover "${del.nome}"? Conteúdos ficam sem categoria.` : ""
+        }
+        confirmLabel="Excluir"
+        pending={pending}
+        onCancel={() => setDel(null)}
+        onConfirm={() =>
+          start(async () => {
+            if (!del) return;
+            const alvo = del.id;
+            const r = await excluirCategoria(alvo);
+            setDel(null);
+            if (!r.ok) toast.error(r.error);
+            else {
+              toast.success("Categoria excluída.");
+              if (value === alvo) onChange("");
+            }
+            router.refresh();
+          })
+        }
+      />
     </div>
   );
 }

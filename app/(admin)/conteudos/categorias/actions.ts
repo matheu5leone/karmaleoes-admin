@@ -9,7 +9,7 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 
 export async function criarCategoria(
   input: CategoriaInput,
-): Promise<ActionResult> {
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const p = categoriaSchema.safeParse(input);
   if (!p.success) return { ok: false, error: p.error.issues[0].message };
   const supabase = await createClient();
@@ -25,9 +25,8 @@ export async function criarCategoria(
     };
   }
   await audit({ acao: "create", entidade: "categoria_conteudo", registroId: data.id });
-  revalidatePath("/conteudos/categorias");
   revalidatePath("/conteudos");
-  return { ok: true };
+  return { ok: true, id: data.id };
 }
 
 export async function editarCategoria(
