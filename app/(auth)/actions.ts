@@ -12,7 +12,8 @@ import {
 
 export type Step = "enroll" | "challenge";
 export type SignInResult =
-  | { ok: true; step: Step }
+  | { ok: true; step: "enroll" }
+  | { ok: true; step: "challenge"; factorId: string }
   | { ok: false; error: string };
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -46,7 +47,19 @@ export async function signIn(input: {
     return { ok: false, error: "Usuário inativo ou não autorizado." };
   }
 
-  return { ok: true, step: admin.two_factor_configured ? "challenge" : "enroll" };
+  if (!admin.two_factor_configured) {
+    return { ok: true, step: "enroll" };
+  }
+
+  // Busca o fator TOTP já aqui (antes de o usuário ler o código), para que o
+  // caminho crítico do 2FA seja só challenge+verify — reduz a chance de o código
+  // expirar (30s) em produção, onde cada chamada ao Supabase custa ~700ms + cold start.
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  const totp = factors?.totp?.[0];
+  if (!totp) {
+    return { ok: false, error: "Nenhum fator TOTP configurado." };
+  }
+  return { ok: true, step: "challenge", factorId: totp.id };
 }
 
 /** 1º acesso: inicia enrollment TOTP e devolve o QR + segredo. */
@@ -105,25 +118,30 @@ export async function verifyEnroll(
   return { ok: true };
 }
 
-/** Logins seguintes: valida o código TOTP do fator existente e abre sessão. */
-export async function challengeTotp(codigo: string): Promise<ActionResult> {
+/**
+ * Logins seguintes: valida o código TOTP e abre sessão. Recebe o `factorId`
+ * resolvido no `signIn` (fora do caminho crítico), então aqui só faz
+ * challenge+verify — o mínimo entre o usuário digitar o código e o Supabase
+ * validá-lo, reduzindo a expiração do código (30s) em produção.
+ */
+export async function challengeTotp(
+  factorId: string,
+  codigo: string,
+): Promise<ActionResult> {
   const parsed = codigoTotpSchema.safeParse({ codigo });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0].message };
   }
-
-  const supabase = await createClient();
-  const { data: factors, error: fErr } = await supabase.auth.mfa.listFactors();
-  const totp = factors?.totp?.[0];
-  if (fErr || !totp) {
-    return { ok: false, error: "Nenhum fator TOTP configurado." };
+  if (!factorId) {
+    return { ok: false, error: "Sessão de 2FA inválida. Entre novamente." };
   }
 
-  const ch = await supabase.auth.mfa.challenge({ factorId: totp.id });
+  const supabase = await createClient();
+  const ch = await supabase.auth.mfa.challenge({ factorId });
   if (ch.error) return { ok: false, error: ch.error.message };
 
   const v = await supabase.auth.mfa.verify({
-    factorId: totp.id,
+    factorId,
     challengeId: ch.data.id,
     code: parsed.data.codigo,
   });

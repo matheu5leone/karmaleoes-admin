@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [codigo, setCodigo] = useState("");
+  const [factorId, setFactorId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,14 +26,17 @@ export default function LoginPage() {
     setLoading(false);
     if (!r.ok) return setError(r.error);
     if (r.step === "enroll") router.push("/configurar-2fa");
-    else setStep("challenge");
+    else {
+      setFactorId(r.factorId);
+      setStep("challenge");
+    }
   }
 
   async function onChallenge(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const r = await challengeTotp(codigo);
+    const r = await challengeTotp(factorId, codigo);
     setLoading(false);
     if (!r.ok) return setError(r.error);
     router.push("/usuarios");
