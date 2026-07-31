@@ -3,7 +3,7 @@ import { z } from "zod";
 export const eventoSchema = z.object({
   nome: z.string().trim().min(1, "Informe o nome"),
   descricao: z.string().trim().optional().or(z.literal("")),
-  categoria: z.string().trim().optional().or(z.literal("")),
+  category_id: z.string().uuid("Categoria inválida").optional().or(z.literal("")),
   data: z.string().min(1, "Informe a data"),
   horario: z.string().optional().or(z.literal("")),
   local: z.string().trim().optional().or(z.literal("")),
@@ -30,6 +30,12 @@ export const statusEventoSchema = z.object({
   lifecycle: z.enum(["Em aberto", "Encerrado"]),
 });
 export type StatusEventoInput = z.infer<typeof statusEventoSchema>;
+
+export const categoriaEventoSchema = z.object({
+  name: z.string().trim().min(1, "Informe o nome"),
+  lifecycle: z.string().trim().optional().or(z.literal("")),
+});
+export type CategoriaEventoInput = z.infer<typeof categoriaEventoSchema>;
 
 /** Sucesso só na data de referência ou depois (RN-EVENTO-014). Datas ISO yyyy-mm-dd. */
 export function sucessoPermitido(dataReferencia: string, hoje: string): boolean {

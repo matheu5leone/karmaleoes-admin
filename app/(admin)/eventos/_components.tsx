@@ -18,6 +18,7 @@ import {
 } from "./actions";
 
 export type StatusOpt = { id: string; nome: string; lifecycle: string };
+export type CategoriaOpt = { id: string; name: string };
 export type EventoRow = {
   id: string;
   nome: string;
@@ -25,7 +26,8 @@ export type EventoRow = {
   horario: string | null;
   local: string | null;
   organizador: string | null;
-  categoria: string | null;
+  category_id: string | null;
+  category_name: string | null;
   descricao: string | null;
   link_externo: string | null;
   lifecycle: string;
@@ -56,9 +58,11 @@ function StatusBadge({ s }: { s: string }) {
 export function EventosManager({
   eventos,
   statuses,
+  categorias,
 }: {
   eventos: EventoRow[];
   statuses: StatusOpt[];
+  categorias: CategoriaOpt[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -151,6 +155,7 @@ export function EventosManager({
         <EventoFormModal
           evento={form.evento}
           statuses={form.evento ? statuses.filter((s) => s.lifecycle === form.evento!.lifecycle) : abertos}
+          categorias={categorias}
           onClose={() => setForm({ open: false, evento: null })}
           onSaved={() => {
             setForm({ open: false, evento: null });
@@ -196,11 +201,13 @@ export function EventosManager({
 function EventoFormModal({
   evento,
   statuses,
+  categorias,
   onClose,
   onSaved,
 }: {
   evento: EventoRow | null;
   statuses: StatusOpt[];
+  categorias: CategoriaOpt[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -208,7 +215,7 @@ function EventoFormModal({
   const [v, setV] = useState({
     nome: evento?.nome ?? "",
     descricao: evento?.descricao ?? "",
-    categoria: evento?.categoria ?? "",
+    category_id: evento?.category_id ?? "",
     data: evento?.data ?? "",
     horario: evento?.horario?.slice(0, 5) ?? "",
     local: evento?.local ?? "",
@@ -284,7 +291,14 @@ function EventoFormModal({
         )}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Categoria" htmlFor="ev-cat">
-            <Input id="ev-cat" value={v.categoria} onChange={(e) => set("categoria", e.target.value)} />
+            <Select id="ev-cat" value={v.category_id} onChange={(e) => set("category_id", e.target.value)}>
+              <option value="">Sem categoria</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
           </Field>
           <Field label="Local" htmlFor="ev-local">
             <Input id="ev-local" value={v.local} onChange={(e) => set("local", e.target.value)} />

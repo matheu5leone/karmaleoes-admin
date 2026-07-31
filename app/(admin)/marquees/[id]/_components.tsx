@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
-import { ImageUpload } from "@/components/image-upload";
 import {
   associarTelas,
   editarMarquee,
@@ -16,15 +15,22 @@ import {
 } from "../actions";
 
 export type EditorTela = { id: string; nome: string; status: string };
+export type IconOpt = { id: string; name: string; extension: string };
 export type EditorItem = {
   id: string;
   titulo: string;
-  imagem: string | null;
+  icon_id: string | null;
+  icon: { name: string; extension: string } | null;
   tipo_nav: string;
   tela_destino_id: string | null;
   url_externa: string | null;
   ordem: number;
 };
+
+/** Caminho do asset do ícone: /icons/<name>.<extension> (arquivos em /public/icons). */
+function iconSrc(icon: { name: string; extension: string }): string {
+  return `/icons/${icon.name}.${icon.extension}`;
+}
 
 export function MarqueeEditor({
   marqueeId,
@@ -34,6 +40,7 @@ export function MarqueeEditor({
   telas,
   telaIdsAssociadas,
   itens,
+  icons,
 }: {
   marqueeId: string;
   nomeInicial: string;
@@ -42,6 +49,7 @@ export function MarqueeEditor({
   telas: EditorTela[];
   telaIdsAssociadas: string[];
   itens: EditorItem[];
+  icons: IconOpt[];
 }) {
   const router = useRouter();
   return (
@@ -59,7 +67,12 @@ export function MarqueeEditor({
         associadas={telaIdsAssociadas}
         onSaved={() => router.refresh()}
       />
-      <ItensSection marqueeId={marqueeId} telas={telas} itens={itens} />
+      <ItensSection
+        marqueeId={marqueeId}
+        telas={telas}
+        itens={itens}
+        icons={icons}
+      />
     </div>
   );
 }
@@ -208,10 +221,12 @@ function ItensSection({
   marqueeId,
   telas,
   itens,
+  icons,
 }: {
   marqueeId: string;
   telas: EditorTela[];
   itens: EditorItem[];
+  icons: IconOpt[];
 }) {
   const router = useRouter();
   const [modal, setModal] = useState<{ open: boolean; item: EditorItem | null }>({
@@ -235,12 +250,12 @@ function ItensSection({
         <ul className="divide-y divide-border">
           {itens.map((it) => (
             <li key={it.id} className="flex items-center gap-3 py-3">
-              {it.imagem ? (
+              {it.icon ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={it.imagem}
+                  src={iconSrc(it.icon)}
                   alt=""
-                  className="size-10 rounded-md border border-border object-cover"
+                  className="size-10 rounded-md border border-border object-contain"
                 />
               ) : (
                 <div className="size-10 rounded-md border border-dashed border-border" />
@@ -274,6 +289,7 @@ function ItensSection({
         <ItemModal
           marqueeId={marqueeId}
           telas={telas}
+          icons={icons}
           item={modal.item}
           onClose={() => setModal({ open: false, item: null })}
           onSaved={() => {
@@ -306,18 +322,20 @@ function ItensSection({
 function ItemModal({
   marqueeId,
   telas,
+  icons,
   item,
   onClose,
   onSaved,
 }: {
   marqueeId: string;
   telas: EditorTela[];
+  icons: IconOpt[];
   item: EditorItem | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [titulo, setTitulo] = useState(item?.titulo ?? "");
-  const [imagem, setImagem] = useState<string | null>(item?.imagem ?? null);
+  const [iconId, setIconId] = useState<string>(item?.icon_id ?? "");
   const [tipoNav, setTipoNav] = useState(item?.tipo_nav ?? "interno");
   const [telaId, setTelaId] = useState(item?.tela_destino_id ?? "");
   const [url, setUrl] = useState(item?.url_externa ?? "");
@@ -333,7 +351,7 @@ function ItemModal({
     start(async () => {
       const r = await salvarItem(marqueeId, item?.id ?? null, {
         titulo,
-        imagem,
+        icon_id: iconId || null,
         tipo_nav: tipoNav as "interno" | "externo",
         tela_destino_id: tipoNav === "interno" ? telaId || null : null,
         url_externa: tipoNav === "externo" ? url || null : null,
@@ -362,8 +380,19 @@ function ItemModal({
         <Field label="Título" htmlFor="i-titulo">
           <Input id="i-titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
         </Field>
-        <Field label="Imagem">
-          <ImageUpload bucket="marquees" value={imagem} onChange={setImagem} />
+        <Field label="Ícone" htmlFor="i-icon">
+          <Select
+            id="i-icon"
+            value={iconId}
+            onChange={(e) => setIconId(e.target.value)}
+          >
+            <option value="">Sem ícone</option>
+            {icons.map((ic) => (
+              <option key={ic.id} value={ic.id}>
+                {ic.name}.{ic.extension}
+              </option>
+            ))}
+          </Select>
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Navegação" htmlFor="i-tipo">

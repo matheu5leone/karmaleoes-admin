@@ -6,9 +6,16 @@ export default async function StatusEventoPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("status_evento")
-    .select("id, nome, lifecycle, protegido")
-    .order("lifecycle", { ascending: true })
+    .select("id, nome, protegido, status_lifecycles(lifecycle)")
     .order("nome", { ascending: true });
+
+  const statuses: StatusRow[] = (data ?? []).map((s) => ({
+    id: s.id,
+    nome: s.nome,
+    protegido: s.protegido,
+    lifecycle:
+      (s.status_lifecycles as { lifecycle: string } | null)?.lifecycle ?? "",
+  }));
 
   return (
     <div>
@@ -22,7 +29,7 @@ export default async function StatusEventoPage() {
         Status dinâmicos por lifecycle. &quot;Adiado&quot; é protegido;
         &quot;Expirado&quot; é reservado (calculado, não cadastrável).
       </p>
-      <StatusManager statuses={(data ?? []) as StatusRow[]} />
+      <StatusManager statuses={statuses} />
     </div>
   );
 }

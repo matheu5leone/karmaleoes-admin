@@ -16,9 +16,15 @@ export async function criarStatus(
   const p = statusEventoSchema.safeParse(input);
   if (!p.success) return { ok: false, error: p.error.issues[0].message };
   const supabase = await createClient();
+  const { data: lc } = await supabase
+    .from("status_lifecycles")
+    .select("id")
+    .eq("lifecycle", p.data.lifecycle)
+    .single();
+  if (!lc) return { ok: false, error: "Lifecycle inválido." };
   const { data, error } = await supabase
     .from("status_evento")
-    .insert({ nome: p.data.nome, lifecycle: p.data.lifecycle })
+    .insert({ nome: p.data.nome, lifecycle_id: lc.id })
     .select("id")
     .single();
   if (error) {
@@ -49,9 +55,15 @@ export async function editarStatus(
     return { ok: false, error: "Status protegido não pode ser editado." };
   }
 
+  const { data: lc } = await supabase
+    .from("status_lifecycles")
+    .select("id")
+    .eq("lifecycle", p.data.lifecycle)
+    .single();
+  if (!lc) return { ok: false, error: "Lifecycle inválido." };
   const { error } = await supabase
     .from("status_evento")
-    .update({ nome: p.data.nome, lifecycle: p.data.lifecycle })
+    .update({ nome: p.data.nome, lifecycle_id: lc.id })
     .eq("id", id);
   if (error) {
     return {

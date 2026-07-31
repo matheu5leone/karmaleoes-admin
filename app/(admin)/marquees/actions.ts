@@ -129,7 +129,7 @@ export async function salvarItem(
   const row = {
     marquee_id: marqueeId,
     titulo: p.data.titulo,
-    imagem: p.data.imagem || null,
+    icon_id: p.data.icon_id || null,
     tipo_nav: p.data.tipo_nav,
     tela_destino_id:
       p.data.tipo_nav === "interno" ? p.data.tela_destino_id! : null,

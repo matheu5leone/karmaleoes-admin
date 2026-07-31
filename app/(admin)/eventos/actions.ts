@@ -14,13 +14,13 @@ import {
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-type StatusInfo = { nome: string; lifecycle: string };
+type StatusRow = { nome: string; status_lifecycles: { lifecycle: string } | null };
 
 function montarRow(input: EventoInput) {
   return {
     nome: input.nome,
     descricao: input.descricao || null,
-    categoria: input.categoria || null,
+    category_id: input.category_id || null,
     data: input.data,
     horario: input.horario || null,
     local: input.local || null,
@@ -41,10 +41,10 @@ export async function criarEvento(
 
   const { data: status } = await supabase
     .from("status_evento")
-    .select("nome, lifecycle")
+    .select("nome, status_lifecycles(lifecycle)")
     .eq("id", p.data.status_id)
-    .single<StatusInfo>();
-  if (!status || status.lifecycle !== "Em aberto") {
+    .single<StatusRow>();
+  if (!status || status.status_lifecycles?.lifecycle !== "Em aberto") {
     return { ok: false, error: "Evento é criado com status 'Em aberto'." };
   }
   if (status.nome === "Adiado" && !p.data.nova_data) {
@@ -77,10 +77,14 @@ export async function editarEvento(
     .single();
   const { data: status } = await supabase
     .from("status_evento")
-    .select("nome, lifecycle")
+    .select("nome, status_lifecycles(lifecycle)")
     .eq("id", p.data.status_id)
-    .single<StatusInfo>();
-  if (!evento || !status || status.lifecycle !== evento.lifecycle) {
+    .single<StatusRow>();
+  if (
+    !evento ||
+    !status ||
+    status.status_lifecycles?.lifecycle !== evento.lifecycle
+  ) {
     return { ok: false, error: "Status deve pertencer ao lifecycle atual." };
   }
   if (status.nome === "Adiado" && !p.data.nova_data) {
@@ -126,10 +130,10 @@ export async function encerrarEvento(
 
   const { data: status } = await supabase
     .from("status_evento")
-    .select("nome, lifecycle")
+    .select("nome, status_lifecycles(lifecycle)")
     .eq("id", p.data.status_id)
-    .single<StatusInfo>();
-  if (!status || status.lifecycle !== "Encerrado") {
+    .single<StatusRow>();
+  if (!status || status.status_lifecycles?.lifecycle !== "Encerrado") {
     return { ok: false, error: "Selecione um status de encerramento." };
   }
 

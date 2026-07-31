@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { MarqueesManager, type MarqueeRow } from "./_components";
 
@@ -23,10 +24,20 @@ export default async function MarqueesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Marquees</h1>
-      <p className="mb-6 mt-1 text-muted-foreground">
-        Componentes navegáveis reutilizáveis, associáveis a várias telas.
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Marquees</h1>
+          <p className="mb-6 mt-1 text-muted-foreground">
+            Componentes navegáveis reutilizáveis, associáveis a várias telas.
+          </p>
+        </div>
+        <Link
+          href="/marquees/icones"
+          className="shrink-0 text-sm text-brand hover:underline"
+        >
+          Ícones
+        </Link>
+      </div>
       <MarqueesManager marquees={marquees} />
     </div>
   );

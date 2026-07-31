@@ -159,6 +159,30 @@ export type Database = {
         }
         Relationships: []
       }
+      category: {
+        Row: {
+          created_at: string
+          id: string
+          lifecycle: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lifecycle?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lifecycle?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       colaborador: {
         Row: {
           created_at: string
@@ -283,7 +307,7 @@ export type Database = {
       }
       evento: {
         Row: {
-          categoria: string | null
+          category_id: string | null
           created_at: string
           data: string
           descricao: string | null
@@ -302,7 +326,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          categoria?: string | null
+          category_id?: string | null
           created_at?: string
           data: string
           descricao?: string | null
@@ -321,7 +345,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          categoria?: string | null
+          category_id?: string | null
           created_at?: string
           data?: string
           descricao?: string | null
@@ -341,6 +365,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "evento_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "evento_status_id_fkey"
             columns: ["status_id"]
             isOneToOne: false
@@ -348,6 +379,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      icons: {
+        Row: {
+          created_at: string
+          extension: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          extension: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          extension?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       link_plataforma: {
         Row: {
@@ -421,8 +476,8 @@ export type Database = {
       marquee_item: {
         Row: {
           created_at: string
+          icon_id: string | null
           id: string
-          imagem: string | null
           marquee_id: string
           ordem: number
           tela_destino_id: string | null
@@ -433,8 +488,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          icon_id?: string | null
           id?: string
-          imagem?: string | null
           marquee_id: string
           ordem?: number
           tela_destino_id?: string | null
@@ -445,8 +500,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          icon_id?: string | null
           id?: string
-          imagem?: string | null
           marquee_id?: string
           ordem?: number
           tela_destino_id?: string | null
@@ -456,6 +511,13 @@ export type Database = {
           url_externa?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "marquee_item_icon_id_fkey"
+            columns: ["icon_id"]
+            isOneToOne: false
+            referencedRelation: "icons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marquee_item_marquee_id_fkey"
             columns: ["marquee_id"]
@@ -639,7 +701,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          lifecycle: string
+          lifecycle_id: string
           nome: string
           protegido: boolean
           updated_at: string
@@ -647,7 +709,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          lifecycle: string
+          lifecycle_id: string
           nome: string
           protegido?: boolean
           updated_at?: string
@@ -655,10 +717,39 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          lifecycle?: string
+          lifecycle_id?: string
           nome?: string
           protegido?: boolean
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_evento_lifecycle_id_fkey"
+            columns: ["lifecycle_id"]
+            isOneToOne: false
+            referencedRelation: "status_lifecycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_lifecycles: {
+        Row: {
+          created_at: string
+          id: string
+          lifecycle: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lifecycle: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lifecycle?: string
+          name?: string
         }
         Relationships: []
       }
@@ -693,7 +784,8 @@ export type Database = {
     Views: {
       eventos_view: {
         Row: {
-          categoria: string | null
+          category_id: string | null
+          category_name: string | null
           created_at: string | null
           data: string | null
           data_referencia: string | null
@@ -723,6 +815,13 @@ export type Database = {
             columns: ["status_id"]
             isOneToOne: false
             referencedRelation: "status_evento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evento_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "category"
             referencedColumns: ["id"]
           },
         ]
