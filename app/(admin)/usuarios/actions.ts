@@ -80,6 +80,17 @@ export async function alternarStatus(
   if (user?.id === id && !ativar) {
     return { ok: false, error: "Você não pode desativar a si mesmo." };
   }
+  if (!ativar) {
+    const { data: primeiro } = await supabase
+      .from("admin_user")
+      .select("id")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .single();
+    if (primeiro?.id === id) {
+      return { ok: false, error: "O administrador raiz não pode ser desativado." };
+    }
+  }
 
   const { error } = await supabase
     .from("admin_user")

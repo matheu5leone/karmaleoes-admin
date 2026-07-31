@@ -81,6 +81,15 @@ export function EventosManager({
     { key: "nome", header: "Nome" },
     { key: "data", header: "Data" },
     {
+      key: "lifecycle",
+      header: "Lifecycle",
+      render: (e) => (
+        <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          {e.lifecycle}
+        </span>
+      ),
+    },
+    {
       key: "status_efetivo",
       header: "Status",
       render: (e) => <StatusBadge s={e.status_efetivo} />,

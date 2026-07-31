@@ -85,7 +85,13 @@ export function NovoUsuario() {
   );
 }
 
-export function UsuariosTable({ usuarios }: { usuarios: Usuario[] }) {
+export function UsuariosTable({
+  usuarios,
+  protectedIds = [],
+}: {
+  usuarios: Usuario[];
+  protectedIds?: string[];
+}) {
   return (
     <div className="overflow-hidden rounded-lg border border-border">
       <table className="w-full text-sm">
@@ -100,7 +106,11 @@ export function UsuariosTable({ usuarios }: { usuarios: Usuario[] }) {
         </thead>
         <tbody>
           {usuarios.map((u) => (
-            <LinhaUsuario key={u.id} usuario={u} />
+            <LinhaUsuario
+              key={u.id}
+              usuario={u}
+              protegido={protectedIds.includes(u.id)}
+            />
           ))}
         </tbody>
       </table>
@@ -108,7 +118,13 @@ export function UsuariosTable({ usuarios }: { usuarios: Usuario[] }) {
   );
 }
 
-function LinhaUsuario({ usuario }: { usuario: Usuario }) {
+function LinhaUsuario({
+  usuario,
+  protegido,
+}: {
+  usuario: Usuario;
+  protegido: boolean;
+}) {
   const router = useRouter();
   const [telefone, setTelefone] = useState(usuario.telefone ?? "");
   const [pending, start] = useTransition();
@@ -170,15 +186,19 @@ function LinhaUsuario({ usuario }: { usuario: Usuario }) {
         </span>
       </td>
       <td className="px-4 py-3">
-        <Button
-          type="button"
-          variant={ativo ? "ghost" : "secondary"}
-          size="sm"
-          onClick={toggle}
-          disabled={pending}
-        >
-          {ativo ? "Desativar" : "Ativar"}
-        </Button>
+        {protegido ? (
+          <span className="text-xs text-muted-foreground">protegido</span>
+        ) : (
+          <Button
+            type="button"
+            variant={ativo ? "ghost" : "secondary"}
+            size="sm"
+            onClick={toggle}
+            disabled={pending}
+          >
+            {ativo ? "Desativar" : "Ativar"}
+          </Button>
+        )}
       </td>
     </tr>
   );
