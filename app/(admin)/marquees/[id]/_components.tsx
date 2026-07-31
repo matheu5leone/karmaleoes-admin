@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
+import { ColorPicker } from "@/components/form/color-picker";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import {
   associarTelas,
@@ -130,17 +131,17 @@ function DadosSection({
 
   return (
     <Secao titulo="Dados">
-      <form onSubmit={submit} className="grid gap-3 sm:grid-cols-3 sm:items-end">
+      <form onSubmit={submit} className="space-y-3">
         <Field label="Nome" htmlFor="e-nome">
           <Input id="e-nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
         </Field>
         <Field label="Cor de fundo" htmlFor="e-cf">
-          <Input id="e-cf" value={cf} onChange={(e) => setCf(e.target.value)} placeholder="#F3F4F6" />
+          <ColorPicker id="e-cf" value={cf} onChange={setCf} />
         </Field>
         <Field label="Cor do texto" htmlFor="e-ct">
-          <Input id="e-ct" value={ct} onChange={(e) => setCt(e.target.value)} placeholder="#18191F" />
+          <ColorPicker id="e-ct" value={ct} onChange={setCt} />
         </Field>
-        <div className="sm:col-span-3">
+        <div>
           <Button type="submit" disabled={pending}>
             {pending ? "Salvando…" : "Salvar dados"}
           </Button>

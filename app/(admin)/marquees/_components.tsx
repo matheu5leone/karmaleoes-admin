@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
+import { ColorPicker } from "@/components/form/color-picker";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { useToast } from "@/components/ui/toast";
@@ -132,22 +133,12 @@ function NovoMarqueeModal({
             required
           />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
           <Field label="Cor de fundo" htmlFor="m-cf">
-            <Input
-              id="m-cf"
-              value={cf}
-              onChange={(e) => setCf(e.target.value)}
-              placeholder="#F3F4F6"
-            />
+            <ColorPicker id="m-cf" value={cf} onChange={setCf} />
           </Field>
           <Field label="Cor do texto" htmlFor="m-ct" error={error}>
-            <Input
-              id="m-ct"
-              value={ct}
-              onChange={(e) => setCt(e.target.value)}
-              placeholder="#18191F"
-            />
+            <ColorPicker id="m-ct" value={ct} onChange={setCt} />
           </Field>
         </div>
         <div className="flex justify-end gap-2">
