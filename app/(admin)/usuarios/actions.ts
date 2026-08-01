@@ -20,6 +20,16 @@ export async function criarUsuario(input: {
     return { ok: false, error: parsed.error.issues[0].message };
   }
 
+  // Criar admin exige a service-role key. Sem ela, o construtor do Supabase
+  // lançaria "supabaseKey is required" (500); aqui vira um erro tratado.
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return {
+      ok: false,
+      error:
+        "Configuração ausente no servidor (SUPABASE_SERVICE_ROLE_KEY). Contate o administrador do sistema.",
+    };
+  }
+
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.createUser({
     email: parsed.data.email,
