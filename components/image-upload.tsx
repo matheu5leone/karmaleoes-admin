@@ -36,21 +36,32 @@ export function ImageUpload({ bucket, value, onChange }: ImageUploadProps) {
   return (
     <div className="space-y-2">
       {value ? (
-        <div className="relative inline-block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={value}
-            alt="Pré-visualização"
-            className="h-24 w-24 rounded-md border border-border object-cover"
-          />
-          <button
+        <div className="flex items-start gap-3">
+          <div className="relative inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={value}
+              alt="Pré-visualização"
+              className="h-24 w-24 rounded-md border border-border object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              className="absolute -right-2 -top-2 rounded-full border border-border bg-card p-1 text-muted-foreground hover:text-foreground"
+              aria-label="Remover imagem"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+          <Button
             type="button"
-            onClick={() => onChange(null)}
-            className="absolute -right-2 -top-2 rounded-full border border-border bg-card p-1 text-muted-foreground hover:text-foreground"
-            aria-label="Remover imagem"
+            variant="secondary"
+            size="sm"
+            disabled={pending}
+            onClick={() => inputRef.current?.click()}
           >
-            <X className="size-3.5" />
-          </button>
+            {pending ? "Enviando…" : "Trocar imagem"}
+          </Button>
         </div>
       ) : (
         <button
