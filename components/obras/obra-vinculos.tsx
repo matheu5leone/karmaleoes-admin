@@ -154,8 +154,8 @@ export function ObraVinculos({
           <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://…"
-            className="w-48"
+            placeholder="applemusic.com/… (https:// opcional)"
+            className="w-56"
           />
           <Button
             disabled={pending || !plataforma || !url}

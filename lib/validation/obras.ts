@@ -74,7 +74,12 @@ function hostCombina(url: string, dominios: readonly string[]): boolean {
 export const linkSchema = z
   .object({
     plataforma: z.string().trim().min(1, "Selecione a plataforma"),
-    url: z.string().trim().url("URL inválida (inclua https://)"),
+    // Aceita só o domínio: prepende https:// se o usuário não digitar o protocolo.
+    url: z.preprocess((v) => {
+      if (typeof v !== "string") return v;
+      const t = v.trim();
+      return t && !/^https?:\/\//i.test(t) ? `https://${t}` : t;
+    }, z.string().url("URL inválida (ex.: applemusic.com/album/...)")),
   })
   .superRefine((val, ctx) => {
     const plat = PLATAFORMAS.find((p) => p.nome === val.plataforma);
