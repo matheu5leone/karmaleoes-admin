@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/form/field";
+import { criarUsuarioSchema } from "@/lib/validation/usuarios";
 import { alternarStatus, criarUsuario, editarTelefone } from "./actions";
 
 export type Usuario = {
@@ -15,22 +16,55 @@ export type Usuario = {
   two_factor_configured: boolean;
 };
 
+type NovoUsuarioErros = {
+  email?: string;
+  senhaTemporaria?: string;
+  form?: string;
+};
+
+/** Borda/anel vermelho para o campo inválido. */
+const INVALID_INPUT =
+  "border-destructive hover:border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30";
+
 export function NovoUsuario() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [erros, setErros] = useState<NovoUsuarioErros>({});
   const [ok, setOk] = useState(false);
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setOk(false);
+    setErros({});
+
+    // Validação no cliente → feedback imediato no campo certo.
+    const parsed = criarUsuarioSchema.safeParse({
+      email,
+      telefone,
+      senhaTemporaria: senha,
+    });
+    if (!parsed.success) {
+      const fe: NovoUsuarioErros = {};
+      for (const issue of parsed.error.issues) {
+        const campo = issue.path[0];
+        if (campo === "email") fe.email ??= issue.message;
+        else if (campo === "senhaTemporaria") fe.senhaTemporaria ??= issue.message;
+        else fe.form ??= issue.message;
+      }
+      return setErros(fe);
+    }
+
     start(async () => {
       const r = await criarUsuario({ email, telefone, senhaTemporaria: senha });
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) {
+        // Erro de e-mail duplicado → no campo de e-mail; demais (config etc.) → geral.
+        return setErros(
+          /mail/i.test(r.error) ? { email: r.error } : { form: r.error },
+        );
+      }
       setEmail("");
       setTelefone("");
       setSenha("");
@@ -42,41 +76,54 @@ export function NovoUsuario() {
   return (
     <form
       onSubmit={submit}
-      className="mb-8 grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-4 sm:items-end"
+      noValidate
+      className="mb-8 grid gap-x-3 gap-y-2 rounded-lg border border-border bg-card p-4 sm:grid-cols-4 sm:items-start"
     >
-      <div className="space-y-1.5">
-        <Label htmlFor="novo-email">E-mail</Label>
+      <Field label="E-mail *" htmlFor="novo-email" error={erros.email}>
         <Input
           id="novo-email"
           type="email"
+          autoComplete="off"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
+          aria-invalid={!!erros.email}
+          className={erros.email ? INVALID_INPUT : undefined}
         />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="novo-tel">Telefone (opcional)</Label>
+      </Field>
+      <Field label="Telefone (opcional)" htmlFor="novo-tel">
         <Input
           id="novo-tel"
           value={telefone}
           onChange={(e) => setTelefone(e.target.value)}
         />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="novo-senha">Senha temporária</Label>
+      </Field>
+      <Field
+        label="Senha temporária *"
+        htmlFor="novo-senha"
+        error={erros.senhaTemporaria}
+      >
         <Input
           id="novo-senha"
           type="text"
+          autoComplete="off"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
-          required
+          placeholder="Mínimo de 8 caracteres"
+          aria-invalid={!!erros.senhaTemporaria}
+          className={erros.senhaTemporaria ? INVALID_INPUT : undefined}
         />
+      </Field>
+      <div className="space-y-1.5">
+        <span aria-hidden className="hidden text-sm sm:block">
+          &nbsp;
+        </span>
+        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+          {pending ? "Cadastrando..." : "Cadastrar"}
+        </Button>
       </div>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Cadastrando..." : "Cadastrar"}
-      </Button>
-      {error && (
-        <p className="text-sm text-destructive sm:col-span-4">{error}</p>
+
+      {erros.form && (
+        <p className="text-sm text-destructive sm:col-span-4">{erros.form}</p>
       )}
       {ok && (
         <p className="text-sm text-success sm:col-span-4">Usuário cadastrado.</p>
