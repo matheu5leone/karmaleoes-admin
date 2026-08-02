@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
 import { ColorPicker } from "@/components/form/color-picker";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
+import { MarqueePreview } from "@/components/marquees/marquee-preview";
 import {
   associarTelas,
   editarMarquee,
@@ -53,13 +54,28 @@ export function MarqueeEditor({
   icons: IconOpt[];
 }) {
   const router = useRouter();
+  // Cores/nome vivem aqui para o preview refletir a edição em tempo real.
+  const [nome, setNome] = useState(nomeInicial);
+  const [cf, setCf] = useState(corFundoInicial);
+  const [ct, setCt] = useState(corTextoInicial);
+
   return (
     <div className="mt-6 space-y-10">
+      <MarqueePreview
+        nome={nome}
+        corFundo={cf}
+        corTexto={ct}
+        itens={itens}
+        onCorTexto={setCt}
+      />
       <DadosSection
         marqueeId={marqueeId}
-        nomeInicial={nomeInicial}
-        corFundoInicial={corFundoInicial}
-        corTextoInicial={corTextoInicial}
+        nome={nome}
+        setNome={setNome}
+        cf={cf}
+        setCf={setCf}
+        ct={ct}
+        setCt={setCt}
         onSaved={() => router.refresh()}
       />
       <TelasSection
@@ -95,20 +111,23 @@ function Secao({
 
 function DadosSection({
   marqueeId,
-  nomeInicial,
-  corFundoInicial,
-  corTextoInicial,
+  nome,
+  setNome,
+  cf,
+  setCf,
+  ct,
+  setCt,
   onSaved,
 }: {
   marqueeId: string;
-  nomeInicial: string;
-  corFundoInicial: string;
-  corTextoInicial: string;
+  nome: string;
+  setNome: (v: string) => void;
+  cf: string;
+  setCf: (v: string) => void;
+  ct: string;
+  setCt: (v: string) => void;
   onSaved: () => void;
 }) {
-  const [nome, setNome] = useState(nomeInicial);
-  const [cf, setCf] = useState(corFundoInicial);
-  const [ct, setCt] = useState(corTextoInicial);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [pending, start] = useTransition();
