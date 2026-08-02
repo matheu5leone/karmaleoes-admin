@@ -10,7 +10,9 @@ import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { ImageUpload } from "@/components/image-upload";
+import { ObraBoardModal } from "@/components/obras/obra-board";
 import { useToast } from "@/components/ui/toast";
+import { formatDuracao } from "@/lib/utils";
 import {
   criarColecao,
   criarMusica,
@@ -40,11 +42,18 @@ export type ColecaoRow = {
   data_lancamento: string | null;
 };
 
-/** Segundos → "m:ss" para exibir/editar a duração (persistida como integer). */
-function formatDuracao(totalSegundos: number): string {
-  const min = Math.floor(totalSegundos / 60);
-  const seg = totalSegundos % 60;
-  return `${min}:${String(seg).padStart(2, "0")}`;
+/** Nome da obra como link — abre o board de vínculos. */
+function NomeLink({ nome, onClick }: { nome: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Ver vínculos"
+      className="text-left font-medium text-brand underline-offset-2 hover:underline"
+    >
+      {nome}
+    </button>
+  );
 }
 
 export function ObrasManager({
@@ -78,10 +87,15 @@ function MusicasSection({
     m: null,
   });
   const [del, setDel] = useState<MusicaRow | null>(null);
+  const [board, setBoard] = useState<MusicaRow | null>(null);
   const [pending, start] = useTransition();
 
   const columns: Column<MusicaRow>[] = [
-    { key: "nome", header: "Música" },
+    {
+      key: "nome",
+      header: "Música",
+      render: (m) => <NomeLink nome={m.nome} onClick={() => setBoard(m)} />,
+    },
     { key: "data_lancamento", header: "Lançamento", render: (m) => m.data_lancamento ?? "—" },
     { key: "colecaoNome", header: "Coleção", render: (m) => m.colecaoNome ?? "—" },
     {
@@ -145,6 +159,13 @@ function MusicasSection({
           })
         }
       />
+      {board && (
+        <ObraBoardModal
+          tipo="musica"
+          obraId={board.id}
+          onClose={() => setBoard(null)}
+        />
+      )}
     </section>
   );
 }
@@ -157,10 +178,15 @@ function ColecoesSection({ colecoes }: { colecoes: ColecaoRow[] }) {
     c: null,
   });
   const [del, setDel] = useState<ColecaoRow | null>(null);
+  const [board, setBoard] = useState<ColecaoRow | null>(null);
   const [pending, start] = useTransition();
 
   const columns: Column<ColecaoRow>[] = [
-    { key: "nome", header: "Coleção" },
+    {
+      key: "nome",
+      header: "Coleção",
+      render: (c) => <NomeLink nome={c.nome} onClick={() => setBoard(c)} />,
+    },
     { key: "tipo", header: "Tipo" },
     { key: "data_lancamento", header: "Lançamento", render: (c) => c.data_lancamento ?? "—" },
     {
@@ -223,6 +249,13 @@ function ColecoesSection({ colecoes }: { colecoes: ColecaoRow[] }) {
           })
         }
       />
+      {board && (
+        <ObraBoardModal
+          tipo="colecao"
+          obraId={board.id}
+          onClose={() => setBoard(null)}
+        />
+      )}
     </section>
   );
 }

@@ -109,3 +109,26 @@
   }
 }
 
+/* Entrada dos nós do board de vínculos ([components/obras/obra-board.tsx]):
+   surgem em direção à sua posição, escalonados pelo animation-delay. */
+@keyframes board-node {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.animate-board-node {
+  animation: board-node 260ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-board-node {
+    animation: none;
+  }
+}
+
