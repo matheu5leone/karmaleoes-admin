@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
+import {
+  MarqueeHoverPreview,
+  type MarqueeResumo,
+} from "@/components/marquees/marquee-hover-preview";
 import { useToast } from "@/components/ui/toast";
 import {
   alternarStatusTela,
@@ -15,7 +19,13 @@ import {
   excluirTela,
 } from "./actions";
 
-export type Tela = { id: string; nome: string; rota: string; status: string };
+export type Tela = {
+  id: string;
+  nome: string;
+  rota: string;
+  status: string;
+  marquees: MarqueeResumo[];
+};
 
 function StatusBadge({ status }: { status: string }) {
   const ok = status === "habilitada";
@@ -46,6 +56,20 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
       key: "rota",
       header: "Rota",
       render: (t) => <span className="font-mono text-xs">{t.rota}</span>,
+    },
+    {
+      key: "marquees",
+      header: "Marquees",
+      render: (t) =>
+        t.marquees.length === 0 ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {t.marquees.map((m) => (
+              <MarqueeHoverPreview key={m.id} marquee={m} />
+            ))}
+          </div>
+        ),
     },
     {
       key: "status",

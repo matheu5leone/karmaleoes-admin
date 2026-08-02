@@ -17,6 +17,92 @@ const FUNDO_PADRAO = "#F3F4F6";
 const TEXTO_PADRAO = "#18191F";
 
 /**
+ * A faixa do marquee em si — reutilizada pelo preview do editor e pelo
+ * hover da listagem de telas.
+ */
+export function MarqueeFaixa({
+  corFundo,
+  corTexto,
+  itens,
+  compacto = false,
+  vazioLabel = "Nenhum item.",
+}: {
+  corFundo: string;
+  corTexto: string;
+  itens: PreviewItem[];
+  compacto?: boolean;
+  vazioLabel?: string;
+}) {
+  const fundo = corFundo?.trim() || FUNDO_PADRAO;
+  const texto = corTexto?.trim() || TEXTO_PADRAO;
+
+  return (
+    <div
+      className={cn("rounded-lg px-1", compacto ? "py-2" : "py-3")}
+      style={{ backgroundColor: fundo }}
+    >
+      {itens.length === 0 ? (
+        <p
+          className={cn(
+            "px-3 py-1 text-center opacity-70",
+            compacto ? "text-xs" : "text-sm",
+          )}
+          style={{ color: texto }}
+        >
+          {vazioLabel}
+        </p>
+      ) : (
+        <ul
+          className={cn(
+            "flex overflow-x-auto px-3 [scrollbar-width:thin]",
+            compacto ? "gap-4" : "gap-5",
+          )}
+          style={{
+            maskImage:
+              "linear-gradient(to right, transparent, black 14px, black calc(100% - 14px), transparent)",
+            WebkitMaskImage:
+              "linear-gradient(to right, transparent, black 14px, black calc(100% - 14px), transparent)",
+          }}
+        >
+          {itens.map((it) => (
+            <li
+              key={it.id}
+              className="flex shrink-0 flex-col items-center gap-1.5"
+              style={{ color: texto }}
+            >
+              {it.icon ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`/icons/${it.icon.name}.${it.icon.extension}`}
+                  alt=""
+                  className={cn("object-contain", compacto ? "size-6" : "size-7")}
+                />
+              ) : (
+                <span
+                  className={cn(
+                    "rounded-full border border-current opacity-30",
+                    compacto ? "size-6" : "size-7",
+                  )}
+                  aria-hidden
+                />
+              )}
+              <span
+                className={cn(
+                  "max-w-[92px] truncate font-medium",
+                  compacto ? "text-[11px]" : "text-xs",
+                )}
+              >
+                {it.titulo}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
  * Pré-visualização do marquee montado: mostra a faixa como ela aparecerá na
  * tela do Hub, reagindo ao vivo às cores e aos itens, com medidor de contraste.
  * O Hub ainda não existe — este preview serve como referência visual.
@@ -111,54 +197,12 @@ export function MarqueePreview({
 
         {/* A faixa do marquee */}
         <div className="p-3">
-          <div
-            className="rounded-lg px-1 py-3 transition-colors"
-            style={{ backgroundColor: fundo }}
-          >
-            {itens.length === 0 ? (
-              <p
-                className="px-3 py-1 text-center text-sm opacity-70"
-                style={{ color: texto }}
-              >
-                Adicione itens para vê-los aqui.
-              </p>
-            ) : (
-              <ul
-                className="flex gap-5 overflow-x-auto px-3 [scrollbar-width:thin]"
-                style={{
-                  maskImage:
-                    "linear-gradient(to right, transparent, black 14px, black calc(100% - 14px), transparent)",
-                  WebkitMaskImage:
-                    "linear-gradient(to right, transparent, black 14px, black calc(100% - 14px), transparent)",
-                }}
-              >
-                {itens.map((it) => (
-                  <li
-                    key={it.id}
-                    className="flex shrink-0 flex-col items-center gap-1.5"
-                    style={{ color: texto }}
-                  >
-                    {it.icon ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`/icons/${it.icon.name}.${it.icon.extension}`}
-                        alt=""
-                        className="size-7 object-contain"
-                      />
-                    ) : (
-                      <span
-                        className="size-7 rounded-full border border-current opacity-30"
-                        aria-hidden
-                      />
-                    )}
-                    <span className="max-w-[92px] truncate text-xs font-medium">
-                      {it.titulo}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <MarqueeFaixa
+            corFundo={fundo}
+            corTexto={texto}
+            itens={itens}
+            vazioLabel="Adicione itens para vê-los aqui."
+          />
 
           {/* Conteúdo fake da página, só para dar contexto à faixa */}
           <div className="space-y-2 px-1 pb-1 pt-4" aria-hidden>
