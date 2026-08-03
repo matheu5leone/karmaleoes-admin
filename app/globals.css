@@ -38,6 +38,41 @@
   --radius: 0.375rem;
 }
 
+/* Dark mode — DESIGN.md §4: escala invertida (fundo 220 20% 12%, tinta 220 14% 92%),
+   com `--brand` e semânticos em luminosidade maior para manterem contraste. */
+.dark {
+  --background: 220 20% 12%;
+  --foreground: 220 14% 92%;
+  --card: 220 18% 16%;
+  --card-foreground: 220 14% 92%;
+  --popover: 220 18% 16%;
+  --popover-foreground: 220 14% 92%;
+
+  --primary: 220 14% 92%;
+  --primary-foreground: 220 20% 14%;
+
+  --secondary: 220 16% 22%;
+  --secondary-foreground: 220 14% 90%;
+  --muted: 220 16% 20%;
+  --muted-foreground: 220 10% 62%;
+  --accent: 220 16% 22%;
+  --accent-foreground: 220 14% 90%;
+
+  --brand: 25 70% 62%;
+  --brand-foreground: 220 20% 12%;
+  --brand-subtle: 25 30% 20%;
+
+  --destructive: 0 70% 66%;
+  --destructive-foreground: 220 20% 12%;
+  --success: 145 50% 52%;
+  --warning: 35 80% 58%;
+  --info: 215 65% 66%;
+
+  --border: 220 14% 24%;
+  --input: 220 14% 30%;
+  --ring: 25 70% 62%;
+}
+
 @layer base {
   * {
     border-color: hsl(var(--border));

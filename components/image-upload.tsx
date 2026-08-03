@@ -68,7 +68,7 @@ export function ImageUpload({ bucket, value, onChange }: ImageUploadProps) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={pending}
-          className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-gray-400 bg-gray-50 text-xs text-muted-foreground transition-colors hover:border-brand hover:bg-brand-subtle disabled:opacity-50"
+          className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-input bg-muted/40 text-xs text-muted-foreground transition-colors hover:border-brand hover:bg-brand-subtle disabled:opacity-50"
         >
           <ImagePlus className="size-5" />
           {pending ? "Enviando…" : "Imagem"}

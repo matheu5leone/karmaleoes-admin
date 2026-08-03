@@ -26,6 +26,14 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" className={`${serif.variable} ${mono.variable}`}>
+      <head>
+        {/* Aplica o tema ANTES da pintura para não piscar claro ao carregar. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('karma-tema')||'sistema';var d=t==='escuro'||(t==='sistema'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d)}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="font-serif antialiased">{children}</body>
     </html>
   );

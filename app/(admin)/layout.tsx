@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   Disc3,
+  History,
   Image as ImageIcon,
   LayoutGrid,
   LogOut,
@@ -9,9 +10,11 @@ import {
   Users,
 } from "lucide-react";
 import { logout } from "@/app/(auth)/actions";
+import { isRootAdmin } from "@/lib/root-admin";
 import { ToastProvider } from "@/components/ui/toast";
 import { NavProgress } from "@/components/nav-progress";
 import { NavLink } from "@/components/nav-link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Shell administrativo (Plano 00). Navegação placeholder — itens habilitados
 // conforme os módulos forem entregues. Tokens/estilo seguem DESIGN.md.
@@ -25,11 +28,16 @@ const NAV = [
   { href: "/obras", label: "Obras", icon: Disc3 },
 ];
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Histórico é exclusivo do administrador raiz (RLS em audit_log, migration 0015).
+  const nav = (await isRootAdmin())
+    ? [...NAV, { href: "/historico", label: "Histórico", icon: History }]
+    : NAV;
+
   return (
     <ToastProvider>
     <NavProgress>
@@ -42,7 +50,7 @@ export default function AdminLayout({
           <p className="text-lg font-semibold tracking-tight">Admin</p>
         </div>
         <nav className="flex flex-col gap-1 px-2">
-          {NAV.map(({ href, label, icon: Icon }) => (
+          {nav.map(({ href, label, icon: Icon }) => (
             <NavLink
               key={href}
               href={href}
@@ -53,7 +61,10 @@ export default function AdminLayout({
             </NavLink>
           ))}
         </nav>
-        <form action={logout} className="mt-auto p-2">
+        <div className="mt-auto px-2 pt-2">
+          <ThemeToggle />
+        </div>
+        <form action={logout} className="p-2">
           <button
             type="submit"
             className="flex h-9 w-full items-center gap-2 rounded-md px-3 text-sm text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"

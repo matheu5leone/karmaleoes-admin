@@ -2,6 +2,8 @@ import type { Config } from "tailwindcss";
 
 // Mapeamento dos tokens definidos em DESIGN.md (§5). As CSS vars vivem em app/globals.css.
 const config: Config = {
+  // Alternância manual de tema (o padrão "media" ignoraria o seletor do usuário).
+  darkMode: "class",
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",

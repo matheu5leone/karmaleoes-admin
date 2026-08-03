@@ -620,7 +620,7 @@ function NoAdicionar({
       onClick={onClick}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
-      className="animate-board-node absolute z-10 flex w-[160px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-400 bg-gray-50 p-2 text-xs text-muted-foreground transition-colors hover:border-brand hover:bg-brand-subtle hover:text-foreground"
+      className="animate-board-node absolute z-10 flex w-[160px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1.5 rounded-lg border border-dashed border-input bg-muted/40 p-2 text-xs text-muted-foreground transition-colors hover:border-brand hover:bg-brand-subtle hover:text-foreground"
       style={{ left: pct(pos.x, VW), top: pct(pos.y, VH) }}
     >
       <Plus className="size-4" />
