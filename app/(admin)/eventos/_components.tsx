@@ -8,7 +8,9 @@ import { Select } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
+import { EventosKanban } from "@/components/eventos/eventos-kanban";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import {
   editarEvento,
   encerrarEvento,
@@ -72,6 +74,7 @@ export function EventosManager({
   });
   const [encerrar, setEncerrar] = useState<EventoRow | null>(null);
   const [del, setDel] = useState<EventoRow | null>(null);
+  const [vista, setVista] = useState<"tabela" | "kanban">("tabela");
   const [pending, start] = useTransition();
 
   const abertos = statuses.filter((s) => s.lifecycle === "Em aberto");
@@ -101,7 +104,7 @@ export function EventosManager({
         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
           <span
             className={`inline-block size-2 rounded-full ${
-              e.enable_efetivo ? "bg-success" : "bg-gray-400"
+              e.enable_efetivo ? "bg-success" : "bg-muted-foreground/40"
             }`}
           />
           {e.enable_efetivo ? "visível" : "oculto"}
@@ -146,19 +149,52 @@ export function EventosManager({
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div
+          role="group"
+          aria-label="Modo de visualização"
+          className="flex rounded-md border border-border p-0.5"
+        >
+          {(["tabela", "kanban"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setVista(v)}
+              aria-pressed={vista === v}
+              className={cn(
+                "rounded px-3 py-1 text-xs font-medium capitalize transition-colors",
+                vista === v
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
         <Button onClick={() => setForm({ open: true, evento: null })}>
           Novo evento
         </Button>
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={eventos}
-        getFilterText={(e) => `${e.nome} ${e.status_efetivo}`}
-        filterPlaceholder="Filtrar eventos…"
-        empty="Nenhum evento cadastrado."
-      />
+      {vista === "tabela" ? (
+        <DataTable
+          columns={columns}
+          rows={eventos}
+          getFilterText={(e) => `${e.nome} ${e.status_efetivo}`}
+          filterPlaceholder="Filtrar eventos…"
+          empty="Nenhum evento cadastrado."
+        />
+      ) : (
+        <EventosKanban
+          eventos={eventos}
+          onEditar={(e) => setForm({ open: true, evento: e })}
+          onEncerrar={(e) => setEncerrar(e)}
+          onBloqueado={() =>
+            toast.error("Não é possível reabrir um evento encerrado.")
+          }
+        />
+      )}
 
       {form.open && (
         <EventoFormModal
