@@ -17,6 +17,7 @@ const PROTECTED_PREFIXES = [
   "/eventos",
   "/conteudos",
   "/obras",
+  "/historico",
 ];
 const KARMA_SID = "karma_sid";
 
