@@ -4,9 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { enrollTotp, verifyEnroll } from "../actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { OtpInput } from "@/components/form/otp-input";
+import { Loader2 } from "lucide-react";
 
 export default function ConfigurarDoisFatoresPage() {
   const router = useRouter();
@@ -26,16 +25,25 @@ export default function ConfigurarDoisFatoresPage() {
     });
   }, []);
 
-  async function onVerify(e: React.FormEvent) {
-    e.preventDefault();
-    if (!factorId) return;
+  /** Dispara assim que os 6 dígitos são preenchidos — sem precisar de Enter. */
+  async function verificar(code: string) {
+    if (!factorId || loading) return;
     setLoading(true);
     setError(null);
-    const r = await verifyEnroll(factorId, codigo);
+    const r = await verifyEnroll(factorId, code);
     setLoading(false);
-    if (!r.ok) return setError(r.error);
+    if (!r.ok) {
+      // O código TOTP expira: limpa para o usuário digitar o próximo.
+      setCodigo("");
+      return setError(r.error);
+    }
     router.push("/usuarios");
     router.refresh();
+  }
+
+  function onVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (codigo.length === 6) void verificar(codigo);
   }
 
   return (
@@ -87,22 +95,24 @@ export default function ConfigurarDoisFatoresPage() {
                 </span>
               </p>
             )}
-            <div className="space-y-1.5">
-              <Label htmlFor="codigo">Código TOTP</Label>
-              <Input
-                id="codigo"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
-                required
-              />
+            <OtpInput
+              id="codigo"
+              value={codigo}
+              onChange={setCodigo}
+              onComplete={verificar}
+              disabled={loading}
+              invalid={!!error}
+            />
+            <div className="min-h-[1.25rem] text-center text-sm" aria-live="polite">
+              {loading ? (
+                <span className="inline-flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Validando…
+                </span>
+              ) : error ? (
+                <span className="text-destructive">{error}</span>
+              ) : null}
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Validando..." : "Ativar 2FA"}
-            </Button>
           </form>
         )}
       </div>
