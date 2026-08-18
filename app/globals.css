@@ -9,63 +9,61 @@
    ========================================================================== */
 :root {
   /* metais / superfícies */
-  --background: 40 42% 88%;        /* pergaminho — fundo da página */
-  --foreground: 28 30% 16%;        /* sable: tinta ferro-galha, não preto */
-  --card: 42 50% 93%;              /* argent — folha sobre a mesa */
-  --card-foreground: 28 30% 16%;
-  --popover: 42 50% 93%;
-  --popover-foreground: 28 30% 16%;
+  --background: 40 44% 90%;        /* pergaminho — fundo da página */
+  --foreground: 28 34% 11%;        /* sable: tinta ferro-galha, não preto */
+  --card: 42 54% 96%;              /* argent — folha sobre a mesa */
+  --card-foreground: 28 34% 11%;
+  --popover: 42 54% 96%;
+  --popover-foreground: 28 34% 11%;
 
-  --primary: 28 30% 16%;
+  --primary: 28 34% 11%;
   --primary-foreground: 42 50% 95%;
 
   --secondary: 40 32% 82%;
   --secondary-foreground: 28 30% 18%;
   --muted: 40 30% 84%;
-  --muted-foreground: 32 20% 36%;  /* tinta desbotada */
+  --muted-foreground: 32 24% 30%;  /* tinta desbotada */
   --accent: 40 34% 82%;
   --accent-foreground: 28 30% 18%;
 
   /* or (ouro) — a marca. Karmaleões: o metal do brasão. */
-  --brand: 38 66% 30%;             /* ouro velho, para texto/links */
+  --brand: 38 68% 28%;             /* ouro velho, para texto/links */
   --brand-foreground: 28 30% 14%;  /* carga de cor sobre metal */
   --brand-fill: 42 72% 54%;        /* folha de ouro, para preenchimentos */
   --brand-subtle: 42 55% 86%;
 
   /* tincturas semânticas */
-  --destructive: 2 62% 42%;        /* gules */
+  --destructive: 2 64% 40%;        /* gules */
   --destructive-foreground: 42 50% 95%;
-  --success: 140 38% 30%;          /* vert */
-  --warning: 26 70% 35%;           /* tenné */
-  --info: 212 48% 38%;             /* azure */
+  --success: 140 40% 27%;          /* vert */
+  --warning: 26 72% 32%;           /* tenné */
+  --info: 212 50% 35%;             /* azure */
   --purpure: 300 28% 34%;
 
   /* contornos */
   --border: 36 25% 72%;
   --input: 36 28% 66%;
-  --ring: 38 66% 30%;
+  --ring: 38 68% 28%;
 
   --radius: 0.125rem;              /* 2px — heráldica é angular */
-
-  --paper-opacity: 0.32;
 }
 
 /* Scriptorium noturno — couro e tinta à luz de vela; ouro mais luminoso. */
 .dark {
   --background: 28 18% 11%;
-  --foreground: 40 30% 88%;
+  --foreground: 40 32% 92%;
   --card: 28 16% 15%;
-  --card-foreground: 40 30% 88%;
+  --card-foreground: 40 32% 92%;
   --popover: 28 16% 15%;
-  --popover-foreground: 40 30% 88%;
+  --popover-foreground: 40 32% 92%;
 
-  --primary: 40 30% 88%;
+  --primary: 40 32% 92%;
   --primary-foreground: 28 20% 12%;
 
   --secondary: 30 14% 22%;
   --secondary-foreground: 40 26% 86%;
   --muted: 30 14% 20%;
-  --muted-foreground: 36 14% 62%;
+  --muted-foreground: 36 16% 70%;
   --accent: 30 14% 22%;
   --accent-foreground: 40 26% 86%;
 
@@ -76,16 +74,14 @@
 
   --destructive: 2 72% 70%;
   --destructive-foreground: 28 30% 10%;
-  --success: 140 40% 55%;
-  --warning: 30 70% 60%;
-  --info: 210 55% 66%;
+  --success: 140 42% 58%;
+  --warning: 30 72% 63%;
+  --info: 210 58% 70%;
   --purpure: 300 35% 68%;
 
   --border: 32 14% 32%;
   --input: 32 14% 38%;
   --ring: 42 75% 62%;
-
-  --paper-opacity: 0.16;
 }
 
 @layer base {
@@ -94,22 +90,20 @@
   }
   body {
     background-color: hsl(var(--background));
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
+    background-blend-mode: multiply;
     color: hsl(var(--foreground));
     font-feature-settings: "tnum" 0;
+    /* EB Garamond tem haste fina: um pouco mais de peso melhora a leitura. */
+    font-weight: 450;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
   }
-  /* Grão de pergaminho — ruído SVG inline, sem custo de rede. */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: var(--paper-opacity);
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
-  }
-  .dark body::after {
-    mix-blend-mode: overlay;
+  /* Grão de pergaminho ATRÁS do conteúdo: mesclado com a cor de fundo do body,
+     nunca sobre o texto. Sobre as letras, o ruído esfarelava as hastes finas do
+     Garamond e derrubava o contraste (11.4 -> 8.6 medido). */
+  .dark body {
+    background-blend-mode: soft-light;
   }
   /* Títulos com a serifa de display (Cormorant). */
   h1,
