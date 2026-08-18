@@ -8,6 +8,7 @@ import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { useToast } from "@/components/ui/toast";
+import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import {
   alternarStatusTela,
   criarTela,
@@ -18,15 +19,10 @@ import {
 export type Tela = { id: string; nome: string; rota: string; status: string };
 
 function StatusBadge({ status }: { status: string }) {
-  const ok = status === "habilitada";
   return (
-    <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-        ok ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-      }`}
-    >
+    <ShieldBadge tinctura={status === "habilitada" ? "vert" : "argent"} escudo>
       {status}
-    </span>
+    </ShieldBadge>
   );
 }
 

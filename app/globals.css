@@ -2,75 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Tokens — DESIGN.md §4 (identidade minimalista serifada, fundo cinza claro) */
+/* =============================================================================
+   Tokens — DESIGN.md: heraldic craftsmanship sobre pergaminho.
+   Escala neutra quente (pergaminho, hue ~38–42) + tincturas heráldicas.
+   Regra da tinctura (Llwyd, 1568): metal não vai sobre metal, nem cor sobre cor.
+   ========================================================================== */
 :root {
-  --background: 220 14% 96%;
-  --foreground: 220 20% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 20% 12%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 20% 12%;
+  /* metais / superfícies */
+  --background: 40 42% 88%;        /* pergaminho — fundo da página */
+  --foreground: 28 30% 16%;        /* sable: tinta ferro-galha, não preto */
+  --card: 42 50% 93%;              /* argent — folha sobre a mesa */
+  --card-foreground: 28 30% 16%;
+  --popover: 42 50% 93%;
+  --popover-foreground: 28 30% 16%;
 
-  --primary: 220 20% 14%;
-  --primary-foreground: 220 14% 98%;
+  --primary: 28 30% 16%;
+  --primary-foreground: 42 50% 95%;
 
-  --secondary: 220 14% 92%;
-  --secondary-foreground: 220 20% 18%;
-  --muted: 220 14% 93%;
-  --muted-foreground: 220 9% 46%;
-  --accent: 220 14% 92%;
-  --accent-foreground: 220 20% 18%;
+  --secondary: 40 32% 82%;
+  --secondary-foreground: 28 30% 18%;
+  --muted: 40 30% 84%;
+  --muted-foreground: 32 20% 36%;  /* tinta desbotada */
+  --accent: 40 34% 82%;
+  --accent-foreground: 28 30% 18%;
 
-  --brand: 25 55% 42%;
-  --brand-foreground: 0 0% 100%;
-  --brand-subtle: 25 50% 94%;
+  /* or (ouro) — a marca. Karmaleões: o metal do brasão. */
+  --brand: 38 66% 30%;             /* ouro velho, para texto/links */
+  --brand-foreground: 28 30% 14%;  /* carga de cor sobre metal */
+  --brand-fill: 42 72% 54%;        /* folha de ouro, para preenchimentos */
+  --brand-subtle: 42 55% 86%;
 
-  --destructive: 0 62% 45%;
-  --destructive-foreground: 0 0% 100%;
-  --success: 145 45% 34%;
-  --warning: 35 75% 42%;
-  --info: 215 50% 44%;
+  /* tincturas semânticas */
+  --destructive: 2 62% 42%;        /* gules */
+  --destructive-foreground: 42 50% 95%;
+  --success: 140 38% 30%;          /* vert */
+  --warning: 26 70% 35%;           /* tenné */
+  --info: 212 48% 38%;             /* azure */
+  --purpure: 300 28% 34%;
 
-  --border: 220 13% 88%;
-  --input: 220 13% 85%;
-  --ring: 25 55% 42%;
+  /* contornos */
+  --border: 36 25% 72%;
+  --input: 36 28% 66%;
+  --ring: 38 66% 30%;
 
-  --radius: 0.375rem;
+  --radius: 0.125rem;              /* 2px — heráldica é angular */
+
+  --paper-opacity: 0.32;
 }
 
-/* Dark mode — DESIGN.md §4: escala invertida (fundo 220 20% 12%, tinta 220 14% 92%),
-   com `--brand` e semânticos em luminosidade maior para manterem contraste. */
+/* Scriptorium noturno — couro e tinta à luz de vela; ouro mais luminoso. */
 .dark {
-  --background: 220 20% 12%;
-  --foreground: 220 14% 92%;
-  --card: 220 18% 16%;
-  --card-foreground: 220 14% 92%;
-  --popover: 220 18% 16%;
-  --popover-foreground: 220 14% 92%;
+  --background: 28 18% 11%;
+  --foreground: 40 30% 88%;
+  --card: 28 16% 15%;
+  --card-foreground: 40 30% 88%;
+  --popover: 28 16% 15%;
+  --popover-foreground: 40 30% 88%;
 
-  --primary: 220 14% 92%;
-  --primary-foreground: 220 20% 14%;
+  --primary: 40 30% 88%;
+  --primary-foreground: 28 20% 12%;
 
-  --secondary: 220 16% 22%;
-  --secondary-foreground: 220 14% 90%;
-  --muted: 220 16% 20%;
-  --muted-foreground: 220 10% 62%;
-  --accent: 220 16% 22%;
-  --accent-foreground: 220 14% 90%;
+  --secondary: 30 14% 22%;
+  --secondary-foreground: 40 26% 86%;
+  --muted: 30 14% 20%;
+  --muted-foreground: 36 14% 62%;
+  --accent: 30 14% 22%;
+  --accent-foreground: 40 26% 86%;
 
-  --brand: 25 70% 62%;
-  --brand-foreground: 220 20% 12%;
-  --brand-subtle: 25 30% 20%;
+  --brand: 42 75% 62%;
+  --brand-foreground: 28 30% 10%;
+  --brand-fill: 42 78% 60%;
+  --brand-subtle: 38 30% 20%;
 
-  --destructive: 0 70% 66%;
-  --destructive-foreground: 220 20% 12%;
-  --success: 145 50% 52%;
-  --warning: 35 80% 58%;
-  --info: 215 65% 66%;
+  --destructive: 2 72% 70%;
+  --destructive-foreground: 28 30% 10%;
+  --success: 140 40% 55%;
+  --warning: 30 70% 60%;
+  --info: 210 55% 66%;
+  --purpure: 300 35% 68%;
 
-  --border: 220 14% 24%;
-  --input: 220 14% 30%;
-  --ring: 25 70% 62%;
+  --border: 32 14% 32%;
+  --input: 32 14% 38%;
+  --ring: 42 75% 62%;
+
+  --paper-opacity: 0.16;
 }
 
 @layer base {
@@ -82,15 +97,36 @@
     color: hsl(var(--foreground));
     font-feature-settings: "tnum" 0;
   }
-  /* Foco sempre visível (DESIGN.md §6) */
+  /* Grão de pergaminho — ruído SVG inline, sem custo de rede. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: var(--paper-opacity);
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+  }
+  .dark body::after {
+    mix-blend-mode: overlay;
+  }
+  /* Títulos com a serifa de display (Cormorant). */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), var(--font-serif), Georgia, serif;
+    letter-spacing: 0.01em;
+  }
+  /* Foco sempre visível */
   :where(button, a, [role="button"], input, select, textarea):focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
   }
 }
 
-/* Skeleton loading (shimmer estilo feed do Facebook/Instagram) */
 @layer components {
+  /* Skeleton loading (shimmer) */
   .skeleton {
     position: relative;
     overflow: hidden;
@@ -109,6 +145,90 @@
     );
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
   }
+
+  /* ---- Hachura de Petra Sancta (1638) ----------------------------------
+     Sistema histórico para representar tincturas em gravura monocromática.
+     Aqui codifica o status por PADRÃO, não só por cor — o badge deixa de
+     depender de cor sozinha (WCAG 1.4.1). Usa currentColor da tinctura. */
+  .hatch {
+    position: relative;
+    isolation: isolate;
+  }
+  .hatch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+  .hatch-or::before {
+    background-image: radial-gradient(currentColor 0.5px, transparent 0.6px);
+    background-size: 4px 4px;
+  }
+  .hatch-argent::before {
+    background-image: none;
+  }
+  .hatch-gules::before {
+    background-image: repeating-linear-gradient(
+      90deg,
+      currentColor 0 1px,
+      transparent 1px 4px
+    );
+  }
+  .hatch-azure::before {
+    background-image: repeating-linear-gradient(
+      0deg,
+      currentColor 0 1px,
+      transparent 1px 4px
+    );
+  }
+  .hatch-sable::before {
+    background-image:
+      repeating-linear-gradient(0deg, currentColor 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 4px);
+  }
+  .hatch-vert::before {
+    background-image: repeating-linear-gradient(
+      45deg,
+      currentColor 0 1px,
+      transparent 1px 5px
+    );
+  }
+  .hatch-purpure::before {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      currentColor 0 1px,
+      transparent 1px 5px
+    );
+  }
+  /* Tenné é uma "mancha", fora do conjunto clássico: diagonal larga + pontos. */
+  .hatch-tenne::before {
+    background-image:
+      repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 7px),
+      radial-gradient(currentColor 0.5px, transparent 0.6px);
+    background-size:
+      auto,
+      6px 6px;
+  }
+
+  /* Fundo e filete derivados da própria tinctura (currentColor com alfa). */
+  .tincture-chip {
+    border: 1px solid color-mix(in oklab, currentColor 34%, transparent);
+    background-color: color-mix(in oklab, currentColor 9%, transparent);
+  }
+
+  /* Capitular rubricada — abertura de página, como em manuscrito. */
+  .dropcap::first-letter {
+    float: left;
+    font-family: var(--font-display), Georgia, serif;
+    font-size: 3.1em;
+    line-height: 0.82;
+    padding: 0.06em 0.1em 0 0;
+    color: hsl(var(--destructive));
+    font-weight: 600;
+  }
 }
 
 @keyframes skeleton-shimmer {
@@ -117,14 +237,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .skeleton::after {
-    animation: none;
-  }
-}
-
-/* Barra de progresso de navegação ([components/nav-progress.tsx]): desliza da
-   esquerda para a direita enquanto a rota carrega (feedback imediato no clique). */
+/* Barra de progresso de navegação ([components/nav-progress.tsx]). */
 @keyframes nav-progress {
   0% {
     transform: translateX(-100%);
@@ -138,14 +251,7 @@
   animation: nav-progress 1.1s ease-in-out infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-nav-progress {
-    animation-duration: 2s;
-  }
-}
-
-/* Entrada dos nós do board de vínculos ([components/obras/obra-board.tsx]):
-   surgem em direção à sua posição, escalonados pelo animation-delay. */
+/* Entrada dos nós do board de vínculos ([components/obras/obra-board.tsx]). */
 @keyframes board-node {
   from {
     opacity: 0;
@@ -162,8 +268,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .skeleton::after,
   .animate-board-node {
     animation: none;
   }
+  .animate-nav-progress {
+    animation-duration: 2s;
+  }
 }
-

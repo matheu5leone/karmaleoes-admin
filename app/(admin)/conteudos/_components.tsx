@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/ui/toast";
+import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import { STATUS, TIPOS } from "@/lib/validation/conteudos";
 import { criarConteudo, editarConteudo, excluirConteudo } from "./actions";
 import { criarCategoria, excluirCategoria } from "./categorias/actions";
@@ -32,16 +33,12 @@ export type ConteudoRow = {
 };
 
 function StatusBadge({ s }: { s: string }) {
-  const cls =
-    s === "publicado"
-      ? "bg-success/10 text-success"
-      : s === "pendente"
-        ? "bg-warning/10 text-warning"
-        : "bg-muted text-muted-foreground";
+  const tinctura =
+    s === "publicado" ? "vert" : s === "pendente" ? "tenne" : "argent";
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
+    <ShieldBadge tinctura={tinctura} escudo>
       {s}
-    </span>
+    </ShieldBadge>
   );
 }
 

@@ -43,12 +43,13 @@ export function DataTable<T extends { id: string }>({
           className="max-w-xs"
         />
       )}
-      <div className="overflow-hidden rounded-lg border border-border">
+      {/* Livro-razão: cabeçalho rubricado, filete duplo e linhas regradas. */}
+      <div className="overflow-hidden rounded-sm border border-border bg-card shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left text-xs uppercase tracking-[0.02em] text-muted-foreground">
+          <thead className="border-b-2 border-double border-border bg-muted/60 text-left text-[11px] uppercase tracking-[0.12em] text-brand">
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className={cn("px-4 py-3 font-semibold", c.className)}>
+                <th key={c.key} className={cn("px-4 py-2.5 font-semibold", c.className)}>
                   {c.header}
                 </th>
               ))}
@@ -66,7 +67,10 @@ export function DataTable<T extends { id: string }>({
               </tr>
             ) : (
               filtered.map((row) => (
-                <tr key={row.id} className="border-t border-border hover:bg-accent/50">
+                <tr
+                  key={row.id}
+                  className="border-t border-border/70 transition-colors odd:bg-background/30 hover:bg-brand-subtle/60"
+                >
                   {columns.map((c) => (
                     <td key={c.key} className={cn("px-4 py-3", c.className)}>
                       {c.render

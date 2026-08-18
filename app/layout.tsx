@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
-import { Source_Serif_4, IBM_Plex_Mono } from "next/font/google";
+import { EB_Garamond, Cormorant_Garamond, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-// Tipografia serifada (DESIGN.md §3) — expõe as CSS vars usadas no Tailwind.
-const serif = Source_Serif_4({
+// Tipografia old-style (DESIGN.md §3) — expõe as CSS vars usadas no Tailwind.
+// EB Garamond: revival humanista do Garamond do séc. XVI, para todo o texto.
+const serif = EB_Garamond({
   subsets: ["latin"],
   variable: "--font-serif",
+  display: "swap",
+});
+
+// Cormorant Garamond: alto contraste, só para títulos.
+const display = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -25,7 +34,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={`${serif.variable} ${mono.variable}`}>
+    <html
+      lang="pt-BR"
+      className={`${serif.variable} ${display.variable} ${mono.variable}`}
+    >
       <head>
         {/* Aplica o tema ANTES da pintura para não piscar claro ao carregar. */}
         <script

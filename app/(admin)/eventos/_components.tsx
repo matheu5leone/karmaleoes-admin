@@ -9,6 +9,7 @@ import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { EventosKanban } from "@/components/eventos/eventos-kanban";
+import { ShieldBadge, type Tinctura } from "@/components/heraldry/shield-badge";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
@@ -41,19 +42,21 @@ export type EventoRow = {
   nova_data: string | null;
 };
 
+/** Cada status recebe uma tinctura — a hachura o distingue mesmo sem cor. */
+function tincturaDoStatus(s: string): Tinctura {
+  if (s === "Expirado") return "argent";
+  if (s === "Cancelado") return "gules";
+  if (s === "Sucesso" || s === "Ingressos a venda") return "vert";
+  if (s === "Esgotado") return "tenne";
+  if (s === "Adiado") return "azure";
+  return "sable";
+}
+
 function StatusBadge({ s }: { s: string }) {
-  const cls =
-    s === "Expirado"
-      ? "bg-muted text-muted-foreground line-through"
-      : s === "Cancelado"
-        ? "bg-destructive/10 text-destructive"
-        : s === "Sucesso" || s === "Ingressos a venda"
-          ? "bg-success/10 text-success"
-          : "bg-muted text-foreground";
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
-      {s}
-    </span>
+    <ShieldBadge tinctura={tincturaDoStatus(s)} escudo>
+      <span className={s === "Expirado" ? "line-through" : undefined}>{s}</span>
+    </ShieldBadge>
   );
 }
 
@@ -87,9 +90,9 @@ export function EventosManager({
       key: "lifecycle",
       header: "Lifecycle",
       render: (e) => (
-        <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+        <ShieldBadge tinctura={e.lifecycle === "Em aberto" ? "azure" : "argent"}>
           {e.lifecycle}
-        </span>
+        </ShieldBadge>
       ),
     },
     {

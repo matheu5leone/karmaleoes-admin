@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import {
   associarTela,
   despublicar,
@@ -77,15 +78,12 @@ export function BannerAssociacoes({
                       {!a ? (
                         <span className="text-muted-foreground">—</span>
                       ) : (
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                            a.status === "publicado"
-                              ? "bg-success/10 text-success"
-                              : "bg-muted text-muted-foreground"
-                          }`}
+                        <ShieldBadge
+                          tinctura={a.status === "publicado" ? "vert" : "argent"}
+                          escudo
                         >
                           {a.status}
-                        </span>
+                        </ShieldBadge>
                       )}
                     </td>
                     <td className="px-4 py-2">

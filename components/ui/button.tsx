@@ -11,7 +11,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        brand: "bg-brand text-brand-foreground hover:bg-brand/90",
+        // Or é metal: recebe carga de cor (tinta escura), nunca texto claro.
+        brand: "bg-or-fill text-brand-foreground hover:bg-or-fill/90",
         secondary:
           "border border-border bg-secondary text-secondary-foreground hover:bg-accent",
         outline:

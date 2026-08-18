@@ -31,6 +31,17 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+
+        // Tincturas heráldicas — aliases dos mesmos tokens semânticos, para o
+        // código novo ler como heráldica (bg-gules, text-or, border-argent).
+        or: { DEFAULT: "hsl(var(--brand))", fill: "hsl(var(--brand-fill))" },
+        argent: "hsl(var(--card))",
+        gules: "hsl(var(--destructive))",
+        azure: "hsl(var(--info))",
+        vert: "hsl(var(--success))",
+        tenne: "hsl(var(--warning))",
+        purpure: "hsl(var(--purpure))",
+        sable: "hsl(var(--foreground))",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -38,8 +49,9 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        serif: ["var(--font-serif)"],
-        mono: ["var(--font-mono)"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        display: ["var(--font-display)", "var(--font-serif)", "Georgia", "serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
     },
   },

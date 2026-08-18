@@ -15,6 +15,8 @@ import { ToastProvider } from "@/components/ui/toast";
 import { NavProgress } from "@/components/nav-progress";
 import { NavLink } from "@/components/nav-link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Seal } from "@/components/heraldry/seal";
+import { Rule } from "@/components/heraldry/ornaments";
 
 // Shell administrativo (Plano 00). Navegação placeholder — itens habilitados
 // conforme os módulos forem entregues. Tokens/estilo seguem DESIGN.md.
@@ -43,12 +45,18 @@ export default async function AdminLayout({
     <NavProgress>
     <div className="flex min-h-screen">
       <aside className="hidden w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
-        <div className="px-5 py-5">
-          <p className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground">
-            Karmaleões
-          </p>
-          <p className="text-lg font-semibold tracking-tight">Admin</p>
+        <div className="flex items-center gap-3 px-5 py-5 text-brand">
+          <Seal size={40} />
+          <div className="min-w-0">
+            <p className="truncate text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Karmaleões
+            </p>
+            <p className="font-display text-lg font-semibold tracking-tight text-foreground">
+              Painel
+            </p>
+          </div>
         </div>
+        <Rule className="mx-4 mb-3" />
         <nav className="flex flex-col gap-1 px-2">
           {nav.map(({ href, label, icon: Icon }) => (
             <NavLink

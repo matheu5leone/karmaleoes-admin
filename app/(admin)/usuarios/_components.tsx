@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
+import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import { criarUsuarioSchema } from "@/lib/validation/usuarios";
 import { alternarStatus, criarUsuario, editarTelefone } from "./actions";
 
@@ -213,24 +214,14 @@ function LinhaUsuario({
         </div>
       </td>
       <td className="px-4 py-3">
-        <span
-          className={
-            usuario.two_factor_configured ? "text-success" : "text-muted-foreground"
-          }
-        >
+        <ShieldBadge tinctura={usuario.two_factor_configured ? "vert" : "tenne"}>
           {usuario.two_factor_configured ? "Ativo" : "Pendente"}
-        </span>
+        </ShieldBadge>
       </td>
       <td className="px-4 py-3">
-        <span
-          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-            ativo
-              ? "bg-success/10 text-success"
-              : "bg-muted text-muted-foreground"
-          }`}
-        >
+        <ShieldBadge tinctura={ativo ? "vert" : "argent"} escudo>
           {ativo ? "ativo" : "inativo"}
-        </span>
+        </ShieldBadge>
       </td>
       <td className="px-4 py-3">
         {protegido ? (

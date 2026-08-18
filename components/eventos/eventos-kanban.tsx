@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ShieldBadge } from "@/components/heraldry/shield-badge";
 
 /** Estrutura mínima que o kanban consome (satisfeita por EventoRow). */
 export type KanbanEvento = {
@@ -29,6 +30,16 @@ const ACENTO: Record<Lifecycle, { filete: string; badge: string }> = {
     badge: "bg-muted text-muted-foreground",
   },
 };
+
+/** Tinctura por status — a hachura distingue mesmo sem cor. */
+function tincturaStatus(s: string) {
+  if (s === "Expirado") return "argent" as const;
+  if (s === "Cancelado") return "gules" as const;
+  if (s === "Sucesso" || s === "Ingressos a venda") return "vert" as const;
+  if (s === "Esgotado") return "tenne" as const;
+  if (s === "Adiado") return "azure" as const;
+  return "sable" as const;
+}
 
 /** "2026-08-15" → "15/08". */
 function diaMes(iso: string): string {
@@ -154,13 +165,11 @@ export function EventosKanban<T extends KanbanEvento>({
                     </div>
 
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      <ShieldBadge tinctura={tincturaStatus(e.status_efetivo)}>
                         {e.status_efetivo}
-                      </span>
+                      </ShieldBadge>
                       {e.status_efetivo === "Expirado" && (
-                        <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning">
-                          expirado
-                        </span>
+                        <ShieldBadge tinctura="tenne">expirado</ShieldBadge>
                       )}
                     </div>
                   </article>
