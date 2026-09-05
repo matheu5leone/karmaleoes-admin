@@ -46,6 +46,8 @@ export async function criarUsuario(input: {
     telefone: parsed.data.telefone || null,
     status: "ativo",
     two_factor_configured: false,
+    // Conta nasce com a senha definida pelo admin → troca obrigatória no 1º acesso.
+    senha_temporaria: true,
   });
   if (insErr) {
     await admin.auth.admin.deleteUser(data.user.id);
@@ -84,12 +86,7 @@ export async function alternarStatus(
   ativar: boolean,
 ): Promise<ActionResult> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user?.id === id && !ativar) {
-    return { ok: false, error: "Você não pode desativar a si mesmo." };
-  }
+  // Autoproteção removida a pedido: só o admin raiz é intocável.
   if (!ativar) {
     const { data: primeiro } = await supabase
       .from("admin_user")

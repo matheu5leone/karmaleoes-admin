@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isRootAdmin } from "@/lib/root-admin";
+import { getContaAtual } from "@/lib/conta";
 import { HistoricoTimeline, type LogRow } from "./_components";
 
 /** Quantos registros a tela carrega por vez. */
@@ -8,7 +8,7 @@ const LIMITE = 200;
 
 export default async function HistoricoPage() {
   // A leitura já é barrada pela RLS (migration 0015); aqui é a guarda de rota.
-  if (!(await isRootAdmin())) notFound();
+  if (!(await getContaAtual()).isRoot) notFound();
 
   const supabase = await createClient();
   const [{ data: logs }, { data: admins }] = await Promise.all([

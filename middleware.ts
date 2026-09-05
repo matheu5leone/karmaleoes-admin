@@ -18,6 +18,8 @@ const PROTECTED_PREFIXES = [
   "/conteudos",
   "/obras",
   "/historico",
+  "/minha-conta",
+  "/trocar-senha",
 ];
 const KARMA_SID = "karma_sid";
 

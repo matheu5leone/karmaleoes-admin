@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
+import { PhoneInput } from "@/components/form/phone-input";
 import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import { criarUsuarioSchema } from "@/lib/validation/usuarios";
 import { alternarStatus, criarUsuario, editarTelefone } from "./actions";
@@ -19,6 +20,7 @@ export type Usuario = {
 
 type NovoUsuarioErros = {
   email?: string;
+  telefone?: string;
   senhaTemporaria?: string;
   form?: string;
 };
@@ -52,6 +54,7 @@ export function NovoUsuario() {
       for (const issue of parsed.error.issues) {
         const campo = issue.path[0];
         if (campo === "email") fe.email ??= issue.message;
+        else if (campo === "telefone") fe.telefone ??= issue.message;
         else if (campo === "senhaTemporaria") fe.senhaTemporaria ??= issue.message;
         else fe.form ??= issue.message;
       }
@@ -91,11 +94,13 @@ export function NovoUsuario() {
           className={erros.email ? INVALID_INPUT : undefined}
         />
       </Field>
-      <Field label="Telefone (opcional)" htmlFor="novo-tel">
-        <Input
+      <Field label="Telefone (opcional)" htmlFor="novo-tel" error={erros.telefone}>
+        <PhoneInput
           id="novo-tel"
           value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
+          onChange={setTelefone}
+          aria-invalid={!!erros.telefone}
+          className={erros.telefone ? INVALID_INPUT : undefined}
         />
       </Field>
       <Field
@@ -196,11 +201,10 @@ function LinhaUsuario({
       <td className="px-4 py-3">{usuario.email}</td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <Input
+          <PhoneInput
             value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
-            className="h-8 w-36"
-            placeholder="—"
+            onChange={setTelefone}
+            className="h-8 w-40"
           />
           <Button
             type="button"

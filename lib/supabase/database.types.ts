@@ -17,6 +17,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          senha_temporaria: boolean
           status: string
           telefone: string | null
           two_factor_configured: boolean
@@ -26,6 +27,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          senha_temporaria?: boolean
           status?: string
           telefone?: string | null
           two_factor_configured?: boolean
@@ -35,6 +37,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          senha_temporaria?: boolean
           status?: string
           telefone?: string | null
           two_factor_configured?: boolean

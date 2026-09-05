@@ -3,18 +3,16 @@ import { NovoUsuario, UsuariosTable, type Usuario } from "./_components";
 
 export default async function UsuariosPage() {
   const supabase = await createClient();
-  const [{ data }, { data: auth }] = await Promise.all([
-    supabase
-      .from("admin_user")
-      .select("id, email, telefone, status, two_factor_configured")
-      .order("created_at", { ascending: true }),
-    supabase.auth.getUser(),
-  ]);
+  const { data } = await supabase
+    .from("admin_user")
+    .select("id, email, telefone, status, two_factor_configured")
+    .order("created_at", { ascending: true });
 
   const usuarios = (data ?? []) as Usuario[];
-  // Protegidos: o 1º admin (mais antigo) e o próprio usuário logado não podem
-  // ser desativados (evita se trancar pra fora / derrubar o admin raiz).
-  const protectedIds = [usuarios[0]?.id, auth.user?.id].filter(
+  // Protegido: SOMENTE o admin raiz (o mais antigo). A autoproteção foi
+  // removida a pedido — um admin pode se desativar e ficar trancado do lado de
+  // fora; nesse caso outro admin reativa.
+  const protectedIds = [usuarios[0]?.id].filter(
     (v): v is string => Boolean(v),
   );
 

@@ -64,6 +64,8 @@ const { error: insErr } = await admin.from("admin_user").insert({
   email,
   status: "ativo",
   two_factor_configured: false,
+  // Senha do seed é temporária: o 1º acesso exige troca (migration 0016).
+  senha_temporaria: true,
 });
 
 if (insErr) {
