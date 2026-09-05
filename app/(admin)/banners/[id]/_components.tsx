@@ -51,7 +51,7 @@ export function BannerAssociacoes({
       {telas.length === 0 ? (
         <p className="text-sm text-muted-foreground">Cadastre telas primeiro.</p>
       ) : (
-        <div className="overflow-hidden rounded-md border border-border">
+        <div className="overflow-x-auto rounded-md border border-border">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase tracking-[0.02em] text-muted-foreground">
               <tr>

@@ -93,7 +93,9 @@ export function DataTable<T extends { id: string }>({
         </div>
       )}
       {/* Livro-razão: cabeçalho rubricado, filete duplo e linhas regradas. */}
-      <div className="overflow-x-auto rounded-sm border border-border bg-card shadow-sm">
+      {/* Tabela: só do md para cima. Abaixo disso vira lista de cards —
+          6 colunas não cabem em 375px. */}
+      <div className="hidden overflow-x-auto rounded-sm border border-border bg-card shadow-sm md:block">
         <table className="w-full text-sm">
           <thead className="border-b-2 border-double border-border bg-muted/60 text-left text-[11px] uppercase tracking-[0.12em] text-brand">
             <tr>
@@ -165,6 +167,38 @@ export function DataTable<T extends { id: string }>({
           </tbody>
         </table>
       </div>
+
+      {/* Cards — mobile */}
+      <ul className="space-y-2 md:hidden">
+        {visiveis.length === 0 ? (
+          <li className="rounded-sm border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+            {empty}
+          </li>
+        ) : (
+          visiveis.map((row) => (
+            <li
+              key={row.id}
+              className="rounded-sm border border-border bg-card p-3 shadow-sm"
+            >
+              <dl className="space-y-1.5">
+                {columns.map((c) => {
+                  const conteudo = c.render
+                    ? c.render(row)
+                    : String((row as Record<string, unknown>)[c.key] ?? "");
+                  return (
+                    <div key={c.key} className="flex flex-wrap items-baseline gap-x-2">
+                      <dt className="min-w-[5.5rem] text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                        {c.header}
+                      </dt>
+                      <dd className="min-w-0 flex-1 text-sm">{conteudo}</dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            </li>
+          ))
+        )}
+      </ul>
     </div>
   );
 }

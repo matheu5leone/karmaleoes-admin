@@ -146,7 +146,14 @@ export function UsuariosTable({
   protectedIds?: string[];
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border">
+    <>
+    {/* Cards no celular: 5 colunas com campo editável não cabem em 375px. */}
+    <ul className="space-y-3 md:hidden">
+      {usuarios.map((u) => (
+        <CardUsuario key={u.id} usuario={u} protegido={protectedIds.includes(u.id)} />
+      ))}
+    </ul>
+    <div className="hidden overflow-hidden rounded-lg border border-border md:block">
       <table className="w-full text-sm">
         <thead className="bg-muted/50 text-left text-xs uppercase tracking-[0.02em] text-muted-foreground">
           <tr>
@@ -168,6 +175,81 @@ export function UsuariosTable({
         </tbody>
       </table>
     </div>
+    </>
+  );
+}
+
+/** Mesma informação da linha, empilhada — versão mobile. */
+function CardUsuario({
+  usuario,
+  protegido,
+}: {
+  usuario: Usuario;
+  protegido: boolean;
+}) {
+  const router = useRouter();
+  const [telefone, setTelefone] = useState(usuario.telefone ?? "");
+  const [pending, start] = useTransition();
+  const ativo = usuario.status === "ativo";
+
+  return (
+    <li className="space-y-3 rounded-lg border border-border bg-card p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="min-w-0 break-all font-medium">{usuario.email}</span>
+        <ShieldBadge tinctura={ativo ? "vert" : "argent"} escudo>
+          {ativo ? "ativo" : "inativo"}
+        </ShieldBadge>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          2FA
+        </span>
+        <ShieldBadge tinctura={usuario.two_factor_configured ? "vert" : "tenne"}>
+          {usuario.two_factor_configured ? "Ativo" : "Pendente"}
+        </ShieldBadge>
+      </div>
+      <div className="flex items-center gap-2">
+        <PhoneInput
+          value={telefone}
+          onChange={setTelefone}
+          className="h-9 flex-1"
+          aria-label={`Telefone de ${usuario.email}`}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={pending || telefone === (usuario.telefone ?? "")}
+          onClick={() =>
+            start(async () => {
+              await editarTelefone(usuario.id, telefone);
+              router.refresh();
+            })
+          }
+        >
+          Salvar
+        </Button>
+      </div>
+      {protegido ? (
+        <p className="text-xs text-muted-foreground">protegido</p>
+      ) : (
+        <Button
+          type="button"
+          variant={ativo ? "ghost" : "secondary"}
+          size="sm"
+          disabled={pending}
+          className="w-full"
+          onClick={() =>
+            start(async () => {
+              await alternarStatus(usuario.id, !ativo);
+              router.refresh();
+            })
+          }
+        >
+          {ativo ? "Desativar" : "Ativar"}
+        </Button>
+      )}
+    </li>
   );
 }
 

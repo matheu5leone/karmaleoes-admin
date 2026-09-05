@@ -83,18 +83,17 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button onClick={() => setForm({ open: true, tela: null })}>
-          Nova tela
-        </Button>
-      </div>
-
       <DataTable
         columns={columns}
         rows={telas}
         getFilterText={(t) => `${t.nome} ${t.rota}`}
         filterPlaceholder="Filtrar telas…"
         empty="Nenhuma tela cadastrada."
+        action={
+          <Button onClick={() => setForm({ open: true, tela: null })}>
+            Nova tela
+          </Button>
+        }
       />
 
       {form.open && (
