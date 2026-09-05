@@ -14,7 +14,6 @@ export const itemSchema = z
     tipo_nav: z.enum(["interno", "externo"]),
     tela_destino_id: z.string().uuid().nullable().optional(),
     url_externa: z.string().trim().nullable().optional(),
-    ordem: z.coerce.number().int().min(0).default(0),
   })
   .refine(
     (d) =>

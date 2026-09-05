@@ -124,7 +124,6 @@ export async function salvarItem(
     tela_destino_id:
       p.data.tipo_nav === "interno" ? p.data.tela_destino_id! : null,
     url_externa: p.data.tipo_nav === "externo" ? p.data.url_externa! : null,
-    ordem: p.data.ordem,
   };
 
   if (itemId) {
@@ -136,7 +135,8 @@ export async function salvarItem(
   } else {
     const { data, error } = await supabase
       .from("marquee_item")
-      .insert(row)
+      // A posição não vem mais do formulário: item novo entra no fim da fila.
+      .insert({ ...row, ordem: await proximaOrdem(supabase, marqueeId) })
       .select("id")
       .single();
     if (error) return { ok: false, error: error.message };
@@ -155,6 +155,45 @@ export async function excluirItem(
     .delete()
     .eq("id", itemId);
   if (error) return { ok: false, error: error.message };
+  revalidatePath(`/marquees/${marqueeId}`);
+  return { ok: true };
+}
+
+/** Próxima posição livre na fila do marquee (item novo entra no fim). */
+async function proximaOrdem(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  marqueeId: string,
+): Promise<number> {
+  const { data } = await supabase
+    .from("marquee_item")
+    .select("ordem")
+    .eq("marquee_id", marqueeId)
+    .order("ordem", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data?.ordem ?? -1) + 1;
+}
+
+/**
+ * Persiste a nova sequência após o arraste. Recebe os ids na ordem desejada e
+ * grava o índice de cada um — o campo numérico saiu do formulário.
+ */
+export async function reordenarItens(
+  marqueeId: string,
+  idsNaOrdem: string[],
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const resultados = await Promise.all(
+    idsNaOrdem.map((id, i) =>
+      supabase
+        .from("marquee_item")
+        .update({ ordem: i })
+        .eq("id", id)
+        .eq("marquee_id", marqueeId),
+    ),
+  );
+  const falha = resultados.find((r) => r.error);
+  if (falha?.error) return { ok: false, error: falha.error.message };
   revalidatePath(`/marquees/${marqueeId}`);
   return { ok: true };
 }

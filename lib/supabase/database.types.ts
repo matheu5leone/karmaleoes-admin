@@ -413,6 +413,21 @@ export type Database = {
         }
         Relationships: []
       }
+      keep_alive_log: {
+        Row: {
+          executado_em: string
+          id: string
+        }
+        Insert: {
+          executado_em?: string
+          id?: string
+        }
+        Update: {
+          executado_em?: string
+          id?: string
+        }
+        Relationships: []
+      }
       link_plataforma: {
         Row: {
           colecao_id: string | null

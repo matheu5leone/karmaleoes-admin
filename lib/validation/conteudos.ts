@@ -24,7 +24,6 @@ export const conteudoSchema = z.object({
   link: z.string().trim().min(1, "Informe o link"),
   status: z.enum(STATUS),
   destaque: z.boolean().default(false),
-  ordem: z.coerce.number().int().min(0).default(0),
   data: z.string().optional().or(z.literal("")),
 });
 export type ConteudoInput = z.infer<typeof conteudoSchema>;

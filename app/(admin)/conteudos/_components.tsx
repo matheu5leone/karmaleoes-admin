@@ -7,12 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/ui/toast";
 import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import { STATUS, TIPOS } from "@/lib/validation/conteudos";
-import { criarConteudo, editarConteudo, excluirConteudo } from "./actions";
+import {
+  criarConteudo,
+  editarConteudo,
+  excluirConteudo,
+  moverConteudo,
+} from "./actions";
 import { criarCategoria, excluirCategoria } from "./categorias/actions";
 
 export type CategoriaOpt = { id: string; nome: string };
@@ -87,7 +93,25 @@ export function ConteudosManager({
       key: "acoes",
       header: "Ações",
       render: (c) => (
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Subir"
+            disabled={pending}
+            onClick={() => start(async () => { await moverConteudo(c.id, "cima"); router.refresh(); })}
+            className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-brand disabled:opacity-40"
+          >
+            <ChevronUp className="size-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Descer"
+            disabled={pending}
+            onClick={() => start(async () => { await moverConteudo(c.id, "baixo"); router.refresh(); })}
+            className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-brand disabled:opacity-40"
+          >
+            <ChevronDown className="size-4" />
+          </button>
           <Button variant="ghost" size="sm" onClick={() => setForm({ open: true, item: c })}>
             Editar
           </Button>
@@ -169,7 +193,6 @@ function ConteudoFormModal({
     plataforma: item?.plataforma ?? "",
     link: item?.link ?? "",
     status: item?.status ?? "draft",
-    ordem: String(item?.ordem ?? 0),
     data: item?.data ?? "",
   });
   const [thumbnail, setThumbnail] = useState<string | null>(item?.thumbnail ?? null);
@@ -189,7 +212,6 @@ function ConteudoFormModal({
         tipo: v.tipo as (typeof TIPOS)[number],
         status: v.status as (typeof STATUS)[number],
         destaque,
-        ordem: Number(v.ordem) || 0,
       };
       const r = item
         ? await editarConteudo(item.id, input)
@@ -255,9 +277,6 @@ function ConteudoFormModal({
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Ordem" htmlFor="ct-ordem">
-            <Input id="ct-ordem" type="number" min={0} value={v.ordem} onChange={(e) => set("ordem", e.target.value)} />
-          </Field>
           <Field label="Data" htmlFor="ct-data">
             <Input id="ct-data" type="date" value={v.data} onChange={(e) => set("data", e.target.value)} />
           </Field>

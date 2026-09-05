@@ -185,7 +185,7 @@ function TelaFormModal({
             id="t-rota"
             value={rota}
             onChange={(e) => setRota(e.target.value)}
-            placeholder="/eventos"
+            placeholder="/ex"
             required
           />
         </Field>

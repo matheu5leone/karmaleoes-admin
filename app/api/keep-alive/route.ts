@@ -29,16 +29,22 @@ export async function GET(request: Request) {
     );
   }
 
-  // Chama a função keep_alive() (retorna now()); toca o banco sem depender de RLS.
+  // keep_alive() INSERE uma linha e devolve a contagem acumulada (migration
+  // 0018). Escrita de verdade: é o que conta como atividade para o free tier, e
+  // deixa rastro para conferir se o agendamento dispara mesmo.
   const supabase = createClient(url, anon, { auth: { persistSession: false } });
   const startedAt = Date.now();
-  const { error } = await supabase.rpc("keep_alive");
+  const { data, error } = await supabase.rpc("keep_alive");
+  const resultado = data as
+    | { executado_em: string; total_execucoes: number }
+    | null;
 
   // Sempre 200: a atividade já aconteceu mesmo se a query der erro (evita retry).
   return NextResponse.json({
     ok: !error,
     ranAt: new Date().toISOString(),
     ms: Date.now() - startedAt,
+    totalExecucoes: resultado?.total_execucoes ?? null,
     error: error?.message ?? null,
   });
 }

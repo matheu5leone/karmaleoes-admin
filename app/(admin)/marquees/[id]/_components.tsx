@@ -8,10 +8,13 @@ import { Select } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
 import { ColorPicker } from "@/components/form/color-picker";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
+import { ListaOrdenavel } from "@/components/form/lista-ordenavel";
+import { useToast } from "@/components/ui/toast";
 import {
   associarTelas,
   editarMarquee,
   excluirItem,
+  reordenarItens,
   salvarItem,
 } from "../actions";
 
@@ -182,9 +185,13 @@ function TelasSection({
       {telas.length === 0 ? (
         <p className="text-sm text-muted-foreground">Cadastre telas primeiro.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
+          <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(180px,1fr))]">
           {telas.map((t) => (
-            <label key={t.id} className="flex items-center gap-2 text-sm">
+            <label
+              key={t.id}
+              className="flex items-center gap-2 rounded-sm border border-border px-2.5 py-2 text-sm transition-colors hover:border-brand"
+            >
               <input
                 type="checkbox"
                 checked={sel.has(t.id)}
@@ -197,6 +204,7 @@ function TelasSection({
               </span>
             </label>
           ))}
+          </div>
           <Button
             className="mt-2"
             disabled={pending}
@@ -230,6 +238,7 @@ function ItensSection({
   icons: IconOpt[];
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [modal, setModal] = useState<{ open: boolean; item: EditorItem | null }>({
     open: false,
     item: null,
@@ -248,9 +257,18 @@ function ItensSection({
       {itens.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhum item ainda.</p>
       ) : (
-        <ul className="divide-y divide-border">
-          {itens.map((it) => (
-            <li key={it.id} className="flex items-center gap-3 py-3">
+        <ListaOrdenavel
+          itens={itens}
+          onReordenar={(ids) =>
+            start(async () => {
+              const r = await reordenarItens(marqueeId, ids);
+              if (!r.ok) toast.error(r.error);
+              router.refresh();
+            })
+          }
+        >
+          {(it) => (
+            <div className="flex items-center gap-3">
               {it.icon ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -267,8 +285,6 @@ function ItensSection({
                   {it.tipo_nav === "interno"
                     ? `interno → ${telas.find((t) => t.id === it.tela_destino_id)?.nome ?? "—"}`
                     : `externo → ${it.url_externa}`}
-                  {" · ordem "}
-                  {it.ordem}
                 </p>
               </div>
               <Button
@@ -281,9 +297,9 @@ function ItensSection({
               <Button variant="ghost" size="sm" onClick={() => setDel(it)}>
                 Remover
               </Button>
-            </li>
-          ))}
-        </ul>
+            </div>
+          )}
+        </ListaOrdenavel>
       )}
 
       {modal.open && (
@@ -340,7 +356,6 @@ function ItemModal({
   const [tipoNav, setTipoNav] = useState(item?.tipo_nav ?? "interno");
   const [telaId, setTelaId] = useState(item?.tela_destino_id ?? "");
   const [url, setUrl] = useState(item?.url_externa ?? "");
-  const [ordem, setOrdem] = useState(String(item?.ordem ?? 0));
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -356,7 +371,6 @@ function ItemModal({
         tipo_nav: tipoNav as "interno" | "externo",
         tela_destino_id: tipoNav === "interno" ? telaId || null : null,
         url_externa: tipoNav === "externo" ? url || null : null,
-        ordem: Number(ordem) || 0,
       });
       if (!r.ok) return setError(r.error);
       onSaved();
@@ -378,7 +392,7 @@ function ItemModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {item ? "Editar item" : "Novo item"}
         </h2>
-        <Field label="Título" htmlFor="i-titulo">
+        <Field label="Texto" htmlFor="i-titulo">
           <Input id="i-titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
         </Field>
         <Field label="Ícone" htmlFor="i-icon">
@@ -395,21 +409,12 @@ function ItemModal({
             ))}
           </Select>
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Navegação" htmlFor="i-tipo">
             <Select id="i-tipo" value={tipoNav} onChange={(e) => setTipoNav(e.target.value)}>
               <option value="interno">Interno (tela)</option>
               <option value="externo">Externo (URL)</option>
             </Select>
-          </Field>
-          <Field label="Ordem" htmlFor="i-ordem">
-            <Input
-              id="i-ordem"
-              type="number"
-              min={0}
-              value={ordem}
-              onChange={(e) => setOrdem(e.target.value)}
-            />
           </Field>
         </div>
         {tipoNav === "interno" ? (
