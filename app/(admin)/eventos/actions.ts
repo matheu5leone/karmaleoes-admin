@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import {
   encerramentoSchema,
   eventoSchema,
@@ -57,7 +56,6 @@ export async function criarEvento(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "evento", registroId: data.id });
   revalidatePath("/eventos");
   return { ok: true, id: data.id };
 }
@@ -96,7 +94,6 @@ export async function editarEvento(
     .update(montarRow(p.data))
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "update", entidade: "evento", registroId: id });
   revalidatePath("/eventos");
   return { ok: true };
 }
@@ -109,12 +106,6 @@ export async function setEnable(
   const supabase = await createClient();
   const { error } = await supabase.from("evento").update({ enable }).eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({
-    acao: "update",
-    entidade: "evento",
-    registroId: id,
-    diff: { enable },
-  });
   revalidatePath("/eventos");
   return { ok: true };
 }
@@ -161,12 +152,6 @@ export async function encerrarEvento(
     })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({
-    acao: "update",
-    entidade: "evento",
-    registroId: id,
-    diff: { lifecycle: "Encerrado", status: status.nome },
-  });
   revalidatePath("/eventos");
   return { ok: true };
 }
@@ -175,7 +160,6 @@ export async function excluirEvento(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("evento").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "evento", registroId: id });
   revalidatePath("/eventos");
   return { ok: true };
 }

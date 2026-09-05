@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { invalidateSession } from "@/lib/redis";
-import { audit } from "@/lib/audit";
 import { criarUsuarioSchema, telefoneSchema } from "@/lib/validation/usuarios";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -40,7 +39,11 @@ export async function criarUsuario(input: {
     return { ok: false, error: "Não foi possível criar (e-mail já em uso?)." };
   }
 
-  const { error: insErr } = await admin.from("admin_user").insert({
+  // A linha de admin_user entra pelo cliente da REQUISIÇÃO, não pelo service
+  // role: assim auth.uid() existe e o trigger de auditoria (0017) registra quem
+  // criou a conta. A RLS já permite insert para admin ativo.
+  const supabase = await createClient();
+  const { error: insErr } = await supabase.from("admin_user").insert({
     id: data.user.id,
     email: parsed.data.email,
     telefone: parsed.data.telefone || null,
@@ -54,7 +57,6 @@ export async function criarUsuario(input: {
     return { ok: false, error: "E-mail já cadastrado." };
   }
 
-  await audit({ acao: "create", entidade: "admin_user", registroId: data.user.id });
   revalidatePath("/usuarios");
   return { ok: true };
 }
@@ -75,7 +77,6 @@ export async function editarTelefone(
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
 
-  await audit({ acao: "update", entidade: "admin_user", registroId: id });
   revalidatePath("/usuarios");
   return { ok: true };
 }
@@ -107,12 +108,6 @@ export async function alternarStatus(
 
   if (!ativar) await invalidateSession(id);
 
-  await audit({
-    acao: "update",
-    entidade: "admin_user",
-    registroId: id,
-    diff: { status: ativar ? "ativo" : "inativo" },
-  });
   revalidatePath("/usuarios");
   return { ok: true };
 }

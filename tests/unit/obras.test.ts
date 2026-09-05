@@ -37,10 +37,28 @@ describe("roleSchema", () => {
 });
 
 describe("linkSchema", () => {
-  it("aceita plataforma + url", () => {
+  it("aceita url do domínio da plataforma", () => {
     expect(
-      linkSchema.safeParse({ plataforma: "Spotify", url: "https://x" }).success,
+      linkSchema.safeParse({
+        plataforma: "Spotify",
+        url: "https://open.spotify.com/album/raizes",
+      }).success,
     ).toBe(true);
+  });
+  it("prepende https:// quando o usuário omite", () => {
+    const r = linkSchema.safeParse({
+      plataforma: "Spotify",
+      url: "open.spotify.com/album/raizes",
+    });
+    expect(r.success && r.data.url.startsWith("https://")).toBe(true);
+  });
+  it("rejeita url de domínio que não é da plataforma", () => {
+    expect(
+      linkSchema.safeParse({
+        plataforma: "Spotify",
+        url: "https://youtube.com/watch?v=x",
+      }).success,
+    ).toBe(false);
   });
   it("rejeita sem url", () => {
     expect(linkSchema.safeParse({ plataforma: "Spotify", url: "" }).success).toBe(

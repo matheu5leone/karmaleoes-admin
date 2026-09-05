@@ -48,7 +48,9 @@ export type Database = {
       audit_log: {
         Row: {
           acao: string
+          antes: Json | null
           created_at: string
+          depois: Json | null
           diff: Json | null
           entidade: string
           id: string
@@ -57,7 +59,9 @@ export type Database = {
         }
         Insert: {
           acao: string
+          antes?: Json | null
           created_at?: string
+          depois?: Json | null
           diff?: Json | null
           entidade: string
           id?: string
@@ -66,7 +70,9 @@ export type Database = {
         }
         Update: {
           acao?: string
+          antes?: Json | null
           created_at?: string
+          depois?: Json | null
           diff?: Json | null
           entidade?: string
           id?: string

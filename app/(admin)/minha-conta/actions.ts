@@ -4,7 +4,6 @@ import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { establishSession } from "@/lib/session";
-import { audit } from "@/lib/audit";
 import {
   alterarSenhaSchema,
   type AlterarSenhaInput,
@@ -70,12 +69,6 @@ export async function alterarSenha(
   // Novo sessionId no Redis → as outras sessões deste usuário deixam de bater.
   await establishSession(user.id);
 
-  await audit({
-    acao: "update",
-    entidade: "admin_user",
-    registroId: user.id,
-    diff: { senha: "alterada" },
-  });
 
   revalidatePath("/", "layout");
   return { ok: true };

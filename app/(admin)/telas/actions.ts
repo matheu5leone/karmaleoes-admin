@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import { telaSchema, type TelaInput } from "@/lib/validation/telas";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -24,7 +23,6 @@ export async function criarTela(input: TelaInput): Promise<ActionResult> {
       error: error.code === "23505" ? "Rota já cadastrada." : error.message,
     };
   }
-  await audit({ acao: "create", entidade: "tela", registroId: data.id });
   revalidatePath("/telas");
   return { ok: true };
 }
@@ -48,7 +46,6 @@ export async function editarTela(
       error: error.code === "23505" ? "Rota já cadastrada." : error.message,
     };
   }
-  await audit({ acao: "update", entidade: "tela", registroId: id });
   revalidatePath("/telas");
   return { ok: true };
 }
@@ -63,12 +60,6 @@ export async function alternarStatusTela(
     .update({ status: habilitar ? "habilitada" : "desabilitada" })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({
-    acao: "update",
-    entidade: "tela",
-    registroId: id,
-    diff: { status: habilitar ? "habilitada" : "desabilitada" },
-  });
   revalidatePath("/telas");
   return { ok: true };
 }
@@ -85,7 +76,6 @@ export async function excluirTela(id: string): Promise<ActionResult> {
           : error.message,
     };
   }
-  await audit({ acao: "delete", entidade: "tela", registroId: id });
   revalidatePath("/telas");
   return { ok: true };
 }

@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import { categoriaSchema, type CategoriaInput } from "@/lib/validation/conteudos";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -24,7 +23,6 @@ export async function criarCategoria(
       error: error.code === "23505" ? "Categoria já existe." : error.message,
     };
   }
-  await audit({ acao: "create", entidade: "categoria_conteudo", registroId: data.id });
   revalidatePath("/conteudos");
   return { ok: true, id: data.id };
 }
@@ -46,7 +44,6 @@ export async function editarCategoria(
       error: error.code === "23505" ? "Categoria já existe." : error.message,
     };
   }
-  await audit({ acao: "update", entidade: "categoria_conteudo", registroId: id });
   revalidatePath("/conteudos/categorias");
   return { ok: true };
 }
@@ -58,7 +55,6 @@ export async function excluirCategoria(id: string): Promise<ActionResult> {
     .delete()
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "categoria_conteudo", registroId: id });
   revalidatePath("/conteudos/categorias");
   revalidatePath("/conteudos");
   return { ok: true };

@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import {
   statusEventoSchema,
   type StatusEventoInput,
@@ -33,7 +32,6 @@ export async function criarStatus(
       error: error.code === "23505" ? "Já existe um status com esse nome." : error.message,
     };
   }
-  await audit({ acao: "create", entidade: "status_evento", registroId: data.id });
   revalidatePath("/eventos/status");
   return { ok: true };
 }
@@ -71,7 +69,6 @@ export async function editarStatus(
       error: error.code === "23505" ? "Já existe um status com esse nome." : error.message,
     };
   }
-  await audit({ acao: "update", entidade: "status_evento", registroId: id });
   revalidatePath("/eventos/status");
   return { ok: true };
 }
@@ -96,7 +93,6 @@ export async function excluirStatus(id: string): Promise<ActionResult> {
           : error.message,
     };
   }
-  await audit({ acao: "delete", entidade: "status_evento", registroId: id });
   revalidatePath("/eventos/status");
   return { ok: true };
 }

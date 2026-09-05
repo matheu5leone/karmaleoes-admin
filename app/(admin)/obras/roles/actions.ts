@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import { roleSchema, type RoleInput } from "@/lib/validation/obras";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -22,7 +21,6 @@ export async function criarRole(input: RoleInput): Promise<ActionResult> {
       error: error.code === "23505" ? "Papel já existe." : error.message,
     };
   }
-  await audit({ acao: "create", entidade: "role", registroId: data.id });
   revalidatePath("/obras/roles");
   return { ok: true };
 }
@@ -44,7 +42,6 @@ export async function editarRole(
       error: error.code === "23505" ? "Papel já existe." : error.message,
     };
   }
-  await audit({ acao: "update", entidade: "role", registroId: id });
   revalidatePath("/obras/roles");
   return { ok: true };
 }
@@ -61,7 +58,6 @@ export async function excluirRole(id: string): Promise<ActionResult> {
           : error.message,
     };
   }
-  await audit({ acao: "delete", entidade: "role", registroId: id });
   revalidatePath("/obras/roles");
   return { ok: true };
 }

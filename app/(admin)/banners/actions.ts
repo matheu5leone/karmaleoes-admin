@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import { bannerSchema, type BannerInput } from "@/lib/validation/banners";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -19,7 +18,6 @@ export async function criarBanner(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "banner", registroId: data.id });
   revalidatePath("/banners");
   return { ok: true, id: data.id };
 }
@@ -36,7 +34,6 @@ export async function editarBanner(
     .update({ nome: p.data.nome, imagem: p.data.imagem })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "update", entidade: "banner", registroId: id });
   revalidatePath("/banners");
   revalidatePath(`/banners/${id}`);
   return { ok: true };
@@ -46,7 +43,6 @@ export async function excluirBanner(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("banner").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "banner", registroId: id });
   revalidatePath("/banners");
   return { ok: true };
 }
@@ -74,7 +70,6 @@ export async function associarTela(
       error: error.code === "23505" ? "Já associado a esta tela." : error.message,
     };
   }
-  await audit({ acao: "update", entidade: "banner", registroId: bannerId });
   revalidatePath(`/banners/${bannerId}`);
   return { ok: true };
 }
@@ -89,7 +84,6 @@ export async function removerAssociacao(
     .delete()
     .eq("id", assocId);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "update", entidade: "banner", registroId: bannerId });
   revalidatePath(`/banners/${bannerId}`);
   return { ok: true };
 }
@@ -104,12 +98,6 @@ export async function publicar(
     assoc_id: assocId,
   });
   if (error) return { ok: false, error: error.message };
-  await audit({
-    acao: "update",
-    entidade: "banner_tela",
-    registroId: assocId,
-    diff: { status: "publicado" },
-  });
   revalidatePath(`/banners/${bannerId}`);
   return { ok: true };
 }
@@ -124,12 +112,6 @@ export async function despublicar(
     .update({ status: "draft" })
     .eq("id", assocId);
   if (error) return { ok: false, error: error.message };
-  await audit({
-    acao: "update",
-    entidade: "banner_tela",
-    registroId: assocId,
-    diff: { status: "draft" },
-  });
   revalidatePath(`/banners/${bannerId}`);
   return { ok: true };
 }

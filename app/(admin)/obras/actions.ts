@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import {
   colecaoSchema,
   musicaSchema,
@@ -32,7 +31,6 @@ export async function criarMusica(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "musica", registroId: data.id });
   revalidatePath("/obras");
   return { ok: true, id: data.id };
 }
@@ -56,7 +54,6 @@ export async function editarMusica(
     })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "update", entidade: "musica", registroId: id });
   revalidatePath("/obras");
   revalidatePath(`/obras/musica/${id}`);
   return { ok: true };
@@ -66,7 +63,6 @@ export async function excluirMusica(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("musica").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "musica", registroId: id });
   revalidatePath("/obras");
   return { ok: true };
 }
@@ -90,7 +86,6 @@ export async function criarColecao(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "colecao", registroId: data.id });
   revalidatePath("/obras");
   return { ok: true, id: data.id };
 }
@@ -113,7 +108,6 @@ export async function editarColecao(
     })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "update", entidade: "colecao", registroId: id });
   revalidatePath("/obras");
   revalidatePath(`/obras/colecao/${id}`);
   return { ok: true };
@@ -123,7 +117,6 @@ export async function excluirColecao(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("colecao").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "colecao", registroId: id });
   revalidatePath("/obras");
   return { ok: true };
 }

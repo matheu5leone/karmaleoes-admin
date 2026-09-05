@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import { formatDuracao } from "@/lib/utils";
 import {
   linkSchema,
@@ -184,7 +183,6 @@ export async function vincularColaborador(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "obra_colaborador", registroId: data.id });
   revalidatePath(`/obras/${tipo}/${obraId}`);
   return { ok: true };
 }
@@ -200,7 +198,6 @@ export async function removerColaborador(
     .delete()
     .eq("id", vinculoId);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "obra_colaborador", registroId: vinculoId });
   revalidatePath(`/obras/${tipo}/${obraId}`);
   return { ok: true };
 }
@@ -219,7 +216,6 @@ export async function adicionarLink(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "link_plataforma", registroId: data.id });
   revalidatePath(`/obras/${tipo}/${obraId}`);
   return { ok: true };
 }
@@ -235,7 +231,6 @@ export async function removerLink(
     .delete()
     .eq("id", linkId);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "link_plataforma", registroId: linkId });
   revalidatePath(`/obras/${tipo}/${obraId}`);
   return { ok: true };
 }

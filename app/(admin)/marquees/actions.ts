@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import {
   itemSchema,
   marqueeSchema,
@@ -30,7 +29,6 @@ export async function criarMarquee(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "marquee", registroId: data.id });
   revalidatePath("/marquees");
   return { ok: true, id: data.id };
 }
@@ -53,7 +51,6 @@ export async function editarMarquee(
     })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "update", entidade: "marquee", registroId: id });
   revalidatePath(`/marquees/${id}`);
   revalidatePath("/marquees");
   return { ok: true };
@@ -63,7 +60,6 @@ export async function excluirMarquee(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("marquee").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "marquee", registroId: id });
   revalidatePath("/marquees");
   return { ok: true };
 }
@@ -95,12 +91,6 @@ export async function associarTelas(
       .insert(toAdd.map((t) => ({ marquee_id: marqueeId, tela_id: t })));
     if (error) return { ok: false, error: error.message };
   }
-  await audit({
-    acao: "update",
-    entidade: "marquee",
-    registroId: marqueeId,
-    diff: { telas: telaIds },
-  });
   revalidatePath(`/marquees/${marqueeId}`);
   return { ok: true };
 }
@@ -143,7 +133,6 @@ export async function salvarItem(
       .update(row)
       .eq("id", itemId);
     if (error) return { ok: false, error: error.message };
-    await audit({ acao: "update", entidade: "marquee_item", registroId: itemId });
   } else {
     const { data, error } = await supabase
       .from("marquee_item")
@@ -151,7 +140,6 @@ export async function salvarItem(
       .select("id")
       .single();
     if (error) return { ok: false, error: error.message };
-    await audit({ acao: "create", entidade: "marquee_item", registroId: data.id });
   }
   revalidatePath(`/marquees/${marqueeId}`);
   return { ok: true };
@@ -167,7 +155,6 @@ export async function excluirItem(
     .delete()
     .eq("id", itemId);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "marquee_item", registroId: itemId });
   revalidatePath(`/marquees/${marqueeId}`);
   return { ok: true };
 }

@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import { iconSchema, type IconInput } from "@/lib/validation/marquees";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -17,7 +16,6 @@ export async function criarIcon(input: IconInput): Promise<ActionResult> {
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "icons", registroId: data.id });
   revalidatePath("/marquees/icones");
   return { ok: true };
 }
@@ -34,7 +32,6 @@ export async function editarIcon(
     .update({ name: p.data.name, extension: p.data.extension.toLowerCase() })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "update", entidade: "icons", registroId: id });
   revalidatePath("/marquees/icones");
   return { ok: true };
 }
@@ -51,7 +48,6 @@ export async function excluirIcon(id: string): Promise<ActionResult> {
           : error.message,
     };
   }
-  await audit({ acao: "delete", entidade: "icons", registroId: id });
   revalidatePath("/marquees/icones");
   return { ok: true };
 }

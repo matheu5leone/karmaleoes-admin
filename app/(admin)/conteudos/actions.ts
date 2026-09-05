@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { audit } from "@/lib/audit";
 import { conteudoSchema, type ConteudoInput } from "@/lib/validation/conteudos";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -35,7 +34,6 @@ export async function criarConteudo(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "create", entidade: "conteudo", registroId: data.id });
   revalidatePath("/conteudos");
   return { ok: true, id: data.id };
 }
@@ -52,7 +50,6 @@ export async function editarConteudo(
     .update(montarRow(p.data))
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "update", entidade: "conteudo", registroId: id });
   revalidatePath("/conteudos");
   return { ok: true };
 }
@@ -61,7 +58,6 @@ export async function excluirConteudo(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("conteudo").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  await audit({ acao: "delete", entidade: "conteudo", registroId: id });
   revalidatePath("/conteudos");
   return { ok: true };
 }
