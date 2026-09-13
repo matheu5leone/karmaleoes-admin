@@ -70,8 +70,26 @@ export async function enrollTotp(): Promise<
   }
 > {
   const supabase = await createClient();
+
+  // Cada abertura da tela gera um fator novo. Se a pessoa recarrega, volta ou
+  // loga de novo antes de confirmar o código, sobra um fator NÃO verificado — e
+  // o Supabase recusa o próximo com "A factor with the friendly name "" for this
+  // user already exists". Fator não verificado nunca chegou a funcionar em
+  // nenhum celular, então é seguro descartar antes de gerar o QR novo.
+  const { data: existentes } = await supabase.auth.mfa.listFactors();
+  const pendentes = (existentes?.all ?? []).filter(
+    (f) => f.factor_type === "totp" && f.status === "unverified",
+  );
+  for (const f of pendentes) {
+    await supabase.auth.mfa.unenroll({ factorId: f.id });
+  }
+
   const { data, error } = await supabase.auth.mfa.enroll({
     factorType: "totp",
+    // Nome único como segunda proteção: mesmo se a limpeza acima falhar, não há
+    // colisão com um fator antigo de nome vazio. (É interno; não aparece no app
+    // autenticador, que mostra e-mail e emissor.)
+    friendlyName: `totp-${Date.now()}`,
   });
   if (error || !data) {
     return { ok: false, error: error?.message ?? "Falha ao iniciar o 2FA." };
