@@ -42,8 +42,8 @@ export default async function AdminLayout({
   // Enquanto a senha for a do cadastro, o único caminho é trocá-la (0016).
   if (conta.senhaTemporaria) redirect("/trocar-senha");
 
-  // Histórico é exclusivo do administrador raiz (RLS em audit_log, migration 0015).
-  const nav = conta.isRoot
+  // Histórico é exclusivo do papel SUPER (RLS em audit_log, migration 0019).
+  const nav = conta.isSuper
     ? [...NAV, { href: "/historico", label: "Histórico", icon: History }]
     : NAV;
 

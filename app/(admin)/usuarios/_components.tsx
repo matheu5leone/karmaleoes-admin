@@ -16,6 +16,7 @@ export type Usuario = {
   telefone: string | null;
   status: string;
   two_factor_configured: boolean;
+  user_role: "ADMIN" | "SUPER";
 };
 
 type NovoUsuarioErros = {
@@ -195,7 +196,10 @@ function CardUsuario({
   return (
     <li className="space-y-3 rounded-lg border border-border bg-card p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="min-w-0 break-all font-medium">{usuario.email}</span>
+        <span className="inline-flex min-w-0 flex-wrap items-center gap-2 break-all font-medium">
+          {usuario.email}
+          {usuario.user_role === "SUPER" && <ShieldBadge tinctura="or">super</ShieldBadge>}
+        </span>
         <ShieldBadge tinctura={ativo ? "vert" : "argent"} escudo>
           {ativo ? "ativo" : "inativo"}
         </ShieldBadge>
@@ -280,7 +284,12 @@ function LinhaUsuario({
 
   return (
     <tr className="border-t border-border">
-      <td className="px-4 py-3">{usuario.email}</td>
+      <td className="px-4 py-3">
+        <span className="inline-flex flex-wrap items-center gap-2">
+          {usuario.email}
+          {usuario.user_role === "SUPER" && <ShieldBadge tinctura="or">super</ShieldBadge>}
+        </span>
+      </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <PhoneInput

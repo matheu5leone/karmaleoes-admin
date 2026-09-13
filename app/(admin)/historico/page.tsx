@@ -31,8 +31,8 @@ export default async function HistoricoPage({
 }: {
   searchParams: Promise<Params>;
 }) {
-  // A RLS (0015) já barra a leitura; aqui é a guarda de rota.
-  if (!(await getContaAtual()).isRoot) notFound();
+  // A RLS (0019) já barra a leitura; aqui é a guarda de rota.
+  if (!(await getContaAtual()).isSuper) notFound();
 
   const sp = await searchParams;
   const ordem = normalizarOrdem(sp.ordem);
@@ -80,7 +80,7 @@ export default async function HistoricoPage({
       <h1 className="text-2xl font-semibold tracking-tight">Histórico</h1>
       <p className="mb-6 mt-1 text-muted-foreground">
         Toda escrita no banco, capturada por trigger — inclusive alterações
-        feitas fora do painel. Visível apenas para o administrador raiz.
+        feitas fora do painel. Visível apenas para super administradores.
       </p>
       <HistoricoTabela
         logs={lista}

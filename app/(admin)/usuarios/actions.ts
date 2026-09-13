@@ -87,16 +87,15 @@ export async function alternarStatus(
   ativar: boolean,
 ): Promise<ActionResult> {
   const supabase = await createClient();
-  // Autoproteção removida a pedido: só o admin raiz é intocável.
+  // SUPER é intocável: não pode ser desativado por ninguém pelo painel.
   if (!ativar) {
-    const { data: primeiro } = await supabase
+    const { data: alvo } = await supabase
       .from("admin_user")
-      .select("id")
-      .order("created_at", { ascending: true })
-      .limit(1)
+      .select("user_role")
+      .eq("id", id)
       .single();
-    if (primeiro?.id === id) {
-      return { ok: false, error: "O administrador raiz não pode ser desativado." };
+    if (alvo?.user_role === "SUPER") {
+      return { ok: false, error: "Super administradores não podem ser desativados." };
     }
   }
 

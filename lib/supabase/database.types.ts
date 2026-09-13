@@ -22,6 +22,7 @@ export type Database = {
           telefone: string | null
           two_factor_configured: boolean
           updated_at: string
+          user_role: string
         }
         Insert: {
           created_at?: string
@@ -32,6 +33,7 @@ export type Database = {
           telefone?: string | null
           two_factor_configured?: boolean
           updated_at?: string
+          user_role?: string
         }
         Update: {
           created_at?: string
@@ -42,6 +44,7 @@ export type Database = {
           telefone?: string | null
           two_factor_configured?: boolean
           updated_at?: string
+          user_role?: string
         }
         Relationships: []
       }
