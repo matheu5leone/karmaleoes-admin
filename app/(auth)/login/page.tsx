@@ -46,7 +46,7 @@ export default function LoginPage() {
       setCodigo("");
       return setError(r.error);
     }
-    router.push("/usuarios");
+    router.push("/dashboard");
     router.refresh();
   }
 

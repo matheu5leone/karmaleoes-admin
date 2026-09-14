@@ -2,11 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getContaAtual } from "@/lib/conta";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { invalidateSession } from "@/lib/redis";
 import { criarUsuarioSchema, telefoneSchema } from "@/lib/validation/usuarios";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
+
+const SO_SUPER: ActionResult = {
+  ok: false,
+  error: "Apenas super administradores gerenciam usuários.",
+};
 
 /** Cadastra usuário admin: cria auth user (senha temporária) + linha admin_user (RF-LOGIN-005). */
 export async function criarUsuario(input: {
@@ -14,6 +20,7 @@ export async function criarUsuario(input: {
   telefone?: string;
   senhaTemporaria: string;
 }): Promise<ActionResult> {
+  if (!(await getContaAtual()).isSuper) return SO_SUPER;
   const parsed = criarUsuarioSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0].message };
@@ -66,6 +73,7 @@ export async function editarTelefone(
   id: string,
   telefone: string,
 ): Promise<ActionResult> {
+  if (!(await getContaAtual()).isSuper) return SO_SUPER;
   const parsed = telefoneSchema.safeParse({ telefone });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0].message };
@@ -86,6 +94,7 @@ export async function alternarStatus(
   id: string,
   ativar: boolean,
 ): Promise<ActionResult> {
+  if (!(await getContaAtual()).isSuper) return SO_SUPER;
   const supabase = await createClient();
   // SUPER é intocável: não pode ser desativado por ninguém pelo painel.
   if (!ativar) {

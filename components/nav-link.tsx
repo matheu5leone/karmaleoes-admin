@@ -31,13 +31,15 @@ export function NavLink({
   href,
   className,
   children,
+  "aria-current": ariaCurrent,
 }: {
   href: string;
   className?: string;
   children: ReactNode;
+  "aria-current"?: "page";
 }) {
   return (
-    <Link href={href} className={className}>
+    <Link href={href} className={className} aria-current={ariaCurrent}>
       {children}
       <PendingIndicator />
     </Link>

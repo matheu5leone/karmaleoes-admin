@@ -1,7 +1,12 @@
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getContaAtual } from "@/lib/conta";
 import { NovoUsuario, UsuariosTable, type Usuario } from "./_components";
 
 export default async function UsuariosPage() {
+  // Gestão de usuários é exclusiva do papel SUPER (a RLS da 0020 também barra).
+  if (!(await getContaAtual()).isSuper) notFound();
+
   const supabase = await createClient();
   const { data } = await supabase
     .from("admin_user")

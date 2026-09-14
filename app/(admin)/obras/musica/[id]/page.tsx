@@ -49,7 +49,7 @@ export default async function MusicaDetailPage({
 
   return (
     <div>
-      <Link href="/obras" className="text-sm text-brand hover:underline">
+      <Link href="/obras/musicas" className="text-sm text-brand hover:underline">
         ← Obras
       </Link>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight">

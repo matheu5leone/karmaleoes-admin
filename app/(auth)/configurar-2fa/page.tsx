@@ -37,7 +37,7 @@ export default function ConfigurarDoisFatoresPage() {
       setCodigo("");
       return setError(r.error);
     }
-    router.push("/usuarios");
+    router.push("/dashboard");
     router.refresh();
   }
 

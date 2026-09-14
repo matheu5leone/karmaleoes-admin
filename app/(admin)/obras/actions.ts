@@ -31,7 +31,7 @@ export async function criarMusica(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/obras");
+  revalidatePath("/obras", "layout");
   return { ok: true, id: data.id };
 }
 
@@ -54,7 +54,7 @@ export async function editarMusica(
     })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/obras");
+  revalidatePath("/obras", "layout");
   revalidatePath(`/obras/musica/${id}`);
   return { ok: true };
 }
@@ -63,7 +63,7 @@ export async function excluirMusica(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("musica").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/obras");
+  revalidatePath("/obras", "layout");
   return { ok: true };
 }
 
@@ -86,7 +86,7 @@ export async function criarColecao(
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/obras");
+  revalidatePath("/obras", "layout");
   return { ok: true, id: data.id };
 }
 
@@ -108,7 +108,7 @@ export async function editarColecao(
     })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/obras");
+  revalidatePath("/obras", "layout");
   revalidatePath(`/obras/colecao/${id}`);
   return { ok: true };
 }
@@ -117,6 +117,6 @@ export async function excluirColecao(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("colecao").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/obras");
+  revalidatePath("/obras", "layout");
   return { ok: true };
 }

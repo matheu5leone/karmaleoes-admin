@@ -10,6 +10,7 @@ import {
 
 // Rotas administrativas protegidas (grupo (admin)).
 const PROTECTED_PREFIXES = [
+  "/dashboard",
   "/usuarios",
   "/telas",
   "/marquees",

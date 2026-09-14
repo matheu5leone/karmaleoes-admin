@@ -10,7 +10,7 @@ import { AlterarSenhaForm } from "@/components/form/alterar-senha-form";
 export default async function TrocarSenhaPage() {
   const conta = await getContaAtual();
   if (!conta.userId) redirect("/login");
-  if (!conta.senhaTemporaria) redirect("/usuarios");
+  if (!conta.senhaTemporaria) redirect("/dashboard");
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6">
@@ -25,7 +25,7 @@ export default async function TrocarSenhaPage() {
           Sua conta ainda usa a senha temporária do cadastro. Escolha uma nova
           senha para continuar.
         </p>
-        <AlterarSenhaForm redirectTo="/usuarios" labelBotao="Definir senha" />
+        <AlterarSenhaForm redirectTo="/dashboard" labelBotao="Definir senha" />
       </div>
     </main>
   );

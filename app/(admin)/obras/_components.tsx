@@ -57,19 +57,21 @@ function NomeLink({ nome, onClick }: { nome: string; onClick: () => void }) {
 }
 
 export function ObrasManager({
+  secao,
   musicas,
   colecoes,
   colecaoOpts,
 }: {
+  /** Cada seção tem sua página (/obras/musicas e /obras/colecoes). */
+  secao: "musicas" | "colecoes";
   musicas: MusicaRow[];
   colecoes: ColecaoRow[];
   colecaoOpts: ColecaoOpt[];
 }) {
-  return (
-    <div className="space-y-10">
-      <MusicasSection musicas={musicas} colecaoOpts={colecaoOpts} />
-      <ColecoesSection colecoes={colecoes} />
-    </div>
+  return secao === "musicas" ? (
+    <MusicasSection musicas={musicas} colecaoOpts={colecaoOpts} />
+  ) : (
+    <ColecoesSection colecoes={colecoes} />
   );
 }
 
