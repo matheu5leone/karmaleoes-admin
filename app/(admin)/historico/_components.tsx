@@ -10,7 +10,7 @@ import { Field } from "@/components/form/field";
 import { Button } from "@/components/ui/button";
 import { ShieldBadge, type Tinctura } from "@/components/heraldry/shield-badge";
 import { cn } from "@/lib/utils";
-import { PERIODOS, type Periodo } from "./periodos";
+import { PERIODOS, PROXIMO_PERIODO, type Periodo } from "./periodos";
 
 export type LogRow = {
   id: string;
@@ -162,6 +162,7 @@ export function HistoricoTabela({
   }
 
   const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+  const proximo = PROXIMO_PERIODO[filtros.periodo];
 
   const colunas: { chave: string; rotulo: string; ordenavel?: boolean }[] = [
     { chave: "created_at", rotulo: "Data/hora", ordenavel: true },
@@ -242,9 +243,21 @@ export function HistoricoTabela({
           </thead>
           <tbody>
             {logs.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
-                Nenhum registro para este filtro.
-              </td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center">
+                  <p className="text-muted-foreground">
+                    {`Sem logs ${PERIODOS[filtros.periodo].frase}.`}
+                  </p>
+                  {proximo && (
+                    <Link
+                      href={comParams({ periodo: proximo, pagina: null })}
+                      className="mt-1 inline-block text-sm font-medium text-brand hover:underline"
+                    >
+                      Ver {PERIODOS[proximo].verFrase}
+                    </Link>
+                  )}
+                </td>
+              </tr>
             )}
             {logs.map((l) => {
               const { rotulo, Icone, tinctura } = acaoDe(l.acao);

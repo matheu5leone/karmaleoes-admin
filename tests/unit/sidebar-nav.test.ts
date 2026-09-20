@@ -54,7 +54,12 @@ describe("gruposAncestrais", () => {
   });
 });
 
-import { PERIODOS, PERIODO_PADRAO, normalizarPeriodo } from "@/app/(admin)/historico/periodos";
+import {
+  PERIODOS,
+  PERIODO_PADRAO,
+  PROXIMO_PERIODO,
+  normalizarPeriodo,
+} from "@/app/(admin)/historico/periodos";
 
 describe("períodos do histórico", () => {
   it("tem as opções pedidas, nesta ordem", () => {
@@ -64,6 +69,15 @@ describe("períodos do histórico", () => {
     expect(PERIODOS.custom.horas).toBeNull();
     expect(PERIODOS["24h"].horas).toBe(24);
     expect(PERIODOS["3m"].horas).toBe(24 * 90);
+  });
+  it("o padrão são as últimas 24 horas", () => {
+    expect(PERIODO_PADRAO).toBe("24h");
+  });
+  it("cada janela sugere a seguinte; a maior e a personalizada não sugerem", () => {
+    expect(PROXIMO_PERIODO["24h"]).toBe("7d");
+    expect(PROXIMO_PERIODO["30d"]).toBe("3m");
+    expect(PROXIMO_PERIODO["3m"]).toBeUndefined();
+    expect(PROXIMO_PERIODO.custom).toBeUndefined();
   });
   it("valor inválido ou ausente cai no padrão", () => {
     expect(normalizarPeriodo(undefined)).toBe(PERIODO_PADRAO);
