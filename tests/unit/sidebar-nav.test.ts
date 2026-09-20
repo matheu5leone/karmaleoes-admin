@@ -53,3 +53,21 @@ describe("gruposAncestrais", () => {
     expect(gruposAncestrais(admin, "/dashboard")).toEqual([]);
   });
 });
+
+import { PERIODOS, PERIODO_PADRAO, normalizarPeriodo } from "@/app/(admin)/historico/periodos";
+
+describe("períodos do histórico", () => {
+  it("tem as opções pedidas, nesta ordem", () => {
+    expect(Object.keys(PERIODOS)).toEqual(["24h", "7d", "15d", "30d", "3m", "custom"]);
+  });
+  it("só 'Personalizado' não tem janela fixa", () => {
+    expect(PERIODOS.custom.horas).toBeNull();
+    expect(PERIODOS["24h"].horas).toBe(24);
+    expect(PERIODOS["3m"].horas).toBe(24 * 90);
+  });
+  it("valor inválido ou ausente cai no padrão", () => {
+    expect(normalizarPeriodo(undefined)).toBe(PERIODO_PADRAO);
+    expect(normalizarPeriodo("tudo")).toBe(PERIODO_PADRAO);
+    expect(normalizarPeriodo("30d")).toBe("30d");
+  });
+});

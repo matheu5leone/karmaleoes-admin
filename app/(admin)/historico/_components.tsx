@@ -10,6 +10,7 @@ import { Field } from "@/components/form/field";
 import { Button } from "@/components/ui/button";
 import { ShieldBadge, type Tinctura } from "@/components/heraldry/shield-badge";
 import { cn } from "@/lib/utils";
+import { PERIODOS, type Periodo } from "./periodos";
 
 export type LogRow = {
   id: string;
@@ -115,7 +116,14 @@ export function HistoricoTabela({
   porPagina: number;
   ordem: string;
   dir: string;
-  filtros: { entidade: string; acao: string; autor: string; de: string; ate: string };
+  filtros: {
+    entidade: string;
+    acao: string;
+    autor: string;
+    periodo: Periodo;
+    de: string;
+    ate: string;
+  };
   entidadesDisponiveis: string[];
   autoresDisponiveis: { id: string; email: string }[];
 }) {
@@ -140,7 +148,17 @@ export function HistoricoTabela({
   }
 
   function filtrar(campo: string, valor: string) {
-    router.push(comParams({ [campo]: valor || null, pagina: null }));
+    const mudancas: Record<string, string | null> = {
+      [campo]: valor || null,
+      pagina: null,
+    };
+    // Sair de "Personalizado" descarta as datas: elas ficariam filtrando sem
+    // aparecer na tela.
+    if (campo === "periodo" && valor !== "custom") {
+      mudancas.de = null;
+      mudancas.ate = null;
+    }
+    router.push(comParams(mudancas));
   }
 
   const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
@@ -181,14 +199,27 @@ export function HistoricoTabela({
             {autoresDisponiveis.map((a) => <option key={a.id} value={a.id}>{a.email}</option>)}
           </Select>
         </Field>
-        <Field label="De" htmlFor="f-de" className="space-y-1.5">
-          <Input id="f-de" type="date" value={filtros.de} className="w-40"
-            onChange={(e) => filtrar("de", e.target.value)} />
+        <Field label="Período" htmlFor="f-periodo" className="space-y-1.5">
+          <Select id="f-periodo" value={filtros.periodo} className="w-48"
+            onChange={(e) => filtrar("periodo", e.target.value)}>
+            {Object.entries(PERIODOS).map(([valor, { rotulo }]) => (
+              <option key={valor} value={valor}>{rotulo}</option>
+            ))}
+          </Select>
         </Field>
-        <Field label="Até" htmlFor="f-ate" className="space-y-1.5">
-          <Input id="f-ate" type="date" value={filtros.ate} className="w-40"
-            onChange={(e) => filtrar("ate", e.target.value)} />
-        </Field>
+        {/* Datas livres só no modo personalizado. */}
+        {filtros.periodo === "custom" && (
+          <>
+            <Field label="De" htmlFor="f-de" className="space-y-1.5">
+              <Input id="f-de" type="date" value={filtros.de} max={filtros.ate || undefined}
+                className="w-40" onChange={(e) => filtrar("de", e.target.value)} />
+            </Field>
+            <Field label="Até" htmlFor="f-ate" className="space-y-1.5">
+              <Input id="f-ate" type="date" value={filtros.ate} min={filtros.de || undefined}
+                className="w-40" onChange={(e) => filtrar("ate", e.target.value)} />
+            </Field>
+          </>
+        )}
         <span className="pb-2 text-sm text-muted-foreground">{total} registro{total === 1 ? "" : "s"}</span>
       </div>
 

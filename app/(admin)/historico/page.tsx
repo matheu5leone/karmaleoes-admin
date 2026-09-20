@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getContaAtual } from "@/lib/conta";
 import { HistoricoTabela, type LogRow } from "./_components";
+import { PERIODOS, normalizarPeriodo } from "./periodos";
 
 const POR_PAGINA = 50;
 
@@ -22,6 +23,7 @@ type Params = {
   entidade?: string;
   acao?: string;
   autor?: string;
+  periodo?: string;
   de?: string;
   ate?: string;
 };
@@ -39,6 +41,8 @@ export default async function HistoricoPage({
   const asc = sp.dir === "asc";
   const pagina = Math.max(1, Number(sp.pagina) || 1);
   const inicio = (pagina - 1) * POR_PAGINA;
+  const periodo = normalizarPeriodo(sp.periodo);
+  const horas = PERIODOS[periodo].horas;
 
   const supabase = await createClient();
 
@@ -51,8 +55,14 @@ export default async function HistoricoPage({
   if (sp.entidade) q = q.eq("entidade", sp.entidade);
   if (sp.acao) q = q.eq("acao", sp.acao);
   if (sp.autor) q = q.eq("user_id", sp.autor);
-  if (sp.de) q = q.gte("created_at", `${sp.de}T00:00:00`);
-  if (sp.ate) q = q.lte("created_at", `${sp.ate}T23:59:59`);
+  if (horas === null) {
+    // Personalizado: intervalo livre, com as pontas do dia incluídas.
+    if (sp.de) q = q.gte("created_at", `${sp.de}T00:00:00`);
+    if (sp.ate) q = q.lte("created_at", `${sp.ate}T23:59:59`);
+  } else {
+    const desde = new Date(Date.now() - horas * 60 * 60 * 1000);
+    q = q.gte("created_at", desde.toISOString());
+  }
 
   const [{ data: logs, count }, { data: admins }, { data: entidades }] =
     await Promise.all([
@@ -93,6 +103,7 @@ export default async function HistoricoPage({
           entidade: sp.entidade ?? "",
           acao: sp.acao ?? "",
           autor: sp.autor ?? "",
+          periodo,
           de: sp.de ?? "",
           ate: sp.ate ?? "",
         }}
