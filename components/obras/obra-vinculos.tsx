@@ -92,7 +92,7 @@ export function ObraVinculos({
             ))}
           </Select>
           <Select value={roleId} onChange={(e) => setRoleId(e.target.value)} className="w-36">
-            <option value="">Papel…</option>
+            <option value="">Tipo de colaboração…</option>
             {roles.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.nome}

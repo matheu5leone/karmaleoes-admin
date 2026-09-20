@@ -18,7 +18,7 @@ export async function criarRole(input: RoleInput): Promise<ActionResult> {
   if (error) {
     return {
       ok: false,
-      error: error.code === "23505" ? "Papel já existe." : error.message,
+      error: error.code === "23505" ? "Tipo de colaboração já existe." : error.message,
     };
   }
   revalidatePath("/obras/roles");
@@ -39,7 +39,7 @@ export async function editarRole(
   if (error) {
     return {
       ok: false,
-      error: error.code === "23505" ? "Papel já existe." : error.message,
+      error: error.code === "23505" ? "Tipo de colaboração já existe." : error.message,
     };
   }
   revalidatePath("/obras/roles");
@@ -54,7 +54,7 @@ export async function excluirRole(id: string): Promise<ActionResult> {
       ok: false,
       error:
         error.code === "23503"
-          ? "Papel em uso por vínculos — não pode ser excluído."
+          ? "Tipo de colaboração em uso por vínculos — não pode ser excluído."
           : error.message,
     };
   }

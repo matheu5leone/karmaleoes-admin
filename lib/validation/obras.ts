@@ -45,7 +45,7 @@ export type RoleInput = z.infer<typeof roleSchema>;
 
 export const vinculoSchema = z.object({
   colaborador_id: z.string().uuid("Selecione o colaborador"),
-  role_id: z.string().uuid("Selecione o papel"),
+  role_id: z.string().uuid("Selecione o tipo de colaboração"),
 });
 export type VinculoInput = z.infer<typeof vinculoSchema>;
 

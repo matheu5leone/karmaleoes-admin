@@ -15,7 +15,7 @@ export default async function RolesPage() {
         ← Obras
       </Link>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-        Papéis (roles)
+        Tipos de Colaborações
       </h1>
       <p className="mb-6 mt-1 text-muted-foreground">
         Tipos de participação (feat, produtor, compositor, mixing engineer…).

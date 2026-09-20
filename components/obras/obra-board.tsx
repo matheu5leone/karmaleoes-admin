@@ -817,7 +817,7 @@ function PainelAdicionar({
             onChange={(e) => setRoleId(e.target.value)}
             className="w-40"
           >
-            <option value="">Papel…</option>
+            <option value="">Tipo de colaboração…</option>
             {grafo.opcoes.roles.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.nome}

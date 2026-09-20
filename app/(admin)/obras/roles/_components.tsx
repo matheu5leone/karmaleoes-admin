@@ -43,14 +43,14 @@ export function RolesManager({ roles }: { roles: RoleRow[] }) {
   return (
     <>
       <div className="mb-4 flex justify-end">
-        <Button onClick={() => setForm({ open: true, r: null })}>Novo papel</Button>
+        <Button onClick={() => setForm({ open: true, r: null })}>Novo tipo</Button>
       </div>
       <DataTable
         columns={columns}
         rows={roles}
         getFilterText={(r) => r.nome}
-        filterPlaceholder="Filtrar papéis…"
-        empty="Nenhum papel."
+        filterPlaceholder="Filtrar tipos de colaboração…"
+        empty="Nenhum tipo de colaboração."
       />
       {form.open && (
         <RoleFormModal
@@ -64,7 +64,7 @@ export function RolesManager({ roles }: { roles: RoleRow[] }) {
       )}
       <ConfirmDialog
         open={!!del}
-        title="Excluir papel"
+        title="Excluir tipo de colaboração"
         description={del ? `Remover "${del.nome}"?` : ""}
         confirmLabel="Excluir"
         pending={pending}
@@ -75,7 +75,7 @@ export function RolesManager({ roles }: { roles: RoleRow[] }) {
             const r = await excluirRole(del.id);
             setDel(null);
             if (!r.ok) toast.error(r.error);
-            else toast.success("Papel excluído.");
+            else toast.success("Tipo de colaboração excluído.");
             router.refresh();
           })
         }
@@ -104,7 +104,7 @@ function RoleFormModal({
     start(async () => {
       const res = r ? await editarRole(r.id, { nome }) : await criarRole({ nome });
       if (!res.ok) return setError(res.error);
-      toast.success(r ? "Papel atualizado." : "Papel criado.");
+      toast.success(r ? "Tipo de colaboração atualizado." : "Tipo de colaboração criado.");
       onSaved();
     });
   }
@@ -122,7 +122,7 @@ function RoleFormModal({
         className="w-full max-w-md space-y-4 rounded-lg border border-border bg-card p-6 shadow-lg"
       >
         <h2 className="text-lg font-semibold tracking-tight">
-          {r ? "Editar papel" : "Novo papel"}
+          {r ? "Editar tipo de colaboração" : "Novo tipo de colaboração"}
         </h2>
         <Field label="Nome" htmlFor="ro-nome" error={error}>
           <Input id="ro-nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
