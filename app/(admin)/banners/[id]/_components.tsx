@@ -1,10 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { ShieldBadge } from "@/components/heraldry/shield-badge";
+import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import {
   associarTela,
   despublicar,
@@ -14,20 +15,28 @@ import {
 
 export type DetTela = { id: string; nome: string; status: string };
 export type DetAssoc = { id: string; tela_id: string; status: string };
+/** Banner de OUTRO cadastro que está publicado na tela agora. */
+export type PublicadoNaTela = { bannerId: string; nome: string };
 
 export function BannerAssociacoes({
   bannerId,
   telas,
   assoc,
+  publicadoPorTela,
 }: {
   bannerId: string;
   telas: DetTela[];
   assoc: DetAssoc[];
+  publicadoPorTela: Record<string, PublicadoNaTela>;
 }) {
   const router = useRouter();
   const toast = useToast();
   const [pending, start] = useTransition();
   const byTela = new Map(assoc.map((a) => [a.tela_id, a]));
+  // Troca pendente de confirmação: publicar aqui tira outro banner do ar.
+  const [troca, setTroca] = useState<
+    { assocId: string; tela: string; substituido: string } | null
+  >(null);
 
   function run(fn: () => Promise<{ ok: boolean; error?: string }>, ok: string) {
     start(async () => {
@@ -85,6 +94,12 @@ export function BannerAssociacoes({
                           {a.status}
                         </ShieldBadge>
                       )}
+                      {/* Quem ocupa a tela hoje — evita a troca às cegas. */}
+                      {publicadoPorTela[t.id] && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          exibindo: {publicadoPorTela[t.id].nome}
+                        </p>
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <div className="flex gap-1">
@@ -107,9 +122,22 @@ export function BannerAssociacoes({
                           <Button
                             size="sm"
                             disabled={pending}
-                            onClick={() =>
-                              run(() => publicar(bannerId, a.id), "Publicado.")
-                            }
+                            onClick={() => {
+                              const atual = publicadoPorTela[t.id];
+                              // Sem banner publicado na tela, publica direto:
+                              // confirmar aqui seria só atrito.
+                              if (!atual) {
+                                return run(
+                                  () => publicar(bannerId, a.id),
+                                  "Publicado.",
+                                );
+                              }
+                              setTroca({
+                                assocId: a.id,
+                                tela: t.nome,
+                                substituido: atual.nome,
+                              });
+                            }}
                           >
                             Publicar
                           </Button>
@@ -153,6 +181,28 @@ export function BannerAssociacoes({
           </table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!troca}
+        title="Trocar o banner publicado?"
+        description={
+          troca
+            ? `A tela "${troca.tela}" já exibe o banner "${troca.substituido}". Publicar este no lugar tira o outro do ar imediatamente — ele volta a rascunho, sem ser excluído.`
+            : ""
+        }
+        confirmLabel="Trocar banner"
+        pending={pending}
+        onCancel={() => setTroca(null)}
+        onConfirm={() => {
+          if (!troca) return;
+          const { assocId, substituido } = troca;
+          setTroca(null);
+          run(
+            () => publicar(bannerId, assocId),
+            `Publicado no lugar de "${substituido}".`,
+          );
+        }}
+      />
     </section>
   );
 }
