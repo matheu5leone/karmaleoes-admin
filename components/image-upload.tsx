@@ -3,7 +3,8 @@
 import { useRef, useState, useTransition } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { uploadImagemAction } from "@/lib/actions/upload";
-import type { Bucket } from "@/lib/storage";
+import type { Bucket } from "@/lib/storage-tipos";
+import { accept, erroDoArquivo } from "@/lib/upload-formatos";
 import { Button } from "@/components/ui/button";
 
 interface ImageUploadProps {
@@ -23,6 +24,15 @@ export function ImageUpload({ bucket, value, onChange }: ImageUploadProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
+
+    // Erro na hora, sem ida ao servidor. O `accept` já filtra o seletor, mas
+    // dá para escolher "todos os arquivos" e passar por cima dele.
+    const problema = erroDoArquivo(bucket, file);
+    if (problema) {
+      e.target.value = "";
+      return setError(problema);
+    }
+
     const fd = new FormData();
     fd.set("file", file);
     start(async () => {
@@ -77,11 +87,15 @@ export function ImageUpload({ bucket, value, onChange }: ImageUploadProps) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif"
+        accept={accept(bucket)}
         className="hidden"
         onChange={onFile}
       />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

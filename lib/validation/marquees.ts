@@ -32,7 +32,12 @@ export const iconSchema = z.object({
   extension: z
     .string()
     .trim()
-    .min(1, "Informe a extensão")
-    .regex(/^[a-z0-9]+$/i, "Extensão inválida (ex.: svg, png)"),
+    .toLowerCase()
+    .pipe(
+      z.enum(["png", "webp", "ico", "svg"], {
+        message: "Ícone deve ser PNG, WEBP, ICO ou SVG",
+      }),
+    ),
 });
-export type IconInput = z.infer<typeof iconSchema>;
+// z.input: o formulário envia texto livre; o schema normaliza e restringe.
+export type IconInput = z.input<typeof iconSchema>;

@@ -1,25 +1,20 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
+import type { Bucket } from "@/lib/storage-tipos";
+import { erroDoArquivo } from "@/lib/upload-formatos";
 
-// Buckets por domínio (ver transversal-storage-imagens.md). Só `marquees` existe
-// no Plano 02; os demais entram com seus módulos.
-export type Bucket = "marquees" | "banners" | "conteudos" | "obras";
-
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
-export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+export type { Bucket } from "@/lib/storage-tipos";
+export { MAX_IMAGE_BYTES } from "@/lib/upload-formatos";
 
 /** Sobe uma imagem ao bucket e devolve path + URL pública. Valida tipo e tamanho. */
 export async function uploadImagem(
   bucket: Bucket,
   file: File,
 ): Promise<{ path: string; url: string }> {
-  if (!IMAGE_TYPES.includes(file.type)) {
-    throw new Error("Formato inválido (use PNG, JPG, WEBP ou GIF).");
-  }
-  if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("Imagem muito grande (máx. 5 MB).");
-  }
+  // Mesma checagem do cliente, refeita aqui: o cliente é só conveniência.
+  const erro = erroDoArquivo(bucket, file);
+  if (erro) throw new Error(erro);
 
   const supabase = await createClient();
   const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";

@@ -3,7 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const EXTENSOES_IMAGEM = new Set(["svg", "png", "jpg", "jpeg", "webp", "gif"]);
+const EXTENSOES_IMAGEM = new Set(["png", "webp", "ico", "svg"]);
 
 /** Lê os arquivos de imagem em /public/icons e devolve { name, extension }. */
 export async function listIconFiles(): Promise<
