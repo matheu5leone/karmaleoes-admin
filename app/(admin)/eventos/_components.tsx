@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,10 @@ function tincturaDoStatus(s: string): Tinctura {
   return "sable";
 }
 
+type Vista = "tabela" | "kanban";
+const VISTA_PADRAO: Vista = "kanban";
+const VISTA_KEY = "karma-eventos-vista";
+
 function StatusBadge({ s }: { s: string }) {
   return (
     <ShieldBadge tinctura={tincturaDoStatus(s)} escudo>
@@ -77,8 +81,30 @@ export function EventosManager({
   });
   const [encerrar, setEncerrar] = useState<EventoRow | null>(null);
   const [del, setDel] = useState<EventoRow | null>(null);
-  const [vista, setVista] = useState<"tabela" | "kanban">("tabela");
+  // Kanban é o padrão; a escolha fica guardada no navegador.
+  const [vista, setVista] = useState<Vista>(VISTA_PADRAO);
+
+  // Lido depois da montagem de propósito: ler localStorage durante a
+  // renderização quebraria a hidratação, já que o servidor não o enxerga.
+  useEffect(() => {
+    try {
+      const salva = localStorage.getItem(VISTA_KEY);
+      if (salva === "tabela" || salva === "kanban") setVista(salva);
+    } catch {
+      /* navegador sem storage: segue no padrão */
+    }
+  }, []);
+
   const [pending, start] = useTransition();
+
+  function escolherVista(v: Vista) {
+    setVista(v);
+    try {
+      localStorage.setItem(VISTA_KEY, v);
+    } catch {
+      /* ignora */
+    }
+  }
 
   const abertos = statuses.filter((s) => s.lifecycle === "Em aberto");
   const encerrados = statuses.filter((s) => s.lifecycle === "Encerrado");
@@ -162,7 +188,7 @@ export function EventosManager({
             <button
               key={v}
               type="button"
-              onClick={() => setVista(v)}
+              onClick={() => escolherVista(v)}
               aria-pressed={vista === v}
               className={cn(
                 "rounded px-3 py-1 text-xs font-medium capitalize transition-colors",
