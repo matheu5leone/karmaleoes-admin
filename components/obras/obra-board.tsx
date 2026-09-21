@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ChevronDown,
+  Crosshair,
   Disc3,
   ExternalLink,
+  Minus,
   Music,
   Plus,
   User,
@@ -30,13 +38,19 @@ import {
   type ObraGrafo,
 } from "@/app/(admin)/obras/vinculos";
 
-// Espaço de coordenadas do board (o SVG e os nós compartilham este sistema).
-const VW = 1000;
-const VH = 720;
-const CX = VW / 2;
-const CY = VH / 2;
+/**
+ * O board tem um "mundo" próprio, bem maior que a janela: as coordenadas abaixo
+ * são pixels desse mundo, e a janela mostra um pedaço dele com pan e zoom.
+ */
+const MUNDO = { w: 3200, h: 2200 };
+const CX = MUNDO.w / 2;
+const CY = MUNDO.h / 2;
+
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 2;
 
 type Pos = { x: number; y: number };
+type Setor = "rel" | "col" | "lnk";
 
 /**
  * Cada setor tem dois anéis: o **nó da categoria** (hub), mais perto do centro,
@@ -46,20 +60,20 @@ type Pos = { x: number; y: number };
 const SETOR = {
   topo: {
     angulo: -90,
-    hub: { rx: 0, ry: 132 },
-    item: { rx: 320, ry: 274 },
-    spread: 72,
-    passo: 26,
-    max: 4,
+    hub: { rx: 0, ry: 240 },
+    item: { rx: 640, ry: 430 },
+    spread: 76,
+    passo: 22,
+    max: 6,
   },
   lado: {
     // O hub fica entre o centro e os itens: raio do item - meia-largura do card
     // precisa passar da borda da pílula, senão um encosta no outro.
-    hub: { rx: 190, ry: 0 },
-    item: { rx: 384, ry: 268 },
-    spread: 76,
-    passo: 26,
-    max: 4,
+    hub: { rx: 420, ry: 0 },
+    item: { rx: 860, ry: 420 },
+    spread: 80,
+    passo: 24,
+    max: 6,
   },
 } as const;
 
@@ -95,7 +109,8 @@ function curva(de: Pos, para: Pos): string {
   return `M ${de.x} ${de.y} Q ${mx - dy * k} ${my + dx * k} ${para.x} ${para.y}`;
 }
 
-const pct = (v: number, total: number) => `${(v / total) * 100}%`;
+const limitar = (v: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, v));
 
 /** Item em foco: o board destaca e o painel de detalhes abre embaixo. */
 type Sel =
@@ -319,9 +334,29 @@ function Board({
   onRemove: (a: RemoveAlvo) => void;
   onVerTudo: () => void;
 }) {
-  const rel = comLimite(grafo.relacionados.itens, SETOR.topo.max);
-  const col = comLimite(grafo.colaboradores, SETOR.lado.max);
-  const lnk = comLimite(grafo.links, SETOR.lado.max);
+  // Setores recolhidos mostram só o nó da categoria; os filhos somem do board.
+  const [recolhidos, setRecolhidos] = useState<Set<Setor>>(new Set());
+  const aberto = (s: Setor) => !recolhidos.has(s);
+
+  function alternarSetor(setor: Setor) {
+    setRecolhidos((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(setor)) novo.delete(setor);
+      else {
+        novo.add(setor);
+        // Recolher o setor do item em foco deixaria o painel órfão.
+        if (sel?.kind === setor) onSelect(null);
+      }
+      return novo;
+    });
+  }
+
+  const rel = comLimite(
+    aberto("rel") ? grafo.relacionados.itens : [],
+    SETOR.topo.max,
+  );
+  const col = comLimite(aberto("col") ? grafo.colaboradores : [], SETOR.lado.max);
+  const lnk = comLimite(aberto("lnk") ? grafo.links : [], SETOR.lado.max);
 
   const { topo, lado } = SETOR;
   const hubRel = ponto(topo.angulo, topo.hub.rx, topo.hub.ry);
@@ -338,7 +373,7 @@ function Board({
     topo.item.ry,
   );
   const posCol = arco(
-    col.visiveis.length + (col.resto ? 1 : 0) + 1,
+    col.visiveis.length + (col.resto ? 1 : 0) + (aberto("col") ? 1 : 0),
     0,
     lado.spread,
     lado.passo,
@@ -346,7 +381,7 @@ function Board({
     lado.item.ry,
   );
   const posLink = arco(
-    lnk.visiveis.length + (lnk.resto ? 1 : 0) + 1,
+    lnk.visiveis.length + (lnk.resto ? 1 : 0) + (aberto("lnk") ? 1 : 0),
     180,
     lado.spread,
     lado.passo,
@@ -382,14 +417,23 @@ function Board({
   // Com um item em foco, o resto recua para o segundo plano.
   const apagado = (chave: string) => !!sel && !aceso(chave);
 
+  // Retângulo que os nós ocupam de fato — é o que o "ajustar" enquadra.
+  const usados = [centro, hubRel, hubCol, hubLnk, ...posRel, ...posCol, ...posLink];
+  const limites = {
+    x: Math.min(...usados.map((p) => p.x)) - 140,
+    y: Math.min(...usados.map((p) => p.y)) - 90,
+    w: Math.max(...usados.map((p) => p.x)) - Math.min(...usados.map((p) => p.x)) + 280,
+    h: Math.max(...usados.map((p) => p.y)) - Math.min(...usados.map((p) => p.y)) + 180,
+  };
+
   return (
     <div className="hidden h-full min-h-[560px] px-6 py-4 lg:block">
-      <div className="relative mx-auto h-full w-full max-w-6xl">
-        <div aria-hidden className="board-grade absolute inset-0 rounded-lg" />
+      <Janela limites={limites}>
+        <div aria-hidden className="board-grade absolute inset-0" />
         <svg
-          className="absolute inset-0 h-full w-full"
-          viewBox={`0 0 ${VW} ${VH}`}
-          preserveAspectRatio="none"
+          className="absolute inset-0"
+          width={MUNDO.w}
+          height={MUNDO.h}
           aria-hidden
         >
           {/* Halos primeiro, para o traço nítido ficar por cima de todos. */}
@@ -399,7 +443,6 @@ function Board({
               d={d}
               fill="none"
               strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
               data-aceso={on}
               className="board-halo stroke-brand [stroke-width:9]"
               style={{ animationDelay: `${atraso}ms` }}
@@ -411,7 +454,6 @@ function Board({
               d={d}
               fill="none"
               strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
               className={cn(
                 "transition-[stroke,stroke-width] duration-300",
                 on
@@ -427,7 +469,7 @@ function Board({
         {/* Centro */}
         <div
           className="absolute z-10 w-[210px] -translate-x-1/2 -translate-y-1/2"
-          style={{ left: pct(CX, VW), top: pct(CY, VH) }}
+          style={{ left: CX, top: CY }}
         >
           <div className="rounded-lg border border-brand/40 bg-card p-3 text-center shadow-md ring-4 ring-brand/5">
             {grafo.centro.imagem ? (
@@ -463,18 +505,24 @@ function Board({
           rotulo={grafo.relacionados.rotulo}
           n={grafo.relacionados.itens.length}
           aceso={troncoAceso("rel")}
+          aberto={aberto("rel")}
+          onToggle={() => alternarSetor("rel")}
         />
         <NoCategoria
           pos={hubCol}
           rotulo="Colaboradores"
           n={grafo.colaboradores.length}
           aceso={troncoAceso("col")}
+          aberto={aberto("col")}
+          onToggle={() => alternarSetor("col")}
         />
         <NoCategoria
           pos={hubLnk}
           rotulo="Plataformas"
           n={grafo.links.length}
           aceso={troncoAceso("lnk")}
+          aberto={aberto("lnk")}
+          onToggle={() => alternarSetor("lnk")}
         />
 
         {/* Relacionados (topo) — chips compactos, somente leitura */}
@@ -535,12 +583,14 @@ function Board({
             onClick={onVerTudo}
           />
         )}
-        <NoAdicionar
-          pos={posCol[posCol.length - 1]}
-          rotulo="Colaborador"
-          onHover={(v) => setHover(v ? `col-${posCol.length - 1}` : null)}
-          onClick={() => onAdd("colaborador")}
-        />
+        {aberto("col") && (
+          <NoAdicionar
+            pos={posCol[posCol.length - 1]}
+            rotulo="Colaborador"
+            onHover={(v) => setHover(v ? `col-${posCol.length - 1}` : null)}
+            onClick={() => onAdd("colaborador")}
+          />
+        )}
 
         {/* Plataformas (esquerda) */}
         {lnk.visiveis.map((l, i) => (
@@ -566,56 +616,256 @@ function Board({
             onClick={onVerTudo}
           />
         )}
-        <NoAdicionar
-          pos={posLink[posLink.length - 1]}
-          rotulo="Link"
-          onHover={(v) => setHover(v ? `lnk-${posLink.length - 1}` : null)}
-          onClick={() => onAdd("link")}
-        />
+        {aberto("lnk") && (
+          <NoAdicionar
+            pos={posLink[posLink.length - 1]}
+            rotulo="Link"
+            onHover={(v) => setHover(v ? `lnk-${posLink.length - 1}` : null)}
+            onClick={() => onAdd("link")}
+          />
+        )}
+      </Janela>
+    </div>
+  );
+}
+
+/**
+ * Janela sobre o mundo do board: arrastar com o mouse move, a roda da zoom no
+ * ponto do cursor, e "ajustar" enquadra tudo. O arrasto so comeca fora de um
+ * controle, para nao roubar o clique dos nos.
+ */
+function Janela({
+  limites,
+  children,
+}: {
+  limites: { x: number; y: number; w: number; h: number };
+  children: React.ReactNode;
+}) {
+  const janelaRef = useRef<HTMLDivElement>(null);
+  const [vista, setVista] = useState({ x: 0, y: 0, k: 1 });
+  const arrasto = useRef<{ px: number; py: number; x: number; y: number } | null>(
+    null,
+  );
+  const [arrastando, setArrastando] = useState(false);
+
+  const ajustar = useCallback(() => {
+    const el = janelaRef.current;
+    if (!el) return;
+    const { width, height } = el.getBoundingClientRect();
+    const k = limitar(
+      Math.min(width / limites.w, height / limites.h) * 0.96,
+      ZOOM_MIN,
+      ZOOM_MAX,
+    );
+    setVista({
+      k,
+      x: width / 2 - (limites.x + limites.w / 2) * k,
+      y: height / 2 - (limites.y + limites.h / 2) * k,
+    });
+  }, [limites.x, limites.y, limites.w, limites.h]);
+
+  // Enquadra uma vez, ao abrir. Depois a vista e do usuario.
+  const enquadrou = useRef(false);
+  useEffect(() => {
+    if (enquadrou.current) return;
+    enquadrou.current = true;
+    ajustar();
+  }, [ajustar]);
+
+  const zoom = useCallback((fator: number, alvo?: { x: number; y: number }) => {
+    const el = janelaRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const cx = alvo ? alvo.x - r.left : r.width / 2;
+    const cy = alvo ? alvo.y - r.top : r.height / 2;
+    setVista((v) => {
+      const k = limitar(v.k * fator, ZOOM_MIN, ZOOM_MAX);
+      const razao = k / v.k;
+      return { k, x: cx - (cx - v.x) * razao, y: cy - (cy - v.y) * razao };
+    });
+  }, []);
+
+  // Listener nativo: o onWheel do React e passivo e nao deixa cancelar a rolagem.
+  useEffect(() => {
+    const el = janelaRef.current;
+    if (!el) return;
+    const h = (e: WheelEvent) => {
+      e.preventDefault();
+      zoom(e.deltaY < 0 ? 1.12 : 1 / 1.12, { x: e.clientX, y: e.clientY });
+    };
+    el.addEventListener("wheel", h, { passive: false });
+    return () => el.removeEventListener("wheel", h);
+  }, [zoom]);
+
+  function aoApertar(e: React.PointerEvent) {
+    if ((e.target as HTMLElement).closest("button, a")) return;
+    arrasto.current = { px: e.clientX, py: e.clientY, x: vista.x, y: vista.y };
+    setArrastando(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function aoMover(e: React.PointerEvent) {
+    const a = arrasto.current;
+    if (!a) return;
+    setVista((v) => ({
+      ...v,
+      x: a.x + (e.clientX - a.px),
+      y: a.y + (e.clientY - a.py),
+    }));
+  }
+
+  function aoSoltar() {
+    arrasto.current = null;
+    setArrastando(false);
+  }
+
+  /**
+   * O mundo é maior que a janela, então o navegador consegue rolá-la por conta
+   * própria (ao focar um nó pelo teclado, por exemplo) e a vista sairia do
+   * lugar sem o transform saber. Converte essa rolagem em pan e zera o scroll.
+   */
+  function aoRolar(e: React.UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    const { scrollLeft: dx, scrollTop: dy } = el;
+    if (!dx && !dy) return;
+    el.scrollLeft = 0;
+    el.scrollTop = 0;
+    setVista((v) => ({ ...v, x: v.x - dx, y: v.y - dy }));
+  }
+
+  return (
+    <div
+      ref={janelaRef}
+      onPointerDown={aoApertar}
+      onPointerMove={aoMover}
+      onPointerUp={aoSoltar}
+      onPointerCancel={aoSoltar}
+      onScroll={aoRolar}
+      className={cn(
+        "relative h-full w-full overflow-hidden rounded-lg border border-border/60",
+        arrastando ? "cursor-grabbing" : "cursor-grab",
+      )}
+    >
+      <div
+        className="absolute left-0 top-0 origin-top-left"
+        style={{
+          width: MUNDO.w,
+          height: MUNDO.h,
+          transform: `translate(${vista.x}px, ${vista.y}px) scale(${vista.k})`,
+        }}
+      >
+        {children}
+      </div>
+
+      <div
+        aria-hidden
+        className="board-vinheta pointer-events-none absolute inset-0"
+      />
+
+      <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-md border border-border bg-card/90 p-1 shadow-sm backdrop-blur-sm">
+        <ControleZoom
+          rotulo="Diminuir zoom"
+          onClick={() => zoom(1 / 1.25)}
+          desabilitado={vista.k <= ZOOM_MIN + 0.001}
+        >
+          <Minus className="size-4" />
+        </ControleZoom>
+        <span className="w-12 text-center text-xs tabular-nums text-muted-foreground">
+          {Math.round(vista.k * 100)}%
+        </span>
+        <ControleZoom
+          rotulo="Aumentar zoom"
+          onClick={() => zoom(1.25)}
+          desabilitado={vista.k >= ZOOM_MAX - 0.001}
+        >
+          <Plus className="size-4" />
+        </ControleZoom>
+        <ControleZoom rotulo="Enquadrar tudo" onClick={ajustar}>
+          <Crosshair className="size-4" />
+        </ControleZoom>
       </div>
     </div>
   );
 }
 
-/** Posiciona um nó no sistema de coordenadas do board. */
-function noEstilo(pos: Pos, delay = 0): React.CSSProperties {
-  return {
-    left: pct(pos.x, VW),
-    top: pct(pos.y, VH),
-    animationDelay: `${delay * 45}ms`,
-  };
+function ControleZoom({
+  rotulo,
+  onClick,
+  desabilitado,
+  children,
+}: {
+  rotulo: string;
+  onClick: () => void;
+  desabilitado?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={desabilitado}
+      aria-label={rotulo}
+      title={rotulo}
+      className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+    >
+      {children}
+    </button>
+  );
 }
 
-/** Nó de categoria ("Músicas", "Colaboradores"…) no meio da conexão. */
+/** Posiciona um nó no sistema de coordenadas do board. */
+function noEstilo(pos: Pos, delay = 0): React.CSSProperties {
+  return { left: pos.x, top: pos.y, animationDelay: `${delay * 45}ms` };
+}
+
+/**
+ * Nó de categoria ("Músicas", "Colaboradores"…) no meio da conexão. Clicar
+ * recolhe ou abre os filhos daquele ramo.
+ */
 function NoCategoria({
   pos,
   rotulo,
   n,
   aceso,
+  aberto,
+  onToggle,
 }: {
   pos: Pos;
   rotulo: string;
   n: number;
   aceso: boolean;
+  aberto: boolean;
+  onToggle: () => void;
 }) {
   return (
     <div
       className="animate-board-node absolute z-10 -translate-x-1/2 -translate-y-1/2"
       style={noEstilo(pos)}
     >
-      <span
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={aberto}
+        title={aberto ? `Recolher ${rotulo}` : `Abrir ${rotulo}`}
         className={cn(
           "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] shadow-sm transition-colors",
           aceso
             ? "border-brand bg-brand-subtle text-brand"
-            : "border-border bg-muted text-muted-foreground",
+            : "border-border bg-muted text-muted-foreground hover:border-brand hover:text-foreground",
         )}
       >
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            "size-3.5 shrink-0 transition-transform duration-150",
+            !aberto && "-rotate-90",
+          )}
+        />
         {rotulo}
         <span className="rounded-full bg-background/70 px-1.5 text-[10px] font-medium tabular-nums">
           {n}
         </span>
-      </span>
+      </button>
     </div>
   );
 }

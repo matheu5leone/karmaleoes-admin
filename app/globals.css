@@ -276,8 +276,16 @@
     40px 40px,
     40px 40px;
   background-position: center center;
-  -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, transparent 88%);
-  mask-image: radial-gradient(ellipse at center, #000 40%, transparent 88%);
+}
+
+/* Vinheta presa na janela (e não no mundo): as bordas apagam a grade sem que o
+   degradê ande junto com o pan. */
+.board-vinheta {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 45%,
+    hsl(var(--card)) 100%
+  );
 }
 
 /* Respiro das linhas de conexão: um halo largo e borrado por baixo do traço,
