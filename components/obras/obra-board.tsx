@@ -48,8 +48,8 @@ const SETOR = {
     angulo: -90,
     hub: { rx: 0, ry: 132 },
     item: { rx: 320, ry: 274 },
-    spread: 86,
-    passo: 29,
+    spread: 72,
+    passo: 26,
     max: 4,
   },
   lado: {
@@ -158,65 +158,64 @@ export function ObraBoardModal({
   }
 
   return (
+    // Tela cheia: o board precisa de espaço, e não há fundo para clicar fora —
+    // fecha pelo X ou pelo Escape.
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Vínculos da obra"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex flex-col bg-card"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-lg border border-border bg-card shadow-lg"
-      >
-        <header className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground">
-              {tipo === "musica" ? "Música" : "Coleção"} · vínculos
-            </p>
-            <h2 className="text-xl font-semibold tracking-tight">
-              {grafo?.centro.titulo ?? "Carregando…"}
-            </h2>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {grafo && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hidden lg:inline-flex"
-                onClick={() => setModo((m) => (m === "board" ? "lista" : "board"))}
-              >
-                {modo === "board" ? "Ver como lista" : "Ver como board"}
-              </Button>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Fechar"
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-6 py-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground">
+            {tipo === "musica" ? "Música" : "Coleção"} · vínculos
+          </p>
+          <h2 className="text-xl font-semibold tracking-tight">
+            {grafo?.centro.titulo ?? "Carregando…"}
+          </h2>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {grafo && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden lg:inline-flex"
+              onClick={() => setModo((m) => (m === "board" ? "lista" : "board"))}
             >
-              <X className="size-5" />
-            </button>
-          </div>
-        </header>
+              {modo === "board" ? "Ver como lista" : "Ver como board"}
+            </Button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+      </header>
 
-        {erro ? (
-          <p className="px-6 py-10 text-center text-sm text-destructive">{erro}</p>
-        ) : !grafo ? (
-          <BoardSkeleton />
-        ) : (
-          <>
+      {erro ? (
+        <p className="px-6 py-10 text-center text-sm text-destructive">{erro}</p>
+      ) : !grafo ? (
+        <BoardSkeleton />
+      ) : (
+        <>
+          {/* Só esta faixa rola; cabeçalho, painéis e rodapé ficam fixos. */}
+          <div className="relative flex-1 overflow-y-auto">
             {modo === "board" && (
-              <Board
-                grafo={grafo}
-                hover={hover}
-                setHover={setHover}
-                sel={sel}
-                onSelect={setSel}
-                onAdd={setPainel}
-                onRemove={setDel}
-                onVerTudo={() => setModo("lista")}
-              />
+            <Board
+              grafo={grafo}
+              hover={hover}
+              setHover={setHover}
+              sel={sel}
+              onSelect={setSel}
+              onAdd={setPainel}
+              onRemove={setDel}
+              onVerTudo={() => setModo("lista")}
+            />
             )}
             {/* No mobile é sempre lista; no desktop, só quando o modo é "lista". */}
             <ListaVinculos
@@ -227,68 +226,68 @@ export function ObraBoardModal({
               onAdd={setPainel}
               onRemove={setDel}
             />
+          </div>
 
-            {sel && (
-              <PainelDetalhe
-                grafo={grafo}
-                sel={sel}
-                onClose={() => setSel(null)}
-                onAdd={setPainel}
-                onRemove={setDel}
-              />
-            )}
+          {sel && (
+            <PainelDetalhe
+              grafo={grafo}
+              sel={sel}
+              onClose={() => setSel(null)}
+              onAdd={setPainel}
+              onRemove={setDel}
+            />
+          )}
 
-            {painel && (
-              <PainelAdicionar
-                tipo={painel}
-                grafo={grafo}
-                pending={pending}
-                onClose={() => setPainel(null)}
-                onColaborador={(colaborador_id, role_id) =>
-                  mutar(
-                    () =>
-                      vincularColaborador(tipo, obraId, { colaborador_id, role_id }),
-                    "Colaborador vinculado.",
-                  )
-                }
-                onLink={(plataforma, url) =>
-                  mutar(
-                    () => adicionarLink(tipo, obraId, { plataforma, url }),
-                    "Link adicionado.",
-                  )
-                }
-              />
-            )}
+          {painel && (
+            <PainelAdicionar
+              tipo={painel}
+              grafo={grafo}
+              pending={pending}
+              onClose={() => setPainel(null)}
+              onColaborador={(colaborador_id, role_id) =>
+                mutar(
+                  () =>
+                    vincularColaborador(tipo, obraId, { colaborador_id, role_id }),
+                  "Colaborador vinculado.",
+                )
+              }
+              onLink={(plataforma, url) =>
+                mutar(
+                  () => adicionarLink(tipo, obraId, { plataforma, url }),
+                  "Link adicionado.",
+                )
+              }
+            />
+          )}
 
-            <footer className="flex justify-end border-t border-border px-6 py-3">
-              <Button asChild variant="ghost" size="sm">
-                <Link href={`/obras/${tipo}/${obraId}`}>Abrir página completa →</Link>
-              </Button>
-            </footer>
-          </>
-        )}
+          <footer className="flex shrink-0 justify-end border-t border-border px-6 py-3">
+            <Button asChild variant="ghost" size="sm">
+              <Link href={`/obras/${tipo}/${obraId}`}>Abrir página completa →</Link>
+            </Button>
+          </footer>
+        </>
+      )}
 
-        <ConfirmDialog
-          open={!!del}
-          title={del?.kind === "link" ? "Remover link" : "Remover colaboração"}
-          description={del ? `Remover "${del.label}" desta obra?` : ""}
-          confirmLabel="Remover"
-          pending={pending}
-          onCancel={() => setDel(null)}
-          onConfirm={() => {
-            if (!del) return;
-            const alvo = del;
-            setDel(null);
-            mutar(
-              () =>
-                alvo.kind === "link"
-                  ? removerLink(tipo, obraId, alvo.id)
-                  : removerColaborador(tipo, obraId, alvo.id),
-              "Vínculo removido.",
-            );
-          }}
-        />
-      </div>
+      <ConfirmDialog
+        open={!!del}
+        title={del?.kind === "link" ? "Remover link" : "Remover colaboração"}
+        description={del ? `Remover "${del.label}" desta obra?` : ""}
+        confirmLabel="Remover"
+        pending={pending}
+        onCancel={() => setDel(null)}
+        onConfirm={() => {
+          if (!del) return;
+          const alvo = del;
+          setDel(null);
+          mutar(
+            () =>
+              alvo.kind === "link"
+                ? removerLink(tipo, obraId, alvo.id)
+                : removerColaborador(tipo, obraId, alvo.id),
+            "Vínculo removido.",
+          );
+        }}
+      />
     </div>
   );
 }
@@ -366,55 +365,60 @@ function Board({
           : `lnk-${grafo.links.findIndex((l) => l.id === sel.id)}`
       : null);
 
-  const centro = { x: CX, y: CY };
-  const troncos = [
-    { key: "rel", de: centro, para: hubRel },
-    { key: "col", de: centro, para: hubCol },
-    { key: "lnk", de: centro, para: hubLnk },
-  ];
-  const ramos = [
-    ...posRel.map((p, i) => ({ key: `rel-${i}`, de: hubRel, para: p })),
-    ...posCol.map((p, i) => ({ key: `col-${i}`, de: hubCol, para: p })),
-    ...posLink.map((p, i) => ({ key: `lnk-${i}`, de: hubLnk, para: p })),
-  ];
-
   const aceso = (chave: string) => focoChave === chave;
   const troncoAceso = (setor: string) => !!focoChave?.startsWith(`${setor}-`);
+
+  const centro = { x: CX, y: CY };
+  // Tronco (centro → categoria) e ramos (categoria → item) numa lista só: o
+  // halo e o traço percorrem a mesma coleção, sempre na mesma ordem.
+  const linhas = [
+    { key: "tronco-rel", de: centro, para: hubRel, tronco: true, aceso: troncoAceso("rel") },
+    { key: "tronco-col", de: centro, para: hubCol, tronco: true, aceso: troncoAceso("col") },
+    { key: "tronco-lnk", de: centro, para: hubLnk, tronco: true, aceso: troncoAceso("lnk") },
+    ...posRel.map((p, i) => ({ key: `rel-${i}`, de: hubRel, para: p, tronco: false, aceso: aceso(`rel-${i}`) })),
+    ...posCol.map((p, i) => ({ key: `col-${i}`, de: hubCol, para: p, tronco: false, aceso: aceso(`col-${i}`) })),
+    ...posLink.map((p, i) => ({ key: `lnk-${i}`, de: hubLnk, para: p, tronco: false, aceso: aceso(`lnk-${i}`) })),
+  ].map((l, i) => ({ ...l, d: curva(l.de, l.para), atraso: i * 380 }));
   // Com um item em foco, o resto recua para o segundo plano.
   const apagado = (chave: string) => !!sel && !aceso(chave);
 
   return (
-    <div className="hidden px-6 py-4 lg:block">
-      <div className="relative mx-auto aspect-[10/7] w-full max-w-4xl">
+    <div className="hidden h-full min-h-[560px] px-6 py-4 lg:block">
+      <div className="relative mx-auto h-full w-full max-w-6xl">
+        <div aria-hidden className="board-grade absolute inset-0 rounded-lg" />
         <svg
           className="absolute inset-0 h-full w-full"
           viewBox={`0 0 ${VW} ${VH}`}
           preserveAspectRatio="none"
           aria-hidden
         >
-          {troncos.map(({ key, de, para }) => (
+          {/* Halos primeiro, para o traço nítido ficar por cima de todos. */}
+          {linhas.map(({ key, d, atraso, aceso: on }) => (
             <path
-              key={`tronco-${key}`}
-              d={curva(de, para)}
+              key={`halo-${key}`}
+              d={d}
               fill="none"
-              className={cn(
-                "transition-[stroke,stroke-width] duration-200",
-                troncoAceso(key)
-                  ? "stroke-brand [stroke-width:3]"
-                  : "stroke-border [stroke-width:2]",
-              )}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+              data-aceso={on}
+              className="board-halo stroke-brand [stroke-width:9]"
+              style={{ animationDelay: `${atraso}ms` }}
             />
           ))}
-          {ramos.map(({ key, de, para }) => (
+          {linhas.map(({ key, d, tronco, aceso: on }) => (
             <path
               key={key}
-              d={curva(de, para)}
+              d={d}
               fill="none"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
               className={cn(
-                "transition-[stroke,stroke-width] duration-200",
-                aceso(key)
-                  ? "stroke-brand [stroke-width:3]"
-                  : "stroke-border [stroke-width:1.5]",
+                "transition-[stroke,stroke-width] duration-300",
+                on
+                  ? "stroke-brand [stroke-width:2.5]"
+                  : tronco
+                    ? "stroke-border [stroke-width:1.75]"
+                    : "stroke-border [stroke-width:1.25]",
               )}
             />
           ))}

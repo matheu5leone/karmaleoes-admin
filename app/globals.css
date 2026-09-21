@@ -261,10 +261,58 @@
   animation: board-node 260ms ease-out both;
 }
 
+/* Ladrilho cartesiano de fundo do board: linhas finas a cada 40px e um traço
+   mais firme a cada 200px. A máscara radial apaga as bordas para a grade não
+   competir com os nós. */
+.board-grade {
+  background-image:
+    linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px),
+    linear-gradient(to right, hsl(var(--border) / 0.22) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border) / 0.22) 1px, transparent 1px);
+  background-size:
+    200px 200px,
+    200px 200px,
+    40px 40px,
+    40px 40px;
+  background-position: center center;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, transparent 88%);
+  mask-image: radial-gradient(ellipse at center, #000 40%, transparent 88%);
+}
+
+/* Respiro das linhas de conexão: um halo largo e borrado por baixo do traço,
+   pulsando devagar e fora de fase (cada linha tem seu atraso). */
+@keyframes board-glow {
+  0%,
+  100% {
+    opacity: 0.07;
+  }
+  50% {
+    opacity: 0.16;
+  }
+}
+
+.board-halo {
+  /* Opacidade de repouso no próprio seletor: sem ela, um ambiente que não roda
+     a animação renderiza o halo a 100%. */
+  opacity: 0.12;
+  filter: blur(2.5px);
+  animation: board-glow 5.5s ease-in-out infinite;
+}
+
+.board-halo[data-aceso="true"] {
+  animation: none;
+  opacity: 0.42;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after,
   .animate-board-node {
     animation: none;
+  }
+  .board-halo {
+    animation: none;
+    opacity: 0.12;
   }
   .animate-nav-progress {
     animation-duration: 2s;
