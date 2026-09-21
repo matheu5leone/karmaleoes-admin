@@ -25,11 +25,17 @@ export type GrafoNo = {
   subtitulo: string | null;
   imagem: string | null;
 };
+/** Um papel do colaborador nesta obra. O vínculo é a linha removível. */
+export type GrafoPapel = { vinculoId: string; papel: string };
+/**
+ * Colaborador **agrupado**: a mesma pessoa pode ter vários tipos de colaboração
+ * na obra (compositor e intérprete, por exemplo) e aparece uma vez só.
+ */
 export type GrafoColaborador = {
-  vinculoId: string;
+  colaboradorId: string;
   nome: string;
-  papel: string;
   instagram: string | null;
+  papeis: GrafoPapel[];
 };
 export type GrafoLink = { id: string; plataforma: string; url: string };
 export type Opt = { id: string; nome: string };
@@ -50,9 +56,29 @@ export type ObraGrafo = {
 
 type VinculoJoin = {
   id: string;
-  colaborador: { nome: string; instagram: string | null } | null;
+  colaborador: { id: string; nome: string; instagram: string | null } | null;
   role: { nome: string } | null;
 };
+
+/** Junta os vínculos da mesma pessoa numa entrada só, preservando a ordem. */
+function agruparColaboradores(vinculos: VinculoJoin[]): GrafoColaborador[] {
+  const porId = new Map<string, GrafoColaborador>();
+  for (const v of vinculos) {
+    const id = v.colaborador?.id ?? v.id;
+    let grupo = porId.get(id);
+    if (!grupo) {
+      grupo = {
+        colaboradorId: id,
+        nome: v.colaborador?.nome ?? "?",
+        instagram: v.colaborador?.instagram ?? null,
+        papeis: [],
+      };
+      porId.set(id, grupo);
+    }
+    grupo.papeis.push({ vinculoId: v.id, papel: v.role?.nome ?? "?" });
+  }
+  return [...porId.values()].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
 
 /**
  * Carrega tudo que o board da obra precisa em UMA chamada (as queries rodam em
@@ -83,7 +109,7 @@ export async function getObraGrafo(
             .single(),
       supabase
         .from("obra_colaborador")
-        .select("id, colaborador(nome, instagram), role(nome)")
+        .select("id, colaborador(id, nome, instagram), role(nome)")
         .eq(ref, obraId),
       supabase.from("link_plataforma").select("id, plataforma, url").eq(ref, obraId),
       supabase.from("colaborador").select("id, nome").order("nome"),
@@ -150,12 +176,9 @@ export async function getObraGrafo(
         meta,
       },
       relacionados,
-      colaboradores: ((vinculos.data ?? []) as unknown as VinculoJoin[]).map((v) => ({
-        vinculoId: v.id,
-        nome: v.colaborador?.nome ?? "?",
-        papel: v.role?.nome ?? "?",
-        instagram: v.colaborador?.instagram ?? null,
-      })),
+      colaboradores: agruparColaboradores(
+        (vinculos.data ?? []) as unknown as VinculoJoin[],
+      ),
       links: (links.data ?? []) as GrafoLink[],
       opcoes: {
         colaboradores: (colaboradores.data ?? []) as Opt[],
