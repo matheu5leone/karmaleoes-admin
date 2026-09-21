@@ -12,11 +12,28 @@ import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import {
   alternarStatusTela,
   criarTela,
+  desvincularTudo,
   editarTela,
   excluirTela,
+  type ItemPendente,
 } from "./actions";
 
-export type Tela = { id: string; nome: string; rota: string; status: string };
+export type Tela = {
+  id: string;
+  nome: string;
+  rota: string;
+  status: string;
+  /** Quantos vínculos a tela tem hoje (alimenta o botão Desvincular). */
+  vinculos: { banners: number; marquees: number; itens: number };
+};
+
+/** "2 banner(s) e 1 marquee(s)" — só o que de fato existe. */
+function resumoVinculos(t: Tela): string {
+  const partes: string[] = [];
+  if (t.vinculos.banners) partes.push(`${t.vinculos.banners} banner(s)`);
+  if (t.vinculos.marquees) partes.push(`${t.vinculos.marquees} marquee(s)`);
+  return partes.join(" e ") || "nenhum vínculo";
+}
 
 function StatusBadge({ status }: { status: string }) {
   return (
@@ -34,6 +51,9 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
     tela: null,
   });
   const [del, setDel] = useState<Tela | null>(null);
+  const [desvincular, setDesvincular] = useState<Tela | null>(null);
+  // Itens de marquee que continuam apontando para a tela após desvincular.
+  const [pendentes, setPendentes] = useState<ItemPendente[] | null>(null);
   const [pending, start] = useTransition();
 
   const columns: Column<Tela>[] = [
@@ -73,6 +93,15 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
           >
             {t.status === "habilitada" ? "Desabilitar" : "Habilitar"}
           </Button>
+          {t.vinculos.banners + t.vinculos.marquees > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDesvincular(t)}
+            >
+              Desvincular
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => setDel(t)}>
             Excluir
           </Button>
@@ -108,6 +137,43 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
       )}
 
       <ConfirmDialog
+        open={!!desvincular}
+        title="Desvincular tudo desta tela?"
+        description={
+          desvincular
+            ? `Remove ${resumoVinculos(desvincular)} de "${desvincular.nome}". Os banners e marquees continuam cadastrados — some apenas a ligação com esta tela.`
+            : ""
+        }
+        confirmLabel="Desvincular"
+        pending={pending}
+        onCancel={() => setDesvincular(null)}
+        onConfirm={() =>
+          start(async () => {
+            if (!desvincular) return;
+            const alvo = desvincular;
+            const r = await desvincularTudo(alvo.id);
+            setDesvincular(null);
+            if (!r.ok) {
+              toast.error(r.error);
+            } else {
+              toast.success(
+                `Desvinculado de "${alvo.nome}": ${r.banners} banner(s) e ${r.marquees} marquee(s).`,
+              );
+              if (r.pendentes.length) setPendentes(r.pendentes);
+            }
+            router.refresh();
+          })
+        }
+      />
+
+      {pendentes && (
+        <PendentesModal
+          itens={pendentes}
+          onClose={() => setPendentes(null)}
+        />
+      )}
+
+      <ConfirmDialog
         open={!!del}
         title="Excluir tela"
         description={
@@ -128,6 +194,57 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
         }
       />
     </>
+  );
+}
+
+/**
+ * Itens de marquee com navegação interna continuam apontando para a tela: o
+ * banco não deixa ficarem sem destino, então só o próprio item pode resolver.
+ */
+function PendentesModal({
+  itens,
+  onClose,
+}: {
+  itens: ItemPendente[];
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold tracking-tight">
+          Ainda há itens apontando para esta tela
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Estes itens de marquee têm navegação interna para ela e não podem
+          ficar sem destino. Edite cada um (mude a tela ou troque para link
+          externo) antes de excluir a tela:
+        </p>
+        <ul className="mt-3 max-h-56 space-y-1 overflow-y-auto text-sm">
+          {itens.map((i, idx) => (
+            <li key={`${i.marquee}-${i.titulo}-${idx}`} className="flex gap-2">
+              <span aria-hidden className="text-muted-foreground">
+                •
+              </span>
+              <span>
+                <strong className="font-medium">{i.titulo}</strong>{" "}
+                <span className="text-muted-foreground">em {i.marquee}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6 flex justify-end">
+          <Button onClick={onClose}>Entendi</Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
