@@ -150,34 +150,84 @@ function PreviewFixo({ cores, itens }: { cores: Cores; itens: EditorItem[] }) {
       <div ref={sentinela} aria-hidden className="h-px" />
       <div
         className={cn(
-          "z-20 -mx-4 px-4 pt-4 sm:-mx-6 sm:px-6",
+          "z-20 -mx-4 px-4 sm:-mx-6 sm:px-6",
           fixo && "sticky top-14 md:top-0",
-          preso && "border-b border-border bg-background/95 pb-3 backdrop-blur-sm",
+          preso
+            ? // Grudado no celular, a faixa inteira custaria 20% da tela: o
+              // rótulo sai e o pin vira um botão sobre a fita.
+              "border-b border-border bg-background/95 py-2 backdrop-blur-sm md:pb-3 md:pt-4"
+            : "pt-4",
         )}
       >
-        <div className="mb-1.5 flex items-center justify-between gap-3">
+        <div
+          className={cn(
+            "mb-1.5 items-center justify-between gap-3",
+            preso ? "hidden md:flex" : "flex",
+          )}
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.04em] text-muted-foreground">
             Preview
           </p>
-          <button
-            type="button"
-            onClick={alternar}
-            aria-pressed={fixo}
-            title={fixo ? "Soltar o preview do topo" : "Fixar o preview no topo"}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors",
-              fixo
-                ? "border-brand bg-brand-subtle text-brand"
-                : "border-border text-muted-foreground hover:border-brand hover:text-foreground",
-            )}
-          >
-            {fixo ? <Pin className="size-3.5" /> : <PinOff className="size-3.5" />}
-            {fixo ? "Fixado" : "Fixar"}
-          </button>
+          <BotaoPin fixo={fixo} onClick={alternar} />
         </div>
-        <MarqueePreview cores={cores} itens={itens} />
+        <div className="relative">
+          <MarqueePreview cores={cores} itens={itens} />
+          {preso && (
+            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 md:hidden">
+              <BotaoPin fixo={fixo} onClick={alternar} compacto />
+            </div>
+          )}
+        </div>
       </div>
     </>
+  );
+}
+
+/** Alterna a fixação. `compacto` é a versão que fica sobre a fita no celular. */
+function BotaoPin({
+  fixo,
+  onClick,
+  compacto,
+}: {
+  fixo: boolean;
+  onClick: () => void;
+  compacto?: boolean;
+}) {
+  const rotulo = fixo ? "Soltar o preview do topo" : "Fixar o preview no topo";
+  const Icone = fixo ? Pin : PinOff;
+
+  if (compacto) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={fixo}
+        aria-label={rotulo}
+        title={rotulo}
+        // Fica sobre as cores do marquee: tom fixo, para não sumir no claro.
+        className="flex size-9 items-center justify-center rounded-md bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+      >
+        <Icone className="size-4" />
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={fixo}
+      title={rotulo}
+      className={cn(
+        "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors",
+        fixo
+          ? "border-brand bg-brand-subtle text-brand"
+          : "border-border text-muted-foreground hover:border-brand hover:text-foreground",
+      )}
+    >
+      <Icone className="size-3.5" />
+      {fixo ? "Fixado" : "Fixar"}
+    </button>
   );
 }
 
