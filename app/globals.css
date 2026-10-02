@@ -117,6 +117,48 @@
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
   }
+
+  /* ---------------------------------------------------------------------
+     Barras de rolagem — calha discreta no pergaminho, polegar cor de tinta.
+     --------------------------------------------------------------------- */
+  /* `scrollbar-color` é herdada: posta no `html`, vale para todo contêiner
+     rolável (tabelas, gaveta, modais). */
+  html {
+    /* Tinta a meio tom: no pergaminho fica um cinza-areia, no escuro clareia
+       sozinha. Medido contra o fundo, passa de 3:1 nos dois temas — com o
+       token de contorno (--input) o claro ficava em 1,6:1. */
+    scrollbar-color: hsl(var(--foreground) / 0.5) transparent;
+  }
+  /* `scrollbar-width` NÃO é herdada — sem o seletor universal, só a barra da
+     janela ficaria fina e as de dentro continuariam na espessura do sistema. */
+  * {
+    scrollbar-width: thin;
+  }
+
+  /* WebKit antigo (Safari < 18) ignora o par acima e precisa dos pseudos.
+     Onde os dois valem, o navegador usa os padronizados — por isso as cores
+     são as mesmas nos dois caminhos. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--foreground) / 0.5);
+    /* Borda transparente recortada no padding: dá o respiro lateral sem
+       precisar de uma calha pintada. */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: var(--radius);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--brand));
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 @layer components {
