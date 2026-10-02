@@ -313,9 +313,29 @@
   opacity: 0.42;
 }
 
+/* Fita do preview de marquee: a trilha é duplicada, então andar metade dela
+   volta exatamente ao ponto de partida. */
+@keyframes marquee-fita {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-fita {
+  animation: marquee-fita 26s linear infinite;
+}
+
+.marquee-fita:hover {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after,
-  .animate-board-node {
+  .animate-board-node,
+  .marquee-fita {
     animation: none;
   }
   .board-halo {

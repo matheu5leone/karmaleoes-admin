@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Pin, PinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -10,6 +11,7 @@ import { ColorPicker } from "@/components/form/color-picker";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { ListaOrdenavel } from "@/components/form/lista-ordenavel";
 import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import {
   associarTelas,
   editarMarquee,
@@ -56,27 +58,172 @@ export function MarqueeEditor({
   icons: IconOpt[];
 }) {
   const router = useRouter();
+  // As cores moram aqui para o preview acompanhar a digitação, antes de salvar.
+  const [cores, setCores] = useState({
+    fundo: corFundoInicial,
+    texto: corTextoInicial,
+  });
+  // Item sendo escrito no modal: entra no preview antes de existir no banco.
+  const [rascunho, setRascunho] = useState<EditorItem | null>(null);
+
+  const itensPreview = useMemo(() => {
+    if (!rascunho) return itens;
+    if (!rascunho.id) return [...itens, rascunho];
+    return itens.map((it) => (it.id === rascunho.id ? rascunho : it));
+  }, [itens, rascunho]);
+
   return (
-    <div className="mt-6 space-y-10">
-      <DadosSection
-        marqueeId={marqueeId}
-        nomeInicial={nomeInicial}
-        corFundoInicial={corFundoInicial}
-        corTextoInicial={corTextoInicial}
-        onSaved={() => router.refresh()}
-      />
-      <TelasSection
-        marqueeId={marqueeId}
-        telas={telas}
-        associadas={telaIdsAssociadas}
-        onSaved={() => router.refresh()}
-      />
-      <ItensSection
-        marqueeId={marqueeId}
-        telas={telas}
-        itens={itens}
-        icons={icons}
-      />
+    <>
+      <PreviewFixo cores={cores} itens={itensPreview} />
+      <div className="mt-6 space-y-10">
+        <DadosSection
+          marqueeId={marqueeId}
+          nomeInicial={nomeInicial}
+          cores={cores}
+          onCores={setCores}
+          onSaved={() => router.refresh()}
+        />
+        <TelasSection
+          marqueeId={marqueeId}
+          telas={telas}
+          associadas={telaIdsAssociadas}
+          onSaved={() => router.refresh()}
+        />
+        <ItensSection
+          marqueeId={marqueeId}
+          telas={telas}
+          itens={itens}
+          icons={icons}
+          onRascunho={setRascunho}
+        />
+      </div>
+    </>
+  );
+}
+
+type Cores = { fundo: string; texto: string };
+
+const CHAVE_FIXO = "karma-marquee-preview-fixo";
+
+/**
+ * Preview do marquee. Por padrão ele gruda no topo quando a página rola, como
+ * uma navbar; o pin desliga essa fixação para quem preferir que ele suba junto
+ * com o resto. A escolha fica guardada entre visitas.
+ */
+function PreviewFixo({ cores, itens }: { cores: Cores; itens: EditorItem[] }) {
+  const [fixo, setFixo] = useState(true);
+  const [preso, setPreso] = useState(false);
+  const sentinela = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const salvo = localStorage.getItem(CHAVE_FIXO);
+      if (salvo !== null) setFixo(salvo === "1");
+    } catch {
+      /* sem storage: segue fixo, que é o padrão */
+    }
+  }, []);
+
+  // Sentinela logo acima: quando ela sai da tela, o preview está grudado.
+  useEffect(() => {
+    if (!fixo) return setPreso(false);
+    const el = sentinela.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => setPreso(!e.isIntersecting));
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [fixo]);
+
+  function alternar() {
+    setFixo((v) => {
+      try {
+        localStorage.setItem(CHAVE_FIXO, v ? "0" : "1");
+      } catch {
+        /* ignora */
+      }
+      return !v;
+    });
+  }
+
+  return (
+    <>
+      <div ref={sentinela} aria-hidden className="h-px" />
+      <div
+        className={cn(
+          "z-20 -mx-4 px-4 pt-4 sm:-mx-6 sm:px-6",
+          fixo && "sticky top-14 md:top-0",
+          preso && "border-b border-border bg-background/95 pb-3 backdrop-blur-sm",
+        )}
+      >
+        <div className="mb-1.5 flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+            Preview
+          </p>
+          <button
+            type="button"
+            onClick={alternar}
+            aria-pressed={fixo}
+            title={fixo ? "Soltar o preview do topo" : "Fixar o preview no topo"}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors",
+              fixo
+                ? "border-brand bg-brand-subtle text-brand"
+                : "border-border text-muted-foreground hover:border-brand hover:text-foreground",
+            )}
+          >
+            {fixo ? <Pin className="size-3.5" /> : <PinOff className="size-3.5" />}
+            {fixo ? "Fixado" : "Fixar"}
+          </button>
+        </div>
+        <MarqueePreview cores={cores} itens={itens} />
+      </div>
+    </>
+  );
+}
+
+/** A fita em si: itens em sequência, deslizando como no site. */
+function MarqueePreview({ cores, itens }: { cores: Cores; itens: EditorItem[] }) {
+  const fundo = cores.fundo || "#17130d";
+  const texto = cores.texto || "#f2e9d8";
+
+  return (
+    <div
+      className="overflow-hidden rounded-md border border-border"
+      style={{ backgroundColor: fundo }}
+    >
+      {itens.length === 0 ? (
+        <p className="px-4 py-3 text-center text-sm opacity-70" style={{ color: texto }}>
+          Nenhum item ainda.
+        </p>
+      ) : (
+        <div className="marquee-fita flex w-max">
+          {/* A fita é duplicada: a animação anda metade dela e volta ao início
+              sem emenda visível. A cópia é escondida dos leitores de tela. */}
+          {[0, 1].map((copia) => (
+            <ul
+              key={copia}
+              aria-hidden={copia === 1 ? true : undefined}
+              className="flex shrink-0 items-center gap-10 px-5 py-2.5"
+            >
+              {itens.map((it, i) => (
+                <li
+                  key={`${copia}-${it.id || "novo"}-${i}`}
+                  className="flex items-center gap-2 whitespace-nowrap"
+                  style={{ color: texto }}
+                >
+                  {it.icon && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={iconSrc(it.icon)} alt="" className="size-5 object-contain" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {it.titulo || "Sem texto"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -99,19 +246,20 @@ function Secao({
 function DadosSection({
   marqueeId,
   nomeInicial,
-  corFundoInicial,
-  corTextoInicial,
+  cores,
+  onCores,
   onSaved,
 }: {
   marqueeId: string;
   nomeInicial: string;
-  corFundoInicial: string;
-  corTextoInicial: string;
+  cores: Cores;
+  onCores: (c: Cores) => void;
   onSaved: () => void;
 }) {
   const [nome, setNome] = useState(nomeInicial);
-  const [cf, setCf] = useState(corFundoInicial);
-  const [ct, setCt] = useState(corTextoInicial);
+  const { fundo: cf, texto: ct } = cores;
+  const setCf = (v: string) => onCores({ ...cores, fundo: v });
+  const setCt = (v: string) => onCores({ ...cores, texto: v });
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [pending, start] = useTransition();
@@ -231,11 +379,13 @@ function ItensSection({
   telas,
   itens,
   icons,
+  onRascunho,
 }: {
   marqueeId: string;
   telas: EditorTela[];
   itens: EditorItem[];
   icons: IconOpt[];
+  onRascunho: (i: EditorItem | null) => void;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -308,8 +458,13 @@ function ItensSection({
           telas={telas}
           icons={icons}
           item={modal.item}
-          onClose={() => setModal({ open: false, item: null })}
+          onRascunho={onRascunho}
+          onClose={() => {
+            onRascunho(null);
+            setModal({ open: false, item: null });
+          }}
           onSaved={() => {
+            onRascunho(null);
             setModal({ open: false, item: null });
             router.refresh();
           }}
@@ -342,6 +497,7 @@ function ItemModal({
   icons,
   item,
   onClose,
+  onRascunho,
   onSaved,
 }: {
   marqueeId: string;
@@ -349,6 +505,7 @@ function ItemModal({
   icons: IconOpt[];
   item: EditorItem | null;
   onClose: () => void;
+  onRascunho: (i: EditorItem | null) => void;
   onSaved: () => void;
 }) {
   const [titulo, setTitulo] = useState(item?.titulo ?? "");
@@ -360,6 +517,21 @@ function ItemModal({
   const [pending, start] = useTransition();
 
   const habilitadas = telas.filter((t) => t.status === "habilitada");
+
+  // Enquanto o modal está aberto, o preview mostra o item como ele está ficando.
+  useEffect(() => {
+    const icon = icons.find((ic) => ic.id === iconId);
+    onRascunho({
+      id: item?.id ?? "",
+      titulo,
+      icon_id: iconId || null,
+      icon: icon ? { name: icon.name, extension: icon.extension } : null,
+      tipo_nav: tipoNav,
+      tela_destino_id: telaId || null,
+      url_externa: url || null,
+      ordem: item?.ordem ?? Number.MAX_SAFE_INTEGER,
+    });
+  }, [titulo, iconId, tipoNav, telaId, url, icons, item, onRascunho]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
