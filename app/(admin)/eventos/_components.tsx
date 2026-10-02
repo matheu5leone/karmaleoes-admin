@@ -129,6 +129,7 @@ export function EventosManager({
     {
       key: "enable_efetivo",
       header: "Hub",
+      valor: (e) => (e.enable_efetivo ? "visível" : "oculto"),
       render: (e) => (
         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
           <span
@@ -143,6 +144,7 @@ export function EventosManager({
     { key: "prioridade", header: "Prio.", render: (e) => String(e.prioridade) },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (e) => (
         <div className="flex flex-wrap gap-1">
@@ -208,6 +210,7 @@ export function EventosManager({
 
       {vista === "tabela" ? (
         <DataTable
+        id="eventos"
           columns={columns}
           rows={eventos}
           getFilterText={(e) => `${e.nome} ${e.status_efetivo}`}

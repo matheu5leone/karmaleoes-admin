@@ -30,6 +30,7 @@ export function IconesManager({ icons }: { icons: IconRow[] }) {
   const columns: Column<IconRow>[] = [
     {
       key: "preview",
+      estatica: true,
       header: "",
       render: (i) => (
         // eslint-disable-next-line @next/next/no-img-element
@@ -44,6 +45,7 @@ export function IconesManager({ icons }: { icons: IconRow[] }) {
     { key: "extension", header: "Ext." },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (i) => (
         <div className="flex gap-1">
@@ -71,6 +73,7 @@ export function IconesManager({ icons }: { icons: IconRow[] }) {
       </div>
 
       <DataTable
+        id="icones"
         columns={columns}
         rows={icons}
         getFilterText={(i) => `${i.name} ${i.extension}`}

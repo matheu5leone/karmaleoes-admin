@@ -67,6 +67,7 @@ export function ConteudosManager({
   const columns: Column<ConteudoRow>[] = [
     {
       key: "thumbnail",
+      estatica: true,
       header: "",
       className: "w-16",
       render: (c) =>
@@ -87,10 +88,16 @@ export function ConteudosManager({
       render: (c) => c.categoriaNome ?? "—",
     },
     { key: "status", header: "Status", render: (c) => <StatusBadge s={c.status} /> },
-    { key: "destaque", header: "Destaque", render: (c) => (c.destaque ? "★" : "—") },
+    {
+      key: "destaque",
+      header: "Destaque",
+      valor: (c) => (c.destaque ? "sim" : "não"),
+      render: (c) => (c.destaque ? "★" : "—"),
+    },
     { key: "ordem", header: "Ordem", render: (c) => String(c.ordem) },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (c) => (
         <div className="flex items-center gap-1">
@@ -132,6 +139,7 @@ export function ConteudosManager({
       </div>
 
       <DataTable
+        id="conteudos"
         columns={columns}
         rows={conteudos}
         getFilterText={(c) => `${c.titulo} ${c.tipo} ${c.categoriaNome ?? ""}`}

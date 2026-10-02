@@ -26,6 +26,7 @@ export function RolesManager({ roles }: { roles: RoleRow[] }) {
     { key: "nome", header: "Nome" },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (r) => (
         <div className="flex gap-1">
@@ -46,6 +47,7 @@ export function RolesManager({ roles }: { roles: RoleRow[] }) {
         <Button onClick={() => setForm({ open: true, r: null })}>Novo tipo</Button>
       </div>
       <DataTable
+        id="roles"
         columns={columns}
         rows={roles}
         getFilterText={(r) => r.nome}

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
 import { PhoneInput } from "@/components/form/phone-input";
 import { ShieldBadge } from "@/components/heraldry/shield-badge";
+import { DataTable, type Column } from "@/components/data-table/data-table";
 import { criarUsuarioSchema } from "@/lib/validation/usuarios";
 import { alternarStatus, criarUsuario, editarTelefone } from "./actions";
 
@@ -146,193 +147,122 @@ export function UsuariosTable({
   usuarios: Usuario[];
   protectedIds?: string[];
 }) {
-  return (
-    <>
-    {/* Cards no celular: 5 colunas com campo editável não cabem em 375px. */}
-    <ul className="space-y-3 md:hidden">
-      {usuarios.map((u) => (
-        <CardUsuario key={u.id} usuario={u} protegido={protectedIds.includes(u.id)} />
-      ))}
-    </ul>
-    <div className="hidden overflow-hidden rounded-lg border border-border md:block">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50 text-left text-xs uppercase tracking-[0.02em] text-muted-foreground">
-          <tr>
-            <th className="px-4 py-3 font-semibold">E-mail</th>
-            <th className="px-4 py-3 font-semibold">Telefone</th>
-            <th className="px-4 py-3 font-semibold">2FA</th>
-            <th className="px-4 py-3 font-semibold">Status</th>
-            <th className="px-4 py-3 font-semibold">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {usuarios.map((u) => (
-            <LinhaUsuario
-              key={u.id}
-              usuario={u}
-              protegido={protectedIds.includes(u.id)}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
-    </>
-  );
-}
+  const protegido = (u: Usuario) => protectedIds.includes(u.id);
 
-/** Mesma informação da linha, empilhada — versão mobile. */
-function CardUsuario({
-  usuario,
-  protegido,
-}: {
-  usuario: Usuario;
-  protegido: boolean;
-}) {
-  const router = useRouter();
-  const [telefone, setTelefone] = useState(usuario.telefone ?? "");
-  const [pending, start] = useTransition();
-  const ativo = usuario.status === "ativo";
-
-  return (
-    <li className="space-y-3 rounded-lg border border-border bg-card p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="inline-flex min-w-0 flex-wrap items-center gap-2 break-all font-medium">
-          {usuario.email}
-          {usuario.user_role === "SUPER" && <ShieldBadge tinctura="or">super</ShieldBadge>}
+  const columns: Column<Usuario>[] = [
+    {
+      key: "email",
+      header: "E-mail",
+      render: (u) => (
+        <span className="inline-flex flex-wrap items-center gap-2 break-all">
+          {u.email}
+          {u.user_role === "SUPER" && (
+            <ShieldBadge tinctura="or">super</ShieldBadge>
+          )}
         </span>
-        <ShieldBadge tinctura={ativo ? "vert" : "argent"} escudo>
-          {ativo ? "ativo" : "inativo"}
+      ),
+    },
+    {
+      key: "telefone",
+      header: "Telefone",
+      valor: (u) => u.telefone ?? "",
+      render: (u) => <CelulaTelefone usuario={u} />,
+    },
+    {
+      key: "two_factor_configured",
+      header: "2FA",
+      valor: (u) => (u.two_factor_configured ? "ativo" : "pendente"),
+      render: (u) => (
+        <ShieldBadge tinctura={u.two_factor_configured ? "vert" : "tenne"}>
+          {u.two_factor_configured ? "Ativo" : "Pendente"}
         </ShieldBadge>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          2FA
-        </span>
-        <ShieldBadge tinctura={usuario.two_factor_configured ? "vert" : "tenne"}>
-          {usuario.two_factor_configured ? "Ativo" : "Pendente"}
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (u) => (
+        <ShieldBadge tinctura={u.status === "ativo" ? "vert" : "argent"} escudo>
+          {u.status === "ativo" ? "ativo" : "inativo"}
         </ShieldBadge>
-      </div>
-      <div className="flex items-center gap-2">
-        <PhoneInput
-          value={telefone}
-          onChange={setTelefone}
-          className="h-9 flex-1"
-          aria-label={`Telefone de ${usuario.email}`}
-        />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={pending || telefone === (usuario.telefone ?? "")}
-          onClick={() =>
-            start(async () => {
-              await editarTelefone(usuario.id, telefone);
-              router.refresh();
-            })
-          }
-        >
-          Salvar
-        </Button>
-      </div>
-      {protegido ? (
-        <p className="text-xs text-muted-foreground">protegido</p>
-      ) : (
-        <Button
-          type="button"
-          variant={ativo ? "ghost" : "secondary"}
-          size="sm"
-          disabled={pending}
-          className="w-full"
-          onClick={() =>
-            start(async () => {
-              await alternarStatus(usuario.id, !ativo);
-              router.refresh();
-            })
-          }
-        >
-          {ativo ? "Desativar" : "Ativar"}
-        </Button>
-      )}
-    </li>
-  );
-}
-
-function LinhaUsuario({
-  usuario,
-  protegido,
-}: {
-  usuario: Usuario;
-  protegido: boolean;
-}) {
-  const router = useRouter();
-  const [telefone, setTelefone] = useState(usuario.telefone ?? "");
-  const [pending, start] = useTransition();
-  const ativo = usuario.status === "ativo";
-
-  function salvarTelefone() {
-    start(async () => {
-      await editarTelefone(usuario.id, telefone);
-      router.refresh();
-    });
-  }
-  function toggle() {
-    start(async () => {
-      await alternarStatus(usuario.id, !ativo);
-      router.refresh();
-    });
-  }
-
-  return (
-    <tr className="border-t border-border">
-      <td className="px-4 py-3">
-        <span className="inline-flex flex-wrap items-center gap-2">
-          {usuario.email}
-          {usuario.user_role === "SUPER" && <ShieldBadge tinctura="or">super</ShieldBadge>}
-        </span>
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <PhoneInput
-            value={telefone}
-            onChange={setTelefone}
-            className="h-8 w-40"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={salvarTelefone}
-            disabled={pending || telefone === (usuario.telefone ?? "")}
-          >
-            Salvar
-          </Button>
-        </div>
-      </td>
-      <td className="px-4 py-3">
-        <ShieldBadge tinctura={usuario.two_factor_configured ? "vert" : "tenne"}>
-          {usuario.two_factor_configured ? "Ativo" : "Pendente"}
-        </ShieldBadge>
-      </td>
-      <td className="px-4 py-3">
-        <ShieldBadge tinctura={ativo ? "vert" : "argent"} escudo>
-          {ativo ? "ativo" : "inativo"}
-        </ShieldBadge>
-      </td>
-      <td className="px-4 py-3">
-        {protegido ? (
+      ),
+    },
+    {
+      key: "acoes",
+      estatica: true,
+      header: "Ações",
+      render: (u) =>
+        protegido(u) ? (
           <span className="text-xs text-muted-foreground">protegido</span>
         ) : (
-          <Button
-            type="button"
-            variant={ativo ? "ghost" : "secondary"}
-            size="sm"
-            onClick={toggle}
-            disabled={pending}
-          >
-            {ativo ? "Desativar" : "Ativar"}
-          </Button>
-        )}
-      </td>
-    </tr>
+          <BotaoStatus usuario={u} />
+        ),
+    },
+  ];
+
+  return (
+    <DataTable
+      id="usuarios"
+      columns={columns}
+      rows={usuarios}
+      getFilterText={(u) => `${u.email} ${u.telefone ?? ""}`}
+      filterPlaceholder="Filtrar usuários…"
+      empty="Nenhum usuário cadastrado."
+    />
+  );
+}
+
+/** Telefone é editável na própria linha: campo + salvar. */
+function CelulaTelefone({ usuario }: { usuario: Usuario }) {
+  const router = useRouter();
+  const [telefone, setTelefone] = useState(usuario.telefone ?? "");
+  const [pending, start] = useTransition();
+
+  return (
+    <div className="flex items-center gap-2">
+      <PhoneInput
+        value={telefone}
+        onChange={setTelefone}
+        className="h-8 w-40"
+        aria-label={`Telefone de ${usuario.email}`}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={pending || telefone === (usuario.telefone ?? "")}
+        onClick={() =>
+          start(async () => {
+            await editarTelefone(usuario.id, telefone);
+            router.refresh();
+          })
+        }
+      >
+        Salvar
+      </Button>
+    </div>
+  );
+}
+
+function BotaoStatus({ usuario }: { usuario: Usuario }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const ativo = usuario.status === "ativo";
+
+  return (
+    <Button
+      type="button"
+      variant={ativo ? "ghost" : "secondary"}
+      size="sm"
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          await alternarStatus(usuario.id, !ativo);
+          router.refresh();
+        })
+      }
+    >
+      {ativo ? "Desativar" : "Ativar"}
+    </Button>
   );
 }

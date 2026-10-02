@@ -32,6 +32,7 @@ export function MarqueesManager({ marquees }: { marquees: MarqueeRow[] }) {
     { key: "itens", header: "Itens", render: (m) => String(m.itens) },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (m) => (
         <div className="flex gap-1">
@@ -53,6 +54,7 @@ export function MarqueesManager({ marquees }: { marquees: MarqueeRow[] }) {
       </div>
 
       <DataTable
+        id="marquees"
         columns={columns}
         rows={marquees}
         getFilterText={(m) => m.nome}

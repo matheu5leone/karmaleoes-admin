@@ -70,6 +70,7 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
     },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (t) => (
         <div className="flex gap-1">
@@ -113,6 +114,7 @@ export function TelasManager({ telas }: { telas: Tela[] }) {
   return (
     <>
       <DataTable
+        id="telas"
         columns={columns}
         rows={telas}
         getFilterText={(t) => `${t.nome} ${t.rota}`}

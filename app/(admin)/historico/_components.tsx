@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
 import { Button } from "@/components/ui/button";
 import { ShieldBadge, type Tinctura } from "@/components/heraldry/shield-badge";
+import { TAMANHOS_PAGINA } from "@/components/data-table/tamanhos";
 import { cn } from "@/lib/utils";
 import { PERIODOS, PROXIMO_PERIODO, type Periodo } from "./periodos";
 
@@ -315,19 +316,47 @@ export function HistoricoTabela({
         </table>
       </div>
 
-      {totalPaginas > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Página {pagina} de {totalPaginas}</span>
-          <div className="flex gap-2">
-            <Button asChild variant="ghost" size="sm" disabled={pagina <= 1}>
-              <Link href={comParams({ pagina: String(pagina - 1) })}>Anterior</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm" disabled={pagina >= totalPaginas}>
-              <Link href={comParams({ pagina: String(pagina + 1) })}>Próxima</Link>
-            </Button>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <span>
+          {total === 0
+            ? "Nenhum registro"
+            : `${(pagina - 1) * porPagina + 1}–${Math.min(pagina * porPagina, total)} de ${total}`}
+        </span>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5">
+            <span className="whitespace-nowrap text-xs">Por página</span>
+            <Select
+              value={String(porPagina)}
+              onChange={(e) =>
+                router.push(
+                  comParams({ porPagina: e.target.value, pagina: null }),
+                  { scroll: false },
+                )
+              }
+              className="h-8 w-[4.5rem] text-xs"
+            >
+              {TAMANHOS_PAGINA.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </Select>
+          </label>
+          {totalPaginas > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs tabular-nums">
+                {pagina} / {totalPaginas}
+              </span>
+              <Button asChild variant="ghost" size="sm" disabled={pagina <= 1}>
+                <Link href={comParams({ pagina: String(pagina - 1) })}>Anterior</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" disabled={pagina >= totalPaginas}>
+                <Link href={comParams({ pagina: String(pagina + 1) })}>Próxima</Link>
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

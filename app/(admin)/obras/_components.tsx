@@ -102,6 +102,7 @@ function MusicasSection({
     { key: "colecaoNome", header: "Coleção", render: (m) => m.colecaoNome ?? "—" },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (m) => (
         <div className="flex gap-1">
@@ -126,6 +127,7 @@ function MusicasSection({
         <Button onClick={() => setForm({ open: true, m: null })}>Nova música</Button>
       </div>
       <DataTable
+        id="musicas"
         columns={columns}
         rows={musicas}
         getFilterText={(m) => `${m.nome} ${m.colecaoNome ?? ""}`}
@@ -193,6 +195,7 @@ function ColecoesSection({ colecoes }: { colecoes: ColecaoRow[] }) {
     { key: "data_lancamento", header: "Lançamento", render: (c) => c.data_lancamento ?? "—" },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (c) => (
         <div className="flex gap-1">
@@ -217,6 +220,7 @@ function ColecoesSection({ colecoes }: { colecoes: ColecaoRow[] }) {
         <Button onClick={() => setForm({ open: true, c: null })}>Nova coleção</Button>
       </div>
       <DataTable
+        id="colecoes"
         columns={columns}
         rows={colecoes}
         getFilterText={(c) => `${c.nome} ${c.tipo}`}

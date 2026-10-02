@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
+import { DataTable, type Column } from "@/components/data-table/data-table";
 import {
   associarTela,
   despublicar,
@@ -47,6 +48,124 @@ export function BannerAssociacoes({
     });
   }
 
+  const colunas: Column<DetTela>[] = [
+    {
+      key: "nome",
+      header: "Tela",
+      render: (t) => (
+        <>
+          {t.nome}
+          {t.status !== "habilitada" && (
+            <span className="ml-2 text-xs text-muted-foreground">
+              (desabilitada)
+            </span>
+          )}
+        </>
+      ),
+    },
+    {
+      key: "estado",
+      header: "Estado",
+      valor: (t) => byTela.get(t.id)?.status ?? "—",
+      render: (t) => {
+        const a = byTela.get(t.id);
+        return (
+          <>
+            {!a ? (
+              <span className="text-muted-foreground">—</span>
+            ) : (
+              <ShieldBadge
+                tinctura={a.status === "publicado" ? "vert" : "argent"}
+                escudo
+              >
+                {a.status}
+              </ShieldBadge>
+            )}
+            {/* Quem ocupa a tela hoje — evita a troca às cegas. */}
+            {publicadoPorTela[t.id] && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                exibindo: {publicadoPorTela[t.id].nome}
+              </p>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      key: "acoes",
+      estatica: true,
+      header: "Ações",
+      render: (t) => {
+        const a = byTela.get(t.id);
+        const habilitada = t.status === "habilitada";
+        return (
+          <div className="flex gap-1">
+            {!a && habilitada && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  run(() => associarTela(bannerId, t.id), "Associado (rascunho).")
+                }
+              >
+                Associar
+              </Button>
+            )}
+            {a && a.status === "draft" && habilitada && (
+              <Button
+                size="sm"
+                disabled={pending}
+                onClick={() => {
+                  const atual = publicadoPorTela[t.id];
+                  // Sem banner publicado na tela, publica direto: confirmar
+                  // aqui seria só atrito.
+                  if (!atual) {
+                    return run(() => publicar(bannerId, a.id), "Publicado.");
+                  }
+                  setTroca({
+                    assocId: a.id,
+                    tela: t.nome,
+                    substituido: atual.nome,
+                  });
+                }}
+              >
+                Publicar
+              </Button>
+            )}
+            {a && a.status === "publicado" && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  run(() => despublicar(bannerId, a.id), "Despublicado.")
+                }
+              >
+                Despublicar
+              </Button>
+            )}
+            {a && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  run(
+                    () => removerAssociacao(bannerId, a.id),
+                    "Associação removida.",
+                  )
+                }
+              >
+                Remover
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <section className="mt-8 rounded-lg border border-border bg-card p-5">
       <h2 className="mb-1 text-lg font-semibold tracking-tight">
@@ -60,126 +179,14 @@ export function BannerAssociacoes({
       {telas.length === 0 ? (
         <p className="text-sm text-muted-foreground">Cadastre telas primeiro.</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs uppercase tracking-[0.02em] text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2 font-semibold">Tela</th>
-                <th className="px-4 py-2 font-semibold">Estado</th>
-                <th className="px-4 py-2 font-semibold">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {telas.map((t) => {
-                const a = byTela.get(t.id);
-                const habilitada = t.status === "habilitada";
-                return (
-                  <tr key={t.id} className="border-t border-border">
-                    <td className="px-4 py-2">
-                      {t.nome}
-                      {!habilitada && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          (desabilitada)
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      {!a ? (
-                        <span className="text-muted-foreground">—</span>
-                      ) : (
-                        <ShieldBadge
-                          tinctura={a.status === "publicado" ? "vert" : "argent"}
-                          escudo
-                        >
-                          {a.status}
-                        </ShieldBadge>
-                      )}
-                      {/* Quem ocupa a tela hoje — evita a troca às cegas. */}
-                      {publicadoPorTela[t.id] && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          exibindo: {publicadoPorTela[t.id].nome}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      <div className="flex gap-1">
-                        {!a && habilitada && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={pending}
-                            onClick={() =>
-                              run(
-                                () => associarTela(bannerId, t.id),
-                                "Associado (rascunho).",
-                              )
-                            }
-                          >
-                            Associar
-                          </Button>
-                        )}
-                        {a && a.status === "draft" && habilitada && (
-                          <Button
-                            size="sm"
-                            disabled={pending}
-                            onClick={() => {
-                              const atual = publicadoPorTela[t.id];
-                              // Sem banner publicado na tela, publica direto:
-                              // confirmar aqui seria só atrito.
-                              if (!atual) {
-                                return run(
-                                  () => publicar(bannerId, a.id),
-                                  "Publicado.",
-                                );
-                              }
-                              setTroca({
-                                assocId: a.id,
-                                tela: t.nome,
-                                substituido: atual.nome,
-                              });
-                            }}
-                          >
-                            Publicar
-                          </Button>
-                        )}
-                        {a && a.status === "publicado" && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={pending}
-                            onClick={() =>
-                              run(
-                                () => despublicar(bannerId, a.id),
-                                "Despublicado.",
-                              )
-                            }
-                          >
-                            Despublicar
-                          </Button>
-                        )}
-                        {a && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={pending}
-                            onClick={() =>
-                              run(
-                                () => removerAssociacao(bannerId, a.id),
-                                "Associação removida.",
-                              )
-                            }
-                          >
-                            Remover
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          id="banner-telas"
+          columns={colunas}
+          rows={telas}
+          getFilterText={(t) => t.nome}
+          filterPlaceholder="Filtrar telas…"
+          empty="Nenhuma tela."
+        />
       )}
 
       <ConfirmDialog

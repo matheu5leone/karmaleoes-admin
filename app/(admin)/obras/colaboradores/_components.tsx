@@ -41,6 +41,7 @@ export function ColaboradoresManager({
     { key: "instagram", header: "Instagram", render: (c) => c.instagram ?? "—" },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (c) => (
         <div className="flex gap-1">
@@ -63,6 +64,7 @@ export function ColaboradoresManager({
         </Button>
       </div>
       <DataTable
+        id="colaboradores"
         columns={columns}
         rows={colaboradores}
         getFilterText={(c) => c.nome}

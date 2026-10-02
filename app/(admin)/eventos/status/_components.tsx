@@ -34,10 +34,12 @@ export function StatusManager({ statuses }: { statuses: StatusRow[] }) {
     {
       key: "protegido",
       header: "Protegido",
+      valor: (s) => (s.protegido ? "sim" : "não"),
       render: (s) => (s.protegido ? "sim" : "—"),
     },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (s) => (
         <div className="flex gap-1">
@@ -71,6 +73,7 @@ export function StatusManager({ statuses }: { statuses: StatusRow[] }) {
       </div>
 
       <DataTable
+        id="evento-status"
         columns={columns}
         rows={statuses}
         getFilterText={(s) => `${s.nome} ${s.lifecycle}`}

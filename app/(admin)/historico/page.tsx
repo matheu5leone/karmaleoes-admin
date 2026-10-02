@@ -1,10 +1,18 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getContaAtual } from "@/lib/conta";
+import {
+  TAMANHOS_PAGINA,
+  TAMANHO_PAGINA_PADRAO,
+} from "@/components/data-table/tamanhos";
 import { HistoricoTabela, type LogRow } from "./_components";
 import { PERIODOS, normalizarPeriodo } from "./periodos";
 
-const POR_PAGINA = 50;
+/** Mesmas opções das demais tabelas; qualquer outro valor cai no padrão. */
+function normalizarPorPagina(v?: string): number {
+  const n = Number(v);
+  return (TAMANHOS_PAGINA as readonly number[]).includes(n) ? n : TAMANHO_PAGINA_PADRAO;
+}
 
 /** Colunas que aceitam ordenação (lista fechada: vai direto para o `order`). */
 const ORDENAVEIS = ["created_at", "acao", "entidade", "registro_id"] as const;
@@ -20,6 +28,7 @@ type Params = {
   ordem?: string;
   dir?: string;
   pagina?: string;
+  porPagina?: string;
   entidade?: string;
   acao?: string;
   autor?: string;
@@ -40,7 +49,8 @@ export default async function HistoricoPage({
   const ordem = normalizarOrdem(sp.ordem);
   const asc = sp.dir === "asc";
   const pagina = Math.max(1, Number(sp.pagina) || 1);
-  const inicio = (pagina - 1) * POR_PAGINA;
+  const porPagina = normalizarPorPagina(sp.porPagina);
+  const inicio = (pagina - 1) * porPagina;
   const periodo = normalizarPeriodo(sp.periodo);
   const horas = PERIODOS[periodo].horas;
 
@@ -66,7 +76,7 @@ export default async function HistoricoPage({
 
   const [{ data: logs, count }, { data: admins }, { data: entidades }] =
     await Promise.all([
-      q.order(ordem, { ascending: asc }).range(inicio, inicio + POR_PAGINA - 1),
+      q.order(ordem, { ascending: asc }).range(inicio, inicio + porPagina - 1),
       supabase.from("admin_user").select("id, email"),
       supabase.from("audit_log").select("entidade"),
     ]);
@@ -96,7 +106,7 @@ export default async function HistoricoPage({
         logs={lista}
         total={count ?? 0}
         pagina={pagina}
-        porPagina={POR_PAGINA}
+        porPagina={porPagina}
         ordem={ordem}
         dir={asc ? "asc" : "desc"}
         filtros={{

@@ -38,6 +38,7 @@ export function CategoriasEventoManager({
     { key: "name", header: "Nome" },
     {
       key: "acoes",
+      estatica: true,
       header: "Ações",
       render: (c) => (
         <div className="flex gap-1">
@@ -65,6 +66,7 @@ export function CategoriasEventoManager({
       </div>
 
       <DataTable
+        id="evento-categorias"
         columns={columns}
         rows={categorias}
         getFilterText={(c) => c.name}
