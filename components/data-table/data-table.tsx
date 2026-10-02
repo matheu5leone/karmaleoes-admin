@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
+import {
+  ArrowDownUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -67,6 +75,8 @@ export function DataTable<T extends { id: string }>({
   const [filtros, setFiltros] = useState<Record<string, string>>({});
   const [porPagina, setPorPagina] = useState<number>(TAMANHO_PAGINA_PADRAO);
   const [pagina, setPagina] = useState(1);
+  // No celular não há cabeçalho de tabela: filtros e ordenação vêm deste painel.
+  const [painel, setPainel] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -183,6 +193,13 @@ export function DataTable<T extends { id: string }>({
     setFiltros((f) => ({ ...f, [key]: v }));
   }
 
+  const ativos = Object.values(filtros).filter(Boolean).length;
+
+  function limparFiltros() {
+    setPagina(1);
+    setFiltros({});
+  }
+
   return (
     <div className="space-y-3">
       {(getFilterText || action) && (
@@ -203,6 +220,106 @@ export function DataTable<T extends { id: string }>({
           {action}
         </div>
       )}
+
+      {/* Controles do celular: o cabeçalho da tabela some abaixo do md, então
+          filtro por coluna e ordenação ganham painel próprio. */}
+      <div className="space-y-2 md:hidden">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setPainel((v) => !v)}
+            aria-expanded={painel}
+            className={cn(
+              "flex h-10 flex-1 items-center justify-center gap-2 rounded-sm border text-sm transition-colors",
+              ativos
+                ? "border-brand bg-brand-subtle text-brand"
+                : "border-border text-muted-foreground",
+            )}
+          >
+            <SlidersHorizontal className="size-4" />
+            Filtros
+            {ativos > 0 && (
+              <span className="rounded-full bg-brand px-1.5 text-xs font-semibold text-brand-foreground">
+                {ativos}
+              </span>
+            )}
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "size-4 transition-transform duration-150",
+                painel && "rotate-180",
+              )}
+            />
+          </button>
+          <div className="flex flex-1 gap-1">
+            <Select
+              aria-label="Ordenar por"
+              value={ordem?.key ?? ""}
+              onChange={(e) => {
+                setPagina(1);
+                setOrdem(e.target.value ? { key: e.target.value, dir: "asc" } : null);
+              }}
+              className="h-10 min-w-0 flex-1 text-sm"
+            >
+              <option value="">Ordenar por…</option>
+              {colunasFiltraveis.map((c) => (
+                <option key={c.key} value={c.key}>
+                  {c.header || c.key}
+                </option>
+              ))}
+            </Select>
+            <button
+              type="button"
+              disabled={!ordem}
+              onClick={() =>
+                setOrdem((o) =>
+                  o ? { ...o, dir: o.dir === "asc" ? "desc" : "asc" } : o,
+                )
+              }
+              aria-label={
+                ordem?.dir === "desc" ? "Ordenar crescente" : "Ordenar decrescente"
+              }
+              className="flex size-10 shrink-0 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors disabled:opacity-40"
+            >
+              {ordem?.dir === "desc" ? (
+                <ChevronDown className="size-4" />
+              ) : ordem ? (
+                <ChevronUp className="size-4" />
+              ) : (
+                <ArrowDownUp className="size-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {painel && (
+          <div className="space-y-2 rounded-sm border border-border bg-card p-3">
+            {colunasFiltraveis.map((c) => (
+              <label key={c.key} className="block">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  {c.header || c.key}
+                </span>
+                <CampoFiltro
+                  coluna={c}
+                  opcoes={opcoesPorColuna[c.key]}
+                  valor={filtros[c.key] ?? ""}
+                  onChange={(v) => filtrar(c.key, v)}
+                  className="h-10 w-full text-sm"
+                />
+              </label>
+            ))}
+            <button
+              type="button"
+              onClick={limparFiltros}
+              disabled={!ativos}
+              className="flex h-9 w-full items-center justify-center gap-1.5 rounded-sm border border-border text-sm text-muted-foreground transition-colors disabled:opacity-40"
+            >
+              <X className="size-4" />
+              Limpar filtros
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Livro-razão: cabeçalho rubricado, filete duplo e linhas regradas. */}
       <div className="hidden overflow-x-auto rounded-sm border border-border bg-card shadow-sm md:block">
@@ -253,26 +370,12 @@ export function DataTable<T extends { id: string }>({
                 const opcoes = opcoesPorColuna[c.key];
                 return (
                   <th key={c.key} className="px-2 pb-2 pt-1 font-normal">
-                    {c.estatica ? null : opcoes ? (
-                      <Select
-                        aria-label={`Filtrar por ${c.header || c.key}`}
-                        value={filtros[c.key] ?? ""}
-                        onChange={(e) => filtrar(c.key, e.target.value)}
-                        className="h-8 w-full min-w-24 text-xs"
-                      >
-                        <option value="">Todos</option>
-                        {opcoes.map((o) => (
-                          <option key={o} value={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </Select>
-                    ) : (
-                      <Input
-                        aria-label={`Filtrar por ${c.header || c.key}`}
-                        placeholder="Filtrar"
-                        value={filtros[c.key] ?? ""}
-                        onChange={(e) => filtrar(c.key, e.target.value)}
+                    {c.estatica ? null : (
+                      <CampoFiltro
+                        coluna={c}
+                        opcoes={opcoes}
+                        valor={filtros[c.key] ?? ""}
+                        onChange={(v) => filtrar(c.key, v)}
                         className="h-8 w-full min-w-24 text-xs"
                       />
                     )}
@@ -357,6 +460,46 @@ export function DataTable<T extends { id: string }>({
   );
 }
 
+/** Campo de filtro de uma coluna — o mesmo no cabeçalho e no painel do celular. */
+function CampoFiltro<T>({
+  coluna,
+  opcoes,
+  valor,
+  onChange,
+  className,
+}: {
+  coluna: Column<T>;
+  opcoes?: string[];
+  valor: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  const rotulo = `Filtrar por ${coluna.header || coluna.key}`;
+  return opcoes ? (
+    <Select
+      aria-label={rotulo}
+      value={valor}
+      onChange={(e) => onChange(e.target.value)}
+      className={className}
+    >
+      <option value="">Todos</option>
+      {opcoes.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </Select>
+  ) : (
+    <Input
+      aria-label={rotulo}
+      placeholder="Filtrar"
+      value={valor}
+      onChange={(e) => onChange(e.target.value)}
+      className={className}
+    />
+  );
+}
+
 function Paginacao({
   total,
   inicio,
@@ -389,7 +532,7 @@ function Paginacao({
           <Select
             value={String(porPagina)}
             onChange={(e) => onPorPagina(Number(e.target.value))}
-            className="h-8 w-[4.5rem] text-xs"
+            className="h-9 w-[4.5rem] text-xs md:h-8"
           >
             {TAMANHOS_PAGINA.map((n) => (
               <option key={n} value={n}>
@@ -442,7 +585,7 @@ function BotaoPagina({
       disabled={desabilitado}
       aria-label={rotulo}
       title={rotulo}
-      className="rounded-sm border border-border p-1 transition-colors hover:border-brand hover:text-foreground disabled:opacity-40 disabled:hover:border-border"
+      className="flex size-9 items-center justify-center rounded-sm border border-border transition-colors hover:border-brand hover:text-foreground disabled:opacity-40 disabled:hover:border-border md:size-7"
     >
       {children}
     </button>
