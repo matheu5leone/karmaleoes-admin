@@ -165,6 +165,8 @@ export function UsuariosTable({
     {
       key: "telefone",
       header: "Telefone",
+      // Campo + botão não cabem em meia largura no card do celular.
+      cardLargo: true,
       valor: (u) => u.telefone ?? "",
       render: (u) => <CelulaTelefone usuario={u} />,
     },
@@ -223,7 +225,7 @@ function CelulaTelefone({ usuario }: { usuario: Usuario }) {
       <PhoneInput
         value={telefone}
         onChange={setTelefone}
-        className="h-8 w-40"
+        className="h-8 w-full md:w-40"
         aria-label={`Telefone de ${usuario.email}`}
       />
       <Button

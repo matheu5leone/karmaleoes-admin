@@ -29,8 +29,14 @@ export type Column<T> = {
    * formatado, nome da coleção em vez do id, etc.).
    */
   valor?: (row: T) => string | number | null | undefined;
-  /** Coluna sem dado próprio (ações, miniatura): não ordena nem filtra. */
+  /**
+   * Coluna sem dado próprio: não ordena nem filtra. No card do celular, uma
+   * coluna estática **com** cabeçalho vira rodapé de ações; **sem** cabeçalho,
+   * vira a miniatura à esquerda.
+   */
   estatica?: boolean;
+  /** No card do celular, ocupa a linha inteira em vez de meia (campos largos). */
+  cardLargo?: boolean;
 };
 
 type Ordem = { key: string; dir: "asc" | "desc" } | null;
@@ -110,6 +116,21 @@ export function DataTable<T extends { id: string }>({
     () => columns.filter((c) => !c.estatica),
     [columns],
   );
+
+  /**
+   * Papéis no card do celular. A primeira coluna com dado é o título da linha
+   * — repetir o rótulo dela ali seria ruído; as demais viram meta em duas
+   * colunas, e as estáticas vão para miniatura ou rodapé.
+   */
+  const papeis = useMemo(() => {
+    const [titulo, ...meta] = colunasFiltraveis;
+    return {
+      titulo,
+      meta,
+      midia: columns.find((c) => c.estatica && !c.header),
+      acoes: columns.filter((c) => c.estatica && c.header),
+    };
+  }, [columns, colunasFiltraveis]);
 
   /** Colunas com poucos valores distintos ganham lista em vez de campo livre. */
   const opcoesPorColuna = useMemo(() => {
@@ -402,9 +423,7 @@ export function DataTable<T extends { id: string }>({
                 >
                   {columns.map((c) => (
                     <td key={c.key} className={cn("px-4 py-3", c.className)}>
-                      {c.render
-                        ? c.render(row)
-                        : String((row as Record<string, unknown>)[c.key] ?? "")}
+                      {celula(c, row)}
                     </td>
                   ))}
                 </tr>
@@ -422,26 +441,7 @@ export function DataTable<T extends { id: string }>({
           </li>
         ) : (
           visiveis.map((row) => (
-            <li
-              key={row.id}
-              className="rounded-sm border border-border bg-card p-3 shadow-sm"
-            >
-              <dl className="space-y-1.5">
-                {columns.map((c) => {
-                  const conteudo = c.render
-                    ? c.render(row)
-                    : String((row as Record<string, unknown>)[c.key] ?? "");
-                  return (
-                    <div key={c.key} className="flex flex-wrap items-baseline gap-x-2">
-                      <dt className="min-w-[5.5rem] text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                        {c.header}
-                      </dt>
-                      <dd className="min-w-0 flex-1 text-sm">{conteudo}</dd>
-                    </div>
-                  );
-                })}
-              </dl>
-            </li>
+            <Card key={row.id} row={row} papeis={papeis} />
           ))
         )}
       </ul>
@@ -457,6 +457,73 @@ export function DataTable<T extends { id: string }>({
         onPorPagina={mudarPorPagina}
       />
     </div>
+  );
+}
+
+/** Conteúdo de uma célula: o `render` da coluna ou o campo cru. */
+function celula<T>(c: Column<T>, row: T): ReactNode {
+  return c.render
+    ? c.render(row)
+    : String((row as Record<string, unknown>)[c.key] ?? "");
+}
+
+/** Linha como card — o formato do celular, onde a tabela não cabe. */
+function Card<T extends { id: string }>({
+  row,
+  papeis,
+}: {
+  row: T;
+  papeis: {
+    titulo?: Column<T>;
+    meta: Column<T>[];
+    midia?: Column<T>;
+    acoes: Column<T>[];
+  };
+}) {
+  const { titulo, meta, midia, acoes } = papeis;
+  return (
+    <li className="rounded-sm border border-border bg-card px-3 py-2.5 shadow-sm">
+      <div className="flex gap-3">
+        {midia && <div className="shrink-0">{celula(midia, row)}</div>}
+        <div className="min-w-0 flex-1">
+          {titulo && (
+            <div className="truncate font-medium leading-snug">
+              {celula(titulo, row)}
+            </div>
+          )}
+          {/* Meta e ações dividem a mesma faixa: rótulo ao lado do valor (e não
+              acima) e os botões à direita. Empilhado, cada card virava uma
+              coluna de cinco linhas quase vazias. */}
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+            {meta.length > 0 && (
+              <dl className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                {meta.map((c) => (
+                  <div
+                    key={c.key}
+                    className={cn(
+                      "flex min-w-0 items-baseline gap-1.5",
+                      c.cardLargo && "w-full",
+                    )}
+                  >
+                    <dt className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                      {c.header}
+                    </dt>
+                    <dd className="min-w-0 truncate text-sm">{celula(c, row)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            {acoes.length > 0 && (
+              <div className="ml-auto flex flex-wrap items-center gap-1">
+                {acoes.map((c) => (
+                  <div key={c.key}>{celula(c, row)}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </li>
   );
 }
 
