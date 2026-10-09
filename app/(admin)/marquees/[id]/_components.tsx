@@ -19,6 +19,7 @@ import {
   reordenarItens,
   salvarItem,
 } from "../actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type EditorTela = { id: string; nome: string; status: string };
 export type IconOpt = { id: string; name: string; extension: string };
@@ -334,7 +335,13 @@ function DadosSection({
     <Secao titulo="Dados">
       <form onSubmit={submit} className="space-y-3">
         <Field label="Nome" htmlFor="e-nome">
-          <Input id="e-nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+          <Input
+            id="e-nome"
+            maxLength={LIMITES.marqueeNome}
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+          />
         </Field>
         <Field label="Cor de fundo" htmlFor="e-cf">
           <ColorPicker id="e-cf" value={cf} onChange={setCf} />
@@ -615,7 +622,13 @@ function ItemModal({
           {item ? "Editar item" : "Novo item"}
         </h2>
         <Field label="Texto" htmlFor="i-titulo">
-          <Input id="i-titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
+          <Input
+            id="i-titulo"
+            maxLength={LIMITES.marqueeItemTitulo}
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+            required
+          />
         </Field>
         <Field label="Ícone" htmlFor="i-icon">
           <Select

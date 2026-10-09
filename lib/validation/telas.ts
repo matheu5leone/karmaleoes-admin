@@ -1,7 +1,12 @@
 import { z } from "zod";
+import { LIMITES, excedeu } from "./limites";
 
 export const telaSchema = z.object({
-  nome: z.string().trim().min(1, "Informe o nome"),
+  nome: z
+    .string()
+    .trim()
+    .min(1, "Informe o nome")
+    .max(LIMITES.telaNome, excedeu(LIMITES.telaNome)),
   rota: z
     .string()
     .trim()

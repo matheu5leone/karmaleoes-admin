@@ -12,6 +12,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { Lightbox } from "@/components/lightbox";
 import { useToast } from "@/components/ui/toast";
 import { criarBanner, editarBanner, excluirBanner } from "./actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type BannerRow = {
   id: string;
@@ -254,6 +255,7 @@ function BannerFormModal({
         <Field label="Nome (interno)" htmlFor="b-nome">
           <Input
             id="b-nome"
+            maxLength={LIMITES.bannerNome}
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             required

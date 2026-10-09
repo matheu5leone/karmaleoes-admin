@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { useToast } from "@/components/ui/toast";
 import { criarRole, editarRole, excluirRole } from "./actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type RoleRow = { id: string; nome: string };
 
@@ -127,7 +128,13 @@ function RoleFormModal({
           {r ? "Editar tipo de colaboração" : "Novo tipo de colaboração"}
         </h2>
         <Field label="Nome" htmlFor="ro-nome" error={error}>
-          <Input id="ro-nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+          <Input
+            id="ro-nome"
+            maxLength={LIMITES.roleNome}
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+          />
         </Field>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose} disabled={pending}>

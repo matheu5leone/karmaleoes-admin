@@ -20,6 +20,7 @@ import {
   moverConteudo,
 } from "./actions";
 import { criarCategoria, excluirCategoria } from "./categorias/actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type CategoriaOpt = { id: string; nome: string };
 export type ConteudoRow = {
@@ -246,7 +247,13 @@ function ConteudoFormModal({
           {item ? "Editar conteúdo" : "Novo conteúdo"}
         </h2>
         <Field label="Título" htmlFor="ct-titulo">
-          <Input id="ct-titulo" value={v.titulo} onChange={(e) => set("titulo", e.target.value)} required />
+          <Input
+            id="ct-titulo"
+            maxLength={LIMITES.conteudoTitulo}
+            value={v.titulo}
+            onChange={(e) => set("titulo", e.target.value)}
+            required
+          />
         </Field>
         <Field label="Thumbnail">
           <ImageUpload bucket="conteudos" value={thumbnail} onChange={setThumbnail} />

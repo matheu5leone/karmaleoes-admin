@@ -13,6 +13,7 @@ import {
   editarCategoriaEvento,
   excluirCategoriaEvento,
 } from "./actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type CategoriaEventoRow = {
   id: string;
@@ -153,6 +154,7 @@ function CategoriaFormModal({
         <Field label="Nome" htmlFor="c-nome" error={error}>
           <Input
             id="c-nome"
+            maxLength={LIMITES.categoriaNome}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required

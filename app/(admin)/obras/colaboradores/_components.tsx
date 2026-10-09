@@ -13,6 +13,7 @@ import {
   editarColaborador,
   excluirColaborador,
 } from "./actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type ColaboradorRow = {
   id: string;
@@ -150,7 +151,13 @@ function ColaboradorFormModal({
           {c ? "Editar colaborador" : "Novo colaborador"}
         </h2>
         <Field label="Nome" htmlFor="co-nome">
-          <Input id="co-nome" value={v.nome} onChange={(e) => set("nome", e.target.value)} required />
+          <Input
+            id="co-nome"
+            maxLength={LIMITES.colaboradorNome}
+            value={v.nome}
+            onChange={(e) => set("nome", e.target.value)}
+            required
+          />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Instagram" htmlFor="co-ig">

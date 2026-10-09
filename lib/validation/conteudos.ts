@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIMITES, excedeu } from "./limites";
 
 export const TIPOS = [
   "video",
@@ -15,7 +16,11 @@ export const STATUS = [
 ] as const;
 
 export const conteudoSchema = z.object({
-  titulo: z.string().trim().min(1, "Informe o título"),
+  titulo: z
+    .string()
+    .trim()
+    .min(1, "Informe o título")
+    .max(LIMITES.conteudoTitulo, excedeu(LIMITES.conteudoTitulo)),
   descricao: z.string().trim().optional().or(z.literal("")),
   thumbnail: z.string().trim().nullable().optional(),
   categoria_id: z.string().uuid().nullable().optional(),
@@ -29,6 +34,10 @@ export const conteudoSchema = z.object({
 export type ConteudoInput = z.infer<typeof conteudoSchema>;
 
 export const categoriaSchema = z.object({
-  nome: z.string().trim().min(1, "Informe o nome"),
+  nome: z
+    .string()
+    .trim()
+    .min(1, "Informe o nome")
+    .max(LIMITES.categoriaNome, excedeu(LIMITES.categoriaNome)),
 });
 export type CategoriaInput = z.infer<typeof categoriaSchema>;

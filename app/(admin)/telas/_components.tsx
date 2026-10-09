@@ -17,6 +17,7 @@ import {
   excluirTela,
   type ItemPendente,
 } from "./actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type Tela = {
   id: string;
@@ -294,6 +295,7 @@ function TelaFormModal({
         <Field label="Nome" htmlFor="t-nome">
           <Input
             id="t-nome"
+            maxLength={LIMITES.telaNome}
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             required

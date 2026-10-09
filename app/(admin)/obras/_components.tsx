@@ -21,6 +21,7 @@ import {
   excluirColecao,
   excluirMusica,
 } from "./actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type ColecaoOpt = { id: string; nome: string };
 export type MusicaRow = {
@@ -309,7 +310,13 @@ function MusicaFormModal({
           {m ? "Editar música" : "Nova música"}
         </h2>
         <Field label="Nome" htmlFor="mu-nome">
-          <Input id="mu-nome" value={v.nome} onChange={(e) => set("nome", e.target.value)} required />
+          <Input
+            id="mu-nome"
+            maxLength={LIMITES.musicaNome}
+            value={v.nome}
+            onChange={(e) => set("nome", e.target.value)}
+            required
+          />
         </Field>
         <Field label="Capa">
           <ImageUpload bucket="obras" value={cover} onChange={setCover} />
@@ -388,7 +395,13 @@ function ColecaoFormModal({
           {c ? "Editar coleção" : "Nova coleção"}
         </h2>
         <Field label="Nome" htmlFor="cl-nome">
-          <Input id="cl-nome" value={v.nome} onChange={(e) => set("nome", e.target.value)} required />
+          <Input
+            id="cl-nome"
+            maxLength={LIMITES.colecaoNome}
+            value={v.nome}
+            onChange={(e) => set("nome", e.target.value)}
+            required
+          />
         </Field>
         <Field label="Capa">
           <ImageUpload bucket="obras" value={cover} onChange={setCover} />

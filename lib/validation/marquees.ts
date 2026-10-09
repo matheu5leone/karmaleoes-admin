@@ -1,7 +1,12 @@
 import { z } from "zod";
+import { LIMITES, excedeu } from "./limites";
 
 export const marqueeSchema = z.object({
-  nome: z.string().trim().min(1, "Informe o nome"),
+  nome: z
+    .string()
+    .trim()
+    .min(1, "Informe o nome")
+    .max(LIMITES.marqueeNome, excedeu(LIMITES.marqueeNome)),
   cor_fundo: z.string().trim().optional().or(z.literal("")),
   cor_texto: z.string().trim().optional().or(z.literal("")),
 });
@@ -9,7 +14,11 @@ export type MarqueeInput = z.infer<typeof marqueeSchema>;
 
 export const itemSchema = z
   .object({
-    titulo: z.string().trim().min(1, "Informe o título"),
+    titulo: z
+      .string()
+      .trim()
+      .min(1, "Informe o título")
+      .max(LIMITES.marqueeItemTitulo, excedeu(LIMITES.marqueeItemTitulo)),
     icon_id: z.string().uuid().nullable().optional(),
     tipo_nav: z.enum(["interno", "externo"]),
     tela_destino_id: z.string().uuid().nullable().optional(),

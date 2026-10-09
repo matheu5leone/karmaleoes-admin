@@ -1,7 +1,12 @@
 import { z } from "zod";
+import { LIMITES, excedeu } from "./limites";
 
 export const eventoSchema = z.object({
-  nome: z.string().trim().min(1, "Informe o nome"),
+  nome: z
+    .string()
+    .trim()
+    .min(1, "Informe o nome")
+    .max(LIMITES.eventoNome, excedeu(LIMITES.eventoNome)),
   descricao: z.string().trim().optional().or(z.literal("")),
   category_id: z.string().uuid("Categoria inválida").optional().or(z.literal("")),
   data: z.string().min(1, "Informe a data"),
@@ -26,13 +31,18 @@ export const statusEventoSchema = z.object({
     .string()
     .trim()
     .min(1, "Informe o nome")
+    .max(LIMITES.statusNome, excedeu(LIMITES.statusNome))
     .refine((n) => n.toLowerCase() !== "expirado", "Nome reservado"),
   lifecycle: z.enum(["Em aberto", "Encerrado"]),
 });
 export type StatusEventoInput = z.infer<typeof statusEventoSchema>;
 
 export const categoriaEventoSchema = z.object({
-  name: z.string().trim().min(1, "Informe o nome"),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Informe o nome")
+    .max(LIMITES.categoriaNome, excedeu(LIMITES.categoriaNome)),
   lifecycle: z.string().trim().optional().or(z.literal("")),
 });
 export type CategoriaEventoInput = z.infer<typeof categoriaEventoSchema>;

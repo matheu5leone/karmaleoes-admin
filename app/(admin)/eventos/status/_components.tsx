@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { useToast } from "@/components/ui/toast";
 import { criarStatus, editarStatus, excluirStatus } from "./actions";
+import { LIMITES } from "@/lib/validation/limites";
 
 export type StatusRow = {
   id: string;
@@ -162,7 +163,13 @@ function StatusFormModal({
           {status ? "Editar status" : "Novo status"}
         </h2>
         <Field label="Nome" htmlFor="s-nome" error={error}>
-          <Input id="s-nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+          <Input
+            id="s-nome"
+            maxLength={LIMITES.statusNome}
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+          />
         </Field>
         <Field label="Lifecycle" htmlFor="s-life">
           <Select
