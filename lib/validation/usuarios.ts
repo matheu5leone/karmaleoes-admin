@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { email } from "./comum";
 
 /**
  * Senha: apenas ASCII imprimível (letras, dígitos, pontuação e espaço).
@@ -48,7 +49,7 @@ export const telefoneOpcional = z
   });
 
 export const criarUsuarioSchema = z.object({
-  email: z.string().min(1, "Informe o e-mail").email("E-mail inválido"),
+  email,
   telefone: telefoneOpcional,
   senhaTemporaria: senhaSchema,
 });

@@ -14,6 +14,9 @@ import {
   excluirColaborador,
 } from "./actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { ResumoErros } from "@/components/form/resumo-erros";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { colaboradorSchema } from "@/lib/validation/obras";
 
 export type ColaboradorRow = {
   id: string;
@@ -120,16 +123,17 @@ function ColaboradorFormModal({
     linkedin: c?.linkedin ?? "",
     descricao: c?.descricao ?? "",
   });
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
   const set = (k: keyof typeof v, val: string) => setV((p) => ({ ...p, [k]: val }));
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const dados = validar(colaboradorSchema, v);
+    if (!dados) return;
     start(async () => {
-      const r = c ? await editarColaborador(c.id, v) : await criarColaborador(v);
-      if (!r.ok) return setError(r.error);
+      const r = c ? await editarColaborador(c.id, dados) : await criarColaborador(dados);
+      if (!r.ok) return doServidor(r.error);
       toast.success(c ? "Colaborador atualizado." : "Colaborador criado.");
       onSaved();
     });
@@ -150,7 +154,16 @@ function ColaboradorFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {c ? "Editar colaborador" : "Novo colaborador"}
         </h2>
-        <Field label="Nome" htmlFor="co-nome">
+        <ResumoErros
+          erros={erros}
+          rotulos={{
+            nome: "Nome",
+            instagram: "Instagram",
+            linkedin: "LinkedIn",
+            descricao: "Descrição",
+          }}
+        />
+        <Field label="Nome" htmlFor="co-nome" error={erros.nome}>
           <Input
             id="co-nome"
             maxLength={LIMITES.colaboradorNome}
@@ -160,14 +173,14 @@ function ColaboradorFormModal({
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Instagram" htmlFor="co-ig">
+          <Field label="Instagram" htmlFor="co-ig" error={erros.instagram}>
             <Input id="co-ig" value={v.instagram} onChange={(e) => set("instagram", e.target.value)} />
           </Field>
-          <Field label="LinkedIn" htmlFor="co-li">
+          <Field label="LinkedIn" htmlFor="co-li" error={erros.linkedin}>
             <Input id="co-li" value={v.linkedin} onChange={(e) => set("linkedin", e.target.value)} />
           </Field>
         </div>
-        <Field label="Descrição" htmlFor="co-desc" error={error}>
+        <Field label="Descrição" htmlFor="co-desc" error={erros.descricao}>
           <Input id="co-desc" value={v.descricao} onChange={(e) => set("descricao", e.target.value)} />
         </Field>
         <div className="flex justify-end gap-2">

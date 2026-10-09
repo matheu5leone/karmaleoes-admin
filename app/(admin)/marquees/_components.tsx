@@ -11,6 +11,9 @@ import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { useToast } from "@/components/ui/toast";
 import { criarMarquee, excluirMarquee } from "./actions";
+import { ResumoErros } from "@/components/form/resumo-erros";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { marqueeSchema } from "@/lib/validation/marquees";
 
 export type MarqueeRow = {
   id: string;
@@ -101,15 +104,20 @@ function NovoMarqueeModal({
   const [nome, setNome] = useState("");
   const [cf, setCf] = useState("");
   const [ct, setCt] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const dados = validar(marqueeSchema, {
+      nome,
+      cor_fundo: cf,
+      cor_texto: ct,
+    });
+    if (!dados) return;
     start(async () => {
-      const r = await criarMarquee({ nome, cor_fundo: cf, cor_texto: ct });
-      if (!r.ok) return setError(r.error);
+      const r = await criarMarquee(dados);
+      if (!r.ok) return doServidor(r.error);
       onCreated(r.id);
     });
   }
@@ -127,7 +135,11 @@ function NovoMarqueeModal({
         className="w-full max-w-md space-y-4 rounded-lg border border-border bg-card p-6 shadow-lg"
       >
         <h2 className="text-lg font-semibold tracking-tight">Novo marquee</h2>
-        <Field label="Nome" htmlFor="m-nome">
+        <ResumoErros
+          erros={erros}
+          rotulos={{ nome: "Nome", cor_fundo: "Cor de fundo", cor_texto: "Cor do texto" }}
+        />
+        <Field label="Nome" htmlFor="m-nome" error={erros.nome}>
           <Input
             id="m-nome"
             value={nome}
@@ -136,10 +148,10 @@ function NovoMarqueeModal({
           />
         </Field>
         <div className="space-y-3">
-          <Field label="Cor de fundo" htmlFor="m-cf">
+          <Field label="Cor de fundo" htmlFor="m-cf" error={erros.cor_fundo}>
             <ColorPicker id="m-cf" value={cf} onChange={setCf} />
           </Field>
-          <Field label="Cor do texto" htmlFor="m-ct" error={error}>
+          <Field label="Cor do texto" htmlFor="m-ct" error={erros.cor_texto}>
             <ColorPicker id="m-ct" value={ct} onChange={setCt} />
           </Field>
         </div>

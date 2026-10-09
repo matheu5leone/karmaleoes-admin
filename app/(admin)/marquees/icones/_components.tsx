@@ -9,6 +9,8 @@ import { ConfirmDialog } from "@/components/form/confirm-dialog";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { useToast } from "@/components/ui/toast";
 import { criarIcon, editarIcon, excluirIcon } from "./actions";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { iconSchema } from "@/lib/validation/marquees";
 
 export type IconRow = { id: string; name: string; extension: string };
 
@@ -126,16 +128,16 @@ function IconFormModal({
   const toast = useToast();
   const [name, setName] = useState(icon?.name ?? "");
   const [extension, setExtension] = useState(icon?.extension ?? "svg");
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    if (!validar(iconSchema, { name, extension })) return;
     start(async () => {
       const input = { name, extension };
       const r = icon ? await editarIcon(icon.id, input) : await criarIcon(input);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return doServidor(r.error, "name");
       toast.success(icon ? "Ícone atualizado." : "Ícone criado.");
       onSaved();
     });
@@ -157,7 +159,7 @@ function IconFormModal({
           {icon ? "Editar ícone" : "Novo ícone"}
         </h2>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Nome do arquivo" htmlFor="ic-name" error={error}>
+          <Field label="Nome do arquivo" htmlFor="ic-name" error={erros.name}>
             <Input
               id="ic-name"
               value={name}
@@ -166,7 +168,7 @@ function IconFormModal({
               required
             />
           </Field>
-          <Field label="Extensão" htmlFor="ic-ext">
+          <Field label="Extensão" htmlFor="ic-ext" error={erros.extension}>
             <Input
               id="ic-ext"
               value={extension}

@@ -20,6 +20,9 @@ import {
   salvarItem,
 } from "../actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { ResumoErros } from "@/components/form/resumo-erros";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { itemSchema, marqueeSchema } from "@/lib/validation/marquees";
 
 export type EditorTela = { id: string; nome: string; status: string };
 export type IconOpt = { id: string; name: string; extension: string };
@@ -311,21 +314,22 @@ function DadosSection({
   const { fundo: cf, texto: ct } = cores;
   const setCf = (v: string) => onCores({ ...cores, fundo: v });
   const setCt = (v: string) => onCores({ ...cores, texto: v });
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [ok, setOk] = useState(false);
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setOk(false);
+    const dados = validar(marqueeSchema, {
+      nome,
+      cor_fundo: cf,
+      cor_texto: ct,
+    });
+    if (!dados) return;
     start(async () => {
-      const r = await editarMarquee(marqueeId, {
-        nome,
-        cor_fundo: cf,
-        cor_texto: ct,
-      });
-      if (!r.ok) return setError(r.error);
+      const r = await editarMarquee(marqueeId, dados);
+      if (!r.ok) return doServidor(r.error);
       setOk(true);
       onSaved();
     });
@@ -334,7 +338,11 @@ function DadosSection({
   return (
     <Secao titulo="Dados">
       <form onSubmit={submit} className="space-y-3">
-        <Field label="Nome" htmlFor="e-nome">
+        <ResumoErros
+          erros={erros}
+          rotulos={{ nome: "Nome", cor_fundo: "Cor de fundo", cor_texto: "Cor do texto" }}
+        />
+        <Field label="Nome" htmlFor="e-nome" error={erros.nome}>
           <Input
             id="e-nome"
             maxLength={LIMITES.marqueeNome}
@@ -343,17 +351,16 @@ function DadosSection({
             required
           />
         </Field>
-        <Field label="Cor de fundo" htmlFor="e-cf">
+        <Field label="Cor de fundo" htmlFor="e-cf" error={erros.cor_fundo}>
           <ColorPicker id="e-cf" value={cf} onChange={setCf} />
         </Field>
-        <Field label="Cor do texto" htmlFor="e-ct">
+        <Field label="Cor do texto" htmlFor="e-ct" error={erros.cor_texto}>
           <ColorPicker id="e-ct" value={ct} onChange={setCt} />
         </Field>
         <div>
           <Button type="submit" disabled={pending}>
             {pending ? "Salvando…" : "Salvar dados"}
           </Button>
-          {error && <span className="ml-3 text-sm text-destructive">{error}</span>}
           {ok && <span className="ml-3 text-sm text-success">Salvo.</span>}
         </div>
       </form>
@@ -570,7 +577,7 @@ function ItemModal({
   const [tipoNav, setTipoNav] = useState(item?.tipo_nav ?? "interno");
   const [telaId, setTelaId] = useState(item?.tela_destino_id ?? "");
   const [url, setUrl] = useState(item?.url_externa ?? "");
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   const habilitadas = telas.filter((t) => t.status === "habilitada");
@@ -592,16 +599,17 @@ function ItemModal({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const dados = validar(itemSchema, {
+      titulo,
+      icon_id: iconId || null,
+      tipo_nav: tipoNav,
+      tela_destino_id: tipoNav === "interno" ? telaId || null : null,
+      url_externa: tipoNav === "externo" ? url || null : null,
+    });
+    if (!dados) return;
     start(async () => {
-      const r = await salvarItem(marqueeId, item?.id ?? null, {
-        titulo,
-        icon_id: iconId || null,
-        tipo_nav: tipoNav as "interno" | "externo",
-        tela_destino_id: tipoNav === "interno" ? telaId || null : null,
-        url_externa: tipoNav === "externo" ? url || null : null,
-      });
-      if (!r.ok) return setError(r.error);
+      const r = await salvarItem(marqueeId, item?.id ?? null, dados);
+      if (!r.ok) return doServidor(r.error);
       onSaved();
     });
   }
@@ -621,7 +629,17 @@ function ItemModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {item ? "Editar item" : "Novo item"}
         </h2>
-        <Field label="Texto" htmlFor="i-titulo">
+        <ResumoErros
+          erros={erros}
+          rotulos={{
+            titulo: "Texto",
+            icon_id: "Ícone",
+            tipo_nav: "Navegação",
+            tela_destino_id: "Tela de destino",
+            url_externa: "URL externa",
+          }}
+        />
+        <Field label="Texto" htmlFor="i-titulo" error={erros.titulo}>
           <Input
             id="i-titulo"
             maxLength={LIMITES.marqueeItemTitulo}
@@ -630,7 +648,7 @@ function ItemModal({
             required
           />
         </Field>
-        <Field label="Ícone" htmlFor="i-icon">
+        <Field label="Ícone" htmlFor="i-icon" error={erros.icon_id}>
           <Select
             id="i-icon"
             value={iconId}
@@ -645,7 +663,7 @@ function ItemModal({
           </Select>
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Navegação" htmlFor="i-tipo">
+          <Field label="Navegação" htmlFor="i-tipo" error={erros.tipo_nav}>
             <Select id="i-tipo" value={tipoNav} onChange={(e) => setTipoNav(e.target.value)}>
               <option value="interno">Interno (tela)</option>
               <option value="externo">Externo (URL)</option>
@@ -653,7 +671,7 @@ function ItemModal({
           </Field>
         </div>
         {tipoNav === "interno" ? (
-          <Field label="Tela de destino (habilitada)" htmlFor="i-tela" error={error}>
+          <Field label="Tela de destino (habilitada)" htmlFor="i-tela" error={erros.tela_destino_id}>
             <Select id="i-tela" value={telaId} onChange={(e) => setTelaId(e.target.value)}>
               <option value="">Selecione…</option>
               {habilitadas.map((t) => (
@@ -664,7 +682,7 @@ function ItemModal({
             </Select>
           </Field>
         ) : (
-          <Field label="URL externa" htmlFor="i-url" error={error}>
+          <Field label="URL externa" htmlFor="i-url" error={erros.url_externa}>
             <Input
               id="i-url"
               value={url}

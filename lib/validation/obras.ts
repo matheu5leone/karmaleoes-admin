@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  dataOpcional,
+  instagramOpcional,
+  isrcOpcional,
+  linkedinOpcional,
+} from "./comum";
 import { LIMITES, excedeu } from "./limites";
 
 export const musicaSchema = z.object({
@@ -7,7 +13,7 @@ export const musicaSchema = z.object({
     .trim()
     .min(1, "Informe o nome")
     .max(LIMITES.musicaNome, excedeu(LIMITES.musicaNome)),
-  data_lancamento: z.string().optional().or(z.literal("")),
+  data_lancamento: dataOpcional,
   // Entrada em mm:ss (ex.: 3:45); persistida como total de segundos (integer).
   duracao: z
     .string()
@@ -19,7 +25,7 @@ export const musicaSchema = z.object({
       const [mm, ss] = v.split(":").map(Number);
       return mm * 60 + ss;
     }),
-  isrc: z.string().trim().optional().or(z.literal("")),
+  isrc: isrcOpcional,
   cover_image: z.string().trim().nullable().optional(),
   colecao_id: z.string().uuid().nullable().optional(),
 });
@@ -35,7 +41,7 @@ export const colecaoSchema = z.object({
   descricao: z.string().trim().optional().or(z.literal("")),
   tipo: z.enum(["album", "EP"]),
   cover_image: z.string().trim().nullable().optional(),
-  data_lancamento: z.string().optional().or(z.literal("")),
+  data_lancamento: dataOpcional,
 });
 export type ColecaoInput = z.infer<typeof colecaoSchema>;
 
@@ -45,8 +51,8 @@ export const colaboradorSchema = z.object({
     .trim()
     .min(1, "Informe o nome")
     .max(LIMITES.colaboradorNome, excedeu(LIMITES.colaboradorNome)),
-  instagram: z.string().trim().optional().or(z.literal("")),
-  linkedin: z.string().trim().optional().or(z.literal("")),
+  instagram: instagramOpcional,
+  linkedin: linkedinOpcional,
   descricao: z.string().trim().optional().or(z.literal("")),
 });
 export type ColaboradorInput = z.infer<typeof colaboradorSchema>;

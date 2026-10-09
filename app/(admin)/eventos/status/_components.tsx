@@ -11,6 +11,8 @@ import { DataTable, type Column } from "@/components/data-table/data-table";
 import { useToast } from "@/components/ui/toast";
 import { criarStatus, editarStatus, excluirStatus } from "./actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { statusEventoSchema } from "@/lib/validation/eventos";
 
 export type StatusRow = {
   id: string;
@@ -127,21 +129,21 @@ function StatusFormModal({
   const toast = useToast();
   const [nome, setNome] = useState(status?.nome ?? "");
   const [lifecycle, setLifecycle] = useState(status?.lifecycle ?? "Em aberto");
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const input = validar(statusEventoSchema, {
+      nome,
+      lifecycle,
+    });
+    if (!input) return;
     start(async () => {
-      const input = {
-        nome,
-        lifecycle: lifecycle as "Em aberto" | "Encerrado",
-      };
       const r = status
         ? await editarStatus(status.id, input)
         : await criarStatus(input);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return doServidor(r.error, "nome");
       toast.success(status ? "Status atualizado." : "Status criado.");
       onSaved();
     });
@@ -162,7 +164,7 @@ function StatusFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {status ? "Editar status" : "Novo status"}
         </h2>
-        <Field label="Nome" htmlFor="s-nome" error={error}>
+        <Field label="Nome" htmlFor="s-nome" error={erros.nome}>
           <Input
             id="s-nome"
             maxLength={LIMITES.statusNome}
@@ -171,7 +173,7 @@ function StatusFormModal({
             required
           />
         </Field>
-        <Field label="Lifecycle" htmlFor="s-life">
+        <Field label="Lifecycle" htmlFor="s-life" error={erros.lifecycle}>
           <Select
             id="s-life"
             value={lifecycle}

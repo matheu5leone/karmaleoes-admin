@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dataOpcional, url } from "./comum";
 import { LIMITES, excedeu } from "./limites";
 
 export const TIPOS = [
@@ -26,10 +27,10 @@ export const conteudoSchema = z.object({
   categoria_id: z.string().uuid().nullable().optional(),
   tipo: z.enum(TIPOS),
   plataforma: z.string().trim().optional().or(z.literal("")),
-  link: z.string().trim().min(1, "Informe o link"),
+  link: url,
   status: z.enum(STATUS),
   destaque: z.boolean().default(false),
-  data: z.string().optional().or(z.literal("")),
+  data: dataOpcional,
 });
 export type ConteudoInput = z.infer<typeof conteudoSchema>;
 

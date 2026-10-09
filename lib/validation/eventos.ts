@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  data as dataObrigatoria,
+  dataOpcional,
+  horarioOpcional,
+  urlOpcional,
+} from "./comum";
 import { LIMITES, excedeu } from "./limites";
 
 export const eventoSchema = z.object({
@@ -9,14 +15,14 @@ export const eventoSchema = z.object({
     .max(LIMITES.eventoNome, excedeu(LIMITES.eventoNome)),
   descricao: z.string().trim().optional().or(z.literal("")),
   category_id: z.string().uuid("Categoria inválida").optional().or(z.literal("")),
-  data: z.string().min(1, "Informe a data"),
-  horario: z.string().optional().or(z.literal("")),
+  data: dataObrigatoria,
+  horario: horarioOpcional,
   local: z.string().trim().optional().or(z.literal("")),
   organizador: z.string().trim().optional().or(z.literal("")),
-  link_externo: z.string().trim().optional().or(z.literal("")),
+  link_externo: urlOpcional,
   status_id: z.string().uuid("Selecione o status"),
   prioridade: z.coerce.number().int().min(0).default(0),
-  nova_data: z.string().optional().or(z.literal("")),
+  nova_data: dataOpcional,
 });
 export type EventoInput = z.infer<typeof eventoSchema>;
 

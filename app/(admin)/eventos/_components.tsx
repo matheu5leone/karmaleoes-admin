@@ -20,6 +20,9 @@ import {
   setEnable,
 } from "./actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { ResumoErros } from "@/components/form/resumo-erros";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { encerramentoSchema, eventoSchema } from "@/lib/validation/eventos";
 
 export type StatusOpt = { id: string; nome: string; lifecycle: string };
 export type CategoriaOpt = { id: string; name: string };
@@ -64,6 +67,20 @@ function StatusBadge({ s }: { s: string }) {
     </ShieldBadge>
   );
 }
+
+const ROTULOS_EVENTO = {
+  nome: "Nome",
+  data: "Data",
+  horario: "Horário",
+  status_id: "Status",
+  prioridade: "Prioridade",
+  nova_data: "Nova data",
+  category_id: "Categoria",
+  local: "Local",
+  organizador: "Organizador",
+  link_externo: "Link de compra",
+  descricao: "Descrição",
+};
 
 export function EventosManager({
   eventos,
@@ -303,20 +320,23 @@ function EventoFormModal({
     prioridade: String(evento?.prioridade ?? 0),
     nova_data: evento?.nova_data ?? "",
   });
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
   const set = (k: keyof typeof v, val: string) => setV((p) => ({ ...p, [k]: val }));
   const statusNome = statuses.find((s) => s.id === v.status_id)?.nome;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const input = validar(eventoSchema, {
+      ...v,
+      prioridade: Number(v.prioridade) || 0,
+    });
+    if (!input) return;
     start(async () => {
-      const input = { ...v, prioridade: Number(v.prioridade) || 0 };
       const r = evento
         ? await editarEvento(evento.id, input)
         : await criarEvento(input);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return doServidor(r.error);
       toast.success(evento ? "Evento atualizado." : "Evento criado.");
       onSaved();
     });
@@ -337,7 +357,8 @@ function EventoFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {evento ? "Editar evento" : "Novo evento"}
         </h2>
-        <Field label="Nome" htmlFor="ev-nome">
+        <ResumoErros erros={erros} rotulos={ROTULOS_EVENTO} />
+        <Field label="Nome" htmlFor="ev-nome" error={erros.nome}>
           <Input
             id="ev-nome"
             maxLength={LIMITES.eventoNome}
@@ -347,15 +368,15 @@ function EventoFormModal({
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Data" htmlFor="ev-data">
+          <Field label="Data" htmlFor="ev-data" error={erros.data}>
             <Input id="ev-data" type="date" value={v.data} onChange={(e) => set("data", e.target.value)} required />
           </Field>
-          <Field label="Horário" htmlFor="ev-hora">
+          <Field label="Horário" htmlFor="ev-hora" error={erros.horario}>
             <Input id="ev-hora" type="time" value={v.horario} onChange={(e) => set("horario", e.target.value)} />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Status" htmlFor="ev-status">
+          <Field label="Status" htmlFor="ev-status" error={erros.status_id}>
             <Select id="ev-status" value={v.status_id} onChange={(e) => set("status_id", e.target.value)} required>
               {statuses.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -364,17 +385,17 @@ function EventoFormModal({
               ))}
             </Select>
           </Field>
-          <Field label="Prioridade" htmlFor="ev-prio">
+          <Field label="Prioridade" htmlFor="ev-prio" error={erros.prioridade}>
             <Input id="ev-prio" type="number" min={0} value={v.prioridade} onChange={(e) => set("prioridade", e.target.value)} />
           </Field>
         </div>
         {statusNome === "Adiado" && (
-          <Field label="Nova data (obrigatória p/ Adiado)" htmlFor="ev-nova">
+          <Field label="Nova data (obrigatória p/ Adiado)" htmlFor="ev-nova" error={erros.nova_data}>
             <Input id="ev-nova" type="date" value={v.nova_data} onChange={(e) => set("nova_data", e.target.value)} />
           </Field>
         )}
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Categoria" htmlFor="ev-cat">
+          <Field label="Categoria" htmlFor="ev-cat" error={erros.category_id}>
             <Select id="ev-cat" value={v.category_id} onChange={(e) => set("category_id", e.target.value)}>
               <option value="">Sem categoria</option>
               {categorias.map((c) => (
@@ -384,17 +405,17 @@ function EventoFormModal({
               ))}
             </Select>
           </Field>
-          <Field label="Local" htmlFor="ev-local">
+          <Field label="Local" htmlFor="ev-local" error={erros.local}>
             <Input id="ev-local" value={v.local} onChange={(e) => set("local", e.target.value)} />
           </Field>
         </div>
-        <Field label="Organizador" htmlFor="ev-org">
+        <Field label="Organizador" htmlFor="ev-org" error={erros.organizador}>
           <Input id="ev-org" value={v.organizador} onChange={(e) => set("organizador", e.target.value)} />
         </Field>
-        <Field label="Link de compra (externo)" htmlFor="ev-link">
+        <Field label="Link de compra (externo)" htmlFor="ev-link" error={erros.link_externo}>
           <Input id="ev-link" value={v.link_externo} onChange={(e) => set("link_externo", e.target.value)} placeholder="https://…" />
         </Field>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onClose} disabled={pending}>
             Cancelar
@@ -422,18 +443,19 @@ function EncerrarModal({
   const toast = useToast();
   const [statusId, setStatusId] = useState(statuses[0]?.id ?? "");
   const [obs, setObs] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const dados = validar(encerramentoSchema, {
+      status_id: statusId,
+      obs_encerramento: obs,
+    });
+    if (!dados) return;
     start(async () => {
-      const r = await encerrarEvento(evento.id, {
-        status_id: statusId,
-        obs_encerramento: obs,
-      });
-      if (!r.ok) return setError(r.error);
+      const r = await encerrarEvento(evento.id, dados);
+      if (!r.ok) return doServidor(r.error);
       toast.success("Evento encerrado.");
       onSaved();
     });
@@ -455,7 +477,7 @@ function EncerrarModal({
         <p className="text-sm text-muted-foreground">
           &quot;{evento.nome}&quot; — Sucesso só na data de referência ou depois.
         </p>
-        <Field label="Status de encerramento" htmlFor="enc-status">
+        <Field label="Status de encerramento" htmlFor="enc-status" error={erros.status_id}>
           <Select id="enc-status" value={statusId} onChange={(e) => setStatusId(e.target.value)} required>
             {statuses.map((s) => (
               <option key={s.id} value={s.id}>
@@ -464,7 +486,7 @@ function EncerrarModal({
             ))}
           </Select>
         </Field>
-        <Field label="Observação (obrigatória)" htmlFor="enc-obs" error={error}>
+        <Field label="Observação (obrigatória)" htmlFor="enc-obs" error={erros.obs_encerramento ?? erros._geral}>
           <textarea
             id="enc-obs"
             value={obs}

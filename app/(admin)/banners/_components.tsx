@@ -13,6 +13,9 @@ import { Lightbox } from "@/components/lightbox";
 import { useToast } from "@/components/ui/toast";
 import { criarBanner, editarBanner, excluirBanner } from "./actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { ResumoErros } from "@/components/form/resumo-erros";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { bannerSchema } from "@/lib/validation/banners";
 
 export type BannerRow = {
   id: string;
@@ -212,18 +215,18 @@ function BannerFormModal({
   const toast = useToast();
   const [nome, setNome] = useState(banner?.nome ?? "");
   const [imagem, setImagem] = useState<string | null>(banner?.imagem ?? null);
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const input = validar(bannerSchema, { nome, imagem: imagem ?? "" });
+    if (!input) return;
     start(async () => {
-      const input = { nome, imagem: imagem ?? "" };
       const r = banner
         ? await editarBanner(banner.id, input)
         : await criarBanner(input);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return doServidor(r.error);
       toast.success(banner ? "Banner atualizado." : "Banner criado.");
       onSaved(banner ? null : (r as { ok: true; id: string }).id);
     });
@@ -252,7 +255,11 @@ function BannerFormModal({
           )}
         </div>
 
-        <Field label="Nome (interno)" htmlFor="b-nome">
+        <ResumoErros
+          erros={erros}
+          rotulos={{ nome: "Nome", imagem: "Imagem" }}
+        />
+        <Field label="Nome (interno)" htmlFor="b-nome" error={erros.nome}>
           <Input
             id="b-nome"
             maxLength={LIMITES.bannerNome}
@@ -261,7 +268,7 @@ function BannerFormModal({
             required
           />
         </Field>
-        <Field label="Imagem" error={error}>
+        <Field label="Imagem" error={erros.imagem}>
           <ImageUpload bucket="banners" value={imagem} onChange={setImagem} />
         </Field>
 

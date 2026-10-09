@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
 import { alterarSenhaSchema } from "@/lib/validation/usuarios";
 import { alterarSenha } from "@/app/(admin)/minha-conta/actions";
+import { ResumoErros } from "@/components/form/resumo-erros";
 
 type Erros = {
   senhaAtual?: string;
@@ -15,9 +16,6 @@ type Erros = {
   confirmar?: string;
   form?: string;
 };
-
-const INVALIDO =
-  "border-destructive hover:border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30";
 
 /**
  * Formulário de troca de senha, usado tanto na página "Minha conta" quanto na
@@ -78,6 +76,10 @@ export function AlterarSenhaForm({
 
   return (
     <form onSubmit={submit} noValidate className="max-w-sm space-y-4">
+      <ResumoErros
+        erros={erros}
+        rotulos={{ senhaAtual: "Senha atual", novaSenha: "Nova senha", confirmar: "Confirmação" }}
+      />
       <Field label="Senha atual" htmlFor="s-atual" error={erros.senhaAtual}>
         <Input
           id="s-atual"
@@ -86,7 +88,6 @@ export function AlterarSenhaForm({
           value={senhaAtual}
           onChange={(e) => setSenhaAtual(e.target.value)}
           aria-invalid={!!erros.senhaAtual}
-          className={erros.senhaAtual ? INVALIDO : undefined}
         />
       </Field>
       <Field label="Nova senha" htmlFor="s-nova" error={erros.novaSenha}>
@@ -98,7 +99,6 @@ export function AlterarSenhaForm({
           onChange={(e) => setNovaSenha(e.target.value)}
           placeholder="Mínimo de 8 caracteres"
           aria-invalid={!!erros.novaSenha}
-          className={erros.novaSenha ? INVALIDO : undefined}
         />
       </Field>
       <Field label="Confirmar nova senha" htmlFor="s-conf" error={erros.confirmar}>
@@ -109,7 +109,6 @@ export function AlterarSenhaForm({
           value={confirmar}
           onChange={(e) => setConfirmar(e.target.value)}
           aria-invalid={!!erros.confirmar}
-          className={erros.confirmar ? INVALIDO : undefined}
         />
       </Field>
 

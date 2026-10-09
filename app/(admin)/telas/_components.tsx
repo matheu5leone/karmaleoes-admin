@@ -18,6 +18,9 @@ import {
   type ItemPendente,
 } from "./actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { ResumoErros } from "@/components/form/resumo-erros";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { telaSchema } from "@/lib/validation/telas";
 
 export type Tela = {
   id: string;
@@ -262,17 +265,18 @@ function TelaFormModal({
 }) {
   const [nome, setNome] = useState(tela?.nome ?? "");
   const [rota, setRota] = useState(tela?.rota ?? "");
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const dados = validar(telaSchema, { nome, rota });
+    if (!dados) return;
     start(async () => {
       const r = tela
-        ? await editarTela(tela.id, { nome, rota })
-        : await criarTela({ nome, rota });
-      if (!r.ok) return setError(r.error);
+        ? await editarTela(tela.id, dados)
+        : await criarTela(dados);
+      if (!r.ok) return doServidor(r.error);
       onSaved();
     });
   }
@@ -292,7 +296,8 @@ function TelaFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {tela ? "Editar tela" : "Nova tela"}
         </h2>
-        <Field label="Nome" htmlFor="t-nome">
+        <ResumoErros erros={erros} rotulos={{ nome: "Nome", rota: "Rota" }} />
+        <Field label="Nome" htmlFor="t-nome" error={erros.nome}>
           <Input
             id="t-nome"
             maxLength={LIMITES.telaNome}
@@ -301,7 +306,7 @@ function TelaFormModal({
             required
           />
         </Field>
-        <Field label="Rota" htmlFor="t-rota" error={error}>
+        <Field label="Rota" htmlFor="t-rota" error={erros.rota}>
           <Input
             id="t-rota"
             value={rota}

@@ -14,6 +14,8 @@ import {
   excluirCategoriaEvento,
 } from "./actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { categoriaEventoSchema } from "@/lib/validation/eventos";
 
 export type CategoriaEventoRow = {
   id: string;
@@ -119,18 +121,18 @@ function CategoriaFormModal({
 }) {
   const toast = useToast();
   const [name, setName] = useState(cat?.name ?? "");
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const input = validar(categoriaEventoSchema, { name, lifecycle: "" });
+    if (!input) return;
     start(async () => {
-      const input = { name, lifecycle: "" };
       const r = cat
         ? await editarCategoriaEvento(cat.id, input)
         : await criarCategoriaEvento(input);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return doServidor(r.error, "name");
       toast.success(cat ? "Categoria atualizada." : "Categoria criada.");
       onSaved();
     });
@@ -151,7 +153,7 @@ function CategoriaFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {cat ? "Editar categoria" : "Nova categoria"}
         </h2>
-        <Field label="Nome" htmlFor="c-nome" error={error}>
+        <Field label="Nome" htmlFor="c-nome" error={erros.name}>
           <Input
             id="c-nome"
             maxLength={LIMITES.categoriaNome}

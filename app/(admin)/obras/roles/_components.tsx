@@ -10,6 +10,8 @@ import { DataTable, type Column } from "@/components/data-table/data-table";
 import { useToast } from "@/components/ui/toast";
 import { criarRole, editarRole, excluirRole } from "./actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { roleSchema } from "@/lib/validation/obras";
 
 export type RoleRow = { id: string; nome: string };
 
@@ -98,15 +100,16 @@ function RoleFormModal({
 }) {
   const toast = useToast();
   const [nome, setNome] = useState(r?.nome ?? "");
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const dados = validar(roleSchema, { nome });
+    if (!dados) return;
     start(async () => {
-      const res = r ? await editarRole(r.id, { nome }) : await criarRole({ nome });
-      if (!res.ok) return setError(res.error);
+      const res = r ? await editarRole(r.id, dados) : await criarRole(dados);
+      if (!res.ok) return doServidor(res.error, "nome");
       toast.success(r ? "Tipo de colaboração atualizado." : "Tipo de colaboração criado.");
       onSaved();
     });
@@ -127,7 +130,7 @@ function RoleFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {r ? "Editar tipo de colaboração" : "Novo tipo de colaboração"}
         </h2>
-        <Field label="Nome" htmlFor="ro-nome" error={error}>
+        <Field label="Nome" htmlFor="ro-nome" error={erros.nome}>
           <Input
             id="ro-nome"
             maxLength={LIMITES.roleNome}

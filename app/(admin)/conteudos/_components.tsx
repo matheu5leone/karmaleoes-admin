@@ -21,6 +21,9 @@ import {
 } from "./actions";
 import { criarCategoria, excluirCategoria } from "./categorias/actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { ResumoErros } from "@/components/form/resumo-erros";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { conteudoSchema } from "@/lib/validation/conteudos";
 
 export type CategoriaOpt = { id: string; nome: string };
 export type ConteudoRow = {
@@ -48,6 +51,18 @@ function StatusBadge({ s }: { s: string }) {
     </ShieldBadge>
   );
 }
+
+const ROTULOS_CONTEUDO = {
+  titulo: "Título",
+  tipo: "Tipo",
+  link: "Link",
+  plataforma: "Plataforma",
+  status: "Status",
+  data: "Data",
+  descricao: "Descrição",
+  categoria_id: "Categoria",
+  thumbnail: "Thumbnail",
+};
 
 export function ConteudosManager({
   conteudos,
@@ -206,26 +221,24 @@ function ConteudoFormModal({
   });
   const [thumbnail, setThumbnail] = useState<string | null>(item?.thumbnail ?? null);
   const [destaque, setDestaque] = useState(item?.destaque ?? false);
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
   const set = (k: keyof typeof v, val: string) => setV((p) => ({ ...p, [k]: val }));
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const input = validar(conteudoSchema, {
+      ...v,
+      thumbnail,
+      categoria_id: v.categoria_id || null,
+      destaque,
+    });
+    if (!input) return;
     start(async () => {
-      const input = {
-        ...v,
-        thumbnail,
-        categoria_id: v.categoria_id || null,
-        tipo: v.tipo as (typeof TIPOS)[number],
-        status: v.status as (typeof STATUS)[number],
-        destaque,
-      };
       const r = item
         ? await editarConteudo(item.id, input)
         : await criarConteudo(input);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return doServidor(r.error);
       toast.success(item ? "Conteúdo atualizado." : "Conteúdo criado.");
       onSaved();
     });
@@ -246,7 +259,8 @@ function ConteudoFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {item ? "Editar conteúdo" : "Novo conteúdo"}
         </h2>
-        <Field label="Título" htmlFor="ct-titulo">
+        <ResumoErros erros={erros} rotulos={ROTULOS_CONTEUDO} />
+        <Field label="Título" htmlFor="ct-titulo" error={erros.titulo}>
           <Input
             id="ct-titulo"
             maxLength={LIMITES.conteudoTitulo}
@@ -258,7 +272,7 @@ function ConteudoFormModal({
         <Field label="Thumbnail">
           <ImageUpload bucket="conteudos" value={thumbnail} onChange={setThumbnail} />
         </Field>
-        <Field label="Tipo" htmlFor="ct-tipo">
+        <Field label="Tipo" htmlFor="ct-tipo" error={erros.tipo}>
           <Select id="ct-tipo" value={v.tipo} onChange={(e) => set("tipo", e.target.value)}>
             {TIPOS.map((t) => (
               <option key={t} value={t}>
@@ -274,14 +288,14 @@ function ConteudoFormModal({
             onChange={(id) => set("categoria_id", id)}
           />
         </Field>
-        <Field label="Link (externo)" htmlFor="ct-link">
+        <Field label="Link (externo)" htmlFor="ct-link" error={erros.link}>
           <Input id="ct-link" value={v.link} onChange={(e) => set("link", e.target.value)} placeholder="https://…" required />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Plataforma" htmlFor="ct-plat">
+          <Field label="Plataforma" htmlFor="ct-plat" error={erros.plataforma}>
             <Input id="ct-plat" value={v.plataforma} onChange={(e) => set("plataforma", e.target.value)} />
           </Field>
-          <Field label="Status" htmlFor="ct-status">
+          <Field label="Status" htmlFor="ct-status" error={erros.status}>
             <Select id="ct-status" value={v.status} onChange={(e) => set("status", e.target.value)}>
               {STATUS.map((s) => (
                 <option key={s} value={s}>
@@ -292,7 +306,7 @@ function ConteudoFormModal({
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Data" htmlFor="ct-data">
+          <Field label="Data" htmlFor="ct-data" error={erros.data}>
             <Input id="ct-data" type="date" value={v.data} onChange={(e) => set("data", e.target.value)} />
           </Field>
         </div>
@@ -305,7 +319,7 @@ function ConteudoFormModal({
           />
           Destaque
         </label>
-        <Field label="Descrição" htmlFor="ct-desc">
+        <Field label="Descrição" htmlFor="ct-desc" error={erros.descricao}>
           <textarea
             id="ct-desc"
             value={v.descricao}
@@ -314,7 +328,6 @@ function ConteudoFormModal({
             className="flex w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </Field>
-        {error && <p className="text-sm text-destructive">{error}</p>}
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onClose} disabled={pending}>
             Cancelar

@@ -10,6 +10,7 @@ import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import { DataTable, type Column } from "@/components/data-table/data-table";
 import { criarUsuarioSchema } from "@/lib/validation/usuarios";
 import { alternarStatus, criarUsuario, editarTelefone } from "./actions";
+import { ResumoErros } from "@/components/form/resumo-erros";
 
 export type Usuario = {
   id: string;
@@ -26,10 +27,6 @@ type NovoUsuarioErros = {
   senhaTemporaria?: string;
   form?: string;
 };
-
-/** Borda/anel vermelho para o campo inválido. */
-const INVALID_INPUT =
-  "border-destructive hover:border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30";
 
 export function NovoUsuario() {
   const router = useRouter();
@@ -85,6 +82,11 @@ export function NovoUsuario() {
       noValidate
       className="mb-8 grid gap-x-3 gap-y-2 rounded-lg border border-border bg-card p-4 sm:grid-cols-4 sm:items-start"
     >
+      <ResumoErros
+        erros={erros}
+        rotulos={{ email: "E-mail", telefone: "Telefone", senhaTemporaria: "Senha temporária" }}
+        className="sm:col-span-4"
+      />
       <Field label="E-mail *" htmlFor="novo-email" error={erros.email}>
         <Input
           id="novo-email"
@@ -93,7 +95,6 @@ export function NovoUsuario() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           aria-invalid={!!erros.email}
-          className={erros.email ? INVALID_INPUT : undefined}
         />
       </Field>
       <Field label="Telefone (opcional)" htmlFor="novo-tel" error={erros.telefone}>
@@ -102,7 +103,6 @@ export function NovoUsuario() {
           value={telefone}
           onChange={setTelefone}
           aria-invalid={!!erros.telefone}
-          className={erros.telefone ? INVALID_INPUT : undefined}
         />
       </Field>
       <Field
@@ -118,7 +118,6 @@ export function NovoUsuario() {
           onChange={(e) => setSenha(e.target.value)}
           placeholder="Mínimo de 8 caracteres"
           aria-invalid={!!erros.senhaTemporaria}
-          className={erros.senhaTemporaria ? INVALID_INPUT : undefined}
         />
       </Field>
       <div className="space-y-1.5">

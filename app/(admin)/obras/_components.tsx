@@ -22,6 +22,9 @@ import {
   excluirMusica,
 } from "./actions";
 import { LIMITES } from "@/lib/validation/limites";
+import { ResumoErros } from "@/components/form/resumo-erros";
+import { useFormErros } from "@/lib/forms/use-form-erros";
+import { colecaoSchema, musicaSchema } from "@/lib/validation/obras";
 
 export type ColecaoOpt = { id: string; nome: string };
 export type MusicaRow = {
@@ -56,6 +59,21 @@ function NomeLink({ nome, onClick }: { nome: string; onClick: () => void }) {
     </button>
   );
 }
+
+const ROTULOS_MUSICA = {
+  nome: "Nome",
+  data_lancamento: "Lançamento",
+  duracao: "Duração",
+  isrc: "ISRC",
+  colecao_id: "Coleção",
+};
+
+const ROTULOS_COLECAO = {
+  nome: "Nome",
+  tipo: "Tipo",
+  data_lancamento: "Lançamento",
+  descricao: "Descrição",
+};
 
 export function ObrasManager({
   secao,
@@ -287,17 +305,19 @@ function MusicaFormModal({
     colecao_id: m?.colecao_id ?? "",
   });
   const [cover, setCover] = useState<string | null>(m?.cover_image ?? null);
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
   const set = (k: keyof typeof v, val: string) => setV((p) => ({ ...p, [k]: val }));
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    // A action recebe o formato do formulário (duração em mm:ss) e valida de
+    // novo no servidor; aqui o schema roda só para acender os campos.
+    const input = { ...v, cover_image: cover, colecao_id: v.colecao_id || null };
+    if (!validar(musicaSchema, input)) return;
     start(async () => {
-      const input = { ...v, cover_image: cover, colecao_id: v.colecao_id || null };
       const r = m ? await editarMusica(m.id, input) : await criarMusica(input);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return doServidor(r.error);
       toast.success(m ? "Música atualizada." : "Música criada.");
       onSaved();
     });
@@ -309,7 +329,8 @@ function MusicaFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {m ? "Editar música" : "Nova música"}
         </h2>
-        <Field label="Nome" htmlFor="mu-nome">
+        <ResumoErros erros={erros} rotulos={ROTULOS_MUSICA} />
+        <Field label="Nome" htmlFor="mu-nome" error={erros.nome}>
           <Input
             id="mu-nome"
             maxLength={LIMITES.musicaNome}
@@ -322,18 +343,18 @@ function MusicaFormModal({
           <ImageUpload bucket="obras" value={cover} onChange={setCover} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Lançamento" htmlFor="mu-data">
+          <Field label="Lançamento" htmlFor="mu-data" error={erros.data_lancamento}>
             <Input id="mu-data" type="date" value={v.data_lancamento} onChange={(e) => set("data_lancamento", e.target.value)} />
           </Field>
-          <Field label="Duração" htmlFor="mu-dur">
+          <Field label="Duração" htmlFor="mu-dur" error={erros.duracao}>
             <Input id="mu-dur" value={v.duracao} onChange={(e) => set("duracao", e.target.value)} placeholder="3:45" />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="ISRC" htmlFor="mu-isrc">
+          <Field label="ISRC" htmlFor="mu-isrc" error={erros.isrc}>
             <Input id="mu-isrc" value={v.isrc} onChange={(e) => set("isrc", e.target.value)} />
           </Field>
-          <Field label="Coleção" htmlFor="mu-col">
+          <Field label="Coleção" htmlFor="mu-col" error={erros.colecao_id}>
             <Select id="mu-col" value={v.colecao_id} onChange={(e) => set("colecao_id", e.target.value)}>
               <option value="">Sem coleção</option>
               {colecaoOpts.map((c) => (
@@ -344,7 +365,6 @@ function MusicaFormModal({
             </Select>
           </Field>
         </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
         <FormFooter pending={pending} onClose={onClose} />
       </form>
     </Modal>
@@ -368,21 +388,17 @@ function ColecaoFormModal({
     data_lancamento: c?.data_lancamento ?? "",
   });
   const [cover, setCover] = useState<string | null>(c?.cover_image ?? null);
-  const [error, setError] = useState<string | null>(null);
+  const { erros, validar, doServidor } = useFormErros();
   const [pending, start] = useTransition();
   const set = (k: keyof typeof v, val: string) => setV((p) => ({ ...p, [k]: val }));
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    const input = validar(colecaoSchema, { ...v, cover_image: cover });
+    if (!input) return;
     start(async () => {
-      const input = {
-        ...v,
-        tipo: v.tipo as "album" | "EP",
-        cover_image: cover,
-      };
       const r = c ? await editarColecao(c.id, input) : await criarColecao(input);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return doServidor(r.error);
       toast.success(c ? "Coleção atualizada." : "Coleção criada.");
       onSaved();
     });
@@ -394,7 +410,8 @@ function ColecaoFormModal({
         <h2 className="text-lg font-semibold tracking-tight">
           {c ? "Editar coleção" : "Nova coleção"}
         </h2>
-        <Field label="Nome" htmlFor="cl-nome">
+        <ResumoErros erros={erros} rotulos={ROTULOS_COLECAO} />
+        <Field label="Nome" htmlFor="cl-nome" error={erros.nome}>
           <Input
             id="cl-nome"
             maxLength={LIMITES.colecaoNome}
@@ -407,17 +424,17 @@ function ColecaoFormModal({
           <ImageUpload bucket="obras" value={cover} onChange={setCover} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Tipo" htmlFor="cl-tipo">
+          <Field label="Tipo" htmlFor="cl-tipo" error={erros.tipo}>
             <Select id="cl-tipo" value={v.tipo} onChange={(e) => set("tipo", e.target.value)}>
               <option value="album">album</option>
               <option value="EP">EP</option>
             </Select>
           </Field>
-          <Field label="Lançamento" htmlFor="cl-data">
+          <Field label="Lançamento" htmlFor="cl-data" error={erros.data_lancamento}>
             <Input id="cl-data" type="date" value={v.data_lancamento} onChange={(e) => set("data_lancamento", e.target.value)} />
           </Field>
         </div>
-        <Field label="Descrição" htmlFor="cl-desc" error={error}>
+        <Field label="Descrição" htmlFor="cl-desc" error={erros.descricao}>
           <Input id="cl-desc" value={v.descricao} onChange={(e) => set("descricao", e.target.value)} />
         </Field>
         <FormFooter pending={pending} onClose={onClose} />
