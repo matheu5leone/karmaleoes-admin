@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -23,6 +24,13 @@ import { LIMITES } from "@/lib/validation/limites";
 import { ResumoErros } from "@/components/form/resumo-erros";
 import { useFormErros } from "@/lib/forms/use-form-erros";
 import { encerramentoSchema, eventoSchema } from "@/lib/validation/eventos";
+import { motivoDeNaoPublicar } from "@/lib/eventos/publicacao";
+import {
+  dentroDoPeriodo,
+  PERIODO_EVENTO_PADRAO,
+  PERIODOS_EVENTO,
+  type PeriodoEvento,
+} from "./periodos";
 
 export type StatusOpt = { id: string; nome: string; lifecycle: string };
 export type CategoriaOpt = { id: string; name: string };
@@ -114,6 +122,9 @@ export function EventosManager({
   }, []);
 
   const [pending, start] = useTransition();
+  const [periodo, setPeriodo] = useState<PeriodoEvento>(PERIODO_EVENTO_PADRAO);
+  const [de, setDe] = useState("");
+  const [ate, setAte] = useState("");
 
   function escolherVista(v: Vista) {
     setVista(v);
@@ -148,16 +159,23 @@ export function EventosManager({
       key: "enable_efetivo",
       header: "Hub",
       valor: (e) => (e.enable_efetivo ? "visível" : "oculto"),
-      render: (e) => (
-        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+      render: (e) => {
+        const motivo = e.enable_efetivo ? null : motivoDeNaoPublicar(e);
+        return (
           <span
-            className={`inline-block size-2 rounded-full ${
-              e.enable_efetivo ? "bg-success" : "bg-muted-foreground/40"
-            }`}
-          />
-          {e.enable_efetivo ? "visível" : "oculto"}
-        </span>
-      ),
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+            title={motivo ?? undefined}
+          >
+            <span
+              className={`inline-block size-2 rounded-full ${
+                e.enable_efetivo ? "bg-success" : "bg-muted-foreground/40"
+              }`}
+            />
+            {e.enable_efetivo ? "visível" : "oculto"}
+            {motivo && <AlertTriangle aria-hidden className="size-3 text-warning" />}
+          </span>
+        );
+      },
     },
     { key: "prioridade", header: "Prio.", render: (e) => String(e.prioridade) },
     {
@@ -172,7 +190,9 @@ export function EventosManager({
           <Button
             variant="ghost"
             size="sm"
-            disabled={pending}
+            // Tirar do ar sempre pode; pôr no ar só com a ficha completa.
+            disabled={pending || (!e.enable && !!motivoDeNaoPublicar(e))}
+            title={(!e.enable && motivoDeNaoPublicar(e)) || undefined}
             onClick={() =>
               start(async () => {
                 const r = await setEnable(e.id, !e.enable);
@@ -196,8 +216,67 @@ export function EventosManager({
     },
   ];
 
+  const visiveis = useMemo(
+    () => eventos.filter((e) => dentroDoPeriodo(e.data, periodo, de, ate)),
+    [eventos, periodo, de, ate],
+  );
+
   return (
     <>
+      <div className="mb-3 flex flex-wrap items-end gap-3">
+        <Field label="Período" htmlFor="ev-periodo" className="space-y-1.5">
+          <Select
+            id="ev-periodo"
+            value={periodo}
+            onChange={(e) => {
+              const v = e.target.value as PeriodoEvento;
+              setPeriodo(v);
+              // Sair de "Personalizado" descarta as datas, senão elas
+              // continuariam filtrando sem aparecer na tela.
+              if (v !== "custom") {
+                setDe("");
+                setAte("");
+              }
+            }}
+            className="w-48"
+          >
+            {Object.entries(PERIODOS_EVENTO).map(([chave, p]) => (
+              <option key={chave} value={chave}>
+                {p.rotulo}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        {periodo === "custom" && (
+          <>
+            <Field label="De" htmlFor="ev-de" className="space-y-1.5">
+              <Input
+                id="ev-de"
+                type="date"
+                value={de}
+                max={ate || undefined}
+                onChange={(e) => setDe(e.target.value)}
+                className="w-40"
+              />
+            </Field>
+            <Field label="Até" htmlFor="ev-ate" className="space-y-1.5">
+              <Input
+                id="ev-ate"
+                type="date"
+                value={ate}
+                min={de || undefined}
+                onChange={(e) => setAte(e.target.value)}
+                className="w-40"
+              />
+            </Field>
+          </>
+        )}
+        <span className="pb-2 text-sm text-muted-foreground">
+          {visiveis.length} de {eventos.length} evento
+          {eventos.length === 1 ? "" : "s"}
+        </span>
+      </div>
+
       <div className="mb-4 flex items-center justify-between gap-3">
         <div
           role="group"
@@ -231,14 +310,14 @@ export function EventosManager({
         id="eventos"
         csv="eventos"
           columns={columns}
-          rows={eventos}
+          rows={visiveis}
           getFilterText={(e) => `${e.nome} ${e.status_efetivo}`}
           filterPlaceholder="Filtrar eventos…"
           empty="Nenhum evento cadastrado."
         />
       ) : (
         <EventosKanban
-          eventos={eventos}
+          eventos={visiveis}
           onEditar={(e) => setForm({ open: true, evento: e })}
           onEncerrar={(e) => setEncerrar(e)}
           onBloqueado={() =>

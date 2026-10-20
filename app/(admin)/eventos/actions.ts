@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { motivoDeNaoPublicar } from "@/lib/eventos/publicacao";
 import {
   encerramentoSchema,
   eventoSchema,
@@ -104,6 +105,21 @@ export async function setEnable(
   enable: boolean,
 ): Promise<ActionResult> {
   const supabase = await createClient();
+
+  // Publicar exige ficha completa e evento em aberto; tirar do ar é sempre
+  // permitido. A checagem é refeita aqui porque o botão desabilitado no
+  // cliente é conveniência, não garantia.
+  if (enable) {
+    const { data: evento } = await supabase
+      .from("evento")
+      .select("nome, data, local, category_id, lifecycle")
+      .eq("id", id)
+      .single();
+    if (!evento) return { ok: false, error: "Evento não encontrado." };
+    const motivo = motivoDeNaoPublicar(evento);
+    if (motivo) return { ok: false, error: motivo };
+  }
+
   const { error } = await supabase.from("evento").update({ enable }).eq("id", id);
   if (error) return { ok: false, error: error.message };
   revalidatePath("/eventos");
