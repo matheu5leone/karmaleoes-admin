@@ -29,14 +29,19 @@ export function ConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-lg"
+        className="flex max-h-[85vh] w-full max-w-md flex-col rounded-lg border border-border bg-card p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        {/* `break-words` porque o nome do registro entra aqui: um título longo
+            sem espaços empurrava a largura do diálogo em vez de quebrar. E a
+            descrição rola quando cresce demais, em vez de estourar a altura. */}
+        <h2 className="break-words text-lg font-semibold tracking-tight">{title}</h2>
         {description && (
-          <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+          <p className="mt-2 overflow-y-auto break-words text-sm text-muted-foreground">
+            {description}
+          </p>
         )}
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-6 flex shrink-0 justify-end gap-2">
           <Button variant="ghost" onClick={onCancel} disabled={pending}>
             Cancelar
           </Button>

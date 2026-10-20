@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
 import { ConfirmDialog } from "@/components/form/confirm-dialog";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { DataTable, type Column } from "@/components/data-table/data-table";
+import {
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  ImageOff,
+  Maximize2,
+} from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/ui/toast";
 import { ShieldBadge } from "@/components/heraldry/shield-badge";
@@ -24,6 +29,7 @@ import { LIMITES } from "@/lib/validation/limites";
 import { ResumoErros } from "@/components/form/resumo-erros";
 import { useFormErros } from "@/lib/forms/use-form-erros";
 import { conteudoSchema } from "@/lib/validation/conteudos";
+import { Lightbox } from "@/components/lightbox";
 
 export type CategoriaOpt = { id: string; nome: string };
 export type ConteudoRow = {
@@ -78,90 +84,72 @@ export function ConteudosManager({
     item: null,
   });
   const [del, setDel] = useState<ConteudoRow | null>(null);
+  const [ampliado, setAmpliado] = useState<ConteudoRow | null>(null);
+  const [filtro, setFiltro] = useState("");
   const [pending, start] = useTransition();
 
-  const columns: Column<ConteudoRow>[] = [
-    {
-      key: "thumbnail",
-      estatica: true,
-      header: "",
-      className: "w-16",
-      render: (c) =>
-        c.thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={c.thumbnail}
-            alt=""
-            className="h-10 w-16 rounded border border-border object-cover"
-          />
-        ) : null,
-    },
-    { key: "titulo", header: "Título" },
-    { key: "tipo", header: "Tipo" },
-    {
-      key: "categoriaNome",
-      header: "Categoria",
-      render: (c) => c.categoriaNome ?? "—",
-    },
-    { key: "status", header: "Status", render: (c) => <StatusBadge s={c.status} /> },
-    {
-      key: "destaque",
-      header: "Destaque",
-      valor: (c) => (c.destaque ? "sim" : "não"),
-      render: (c) => (c.destaque ? "★" : "—"),
-    },
-    { key: "ordem", header: "Ordem", render: (c) => String(c.ordem) },
-    {
-      key: "acoes",
-      estatica: true,
-      header: "Ações",
-      render: (c) => (
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            aria-label="Subir"
-            disabled={pending}
-            onClick={() => start(async () => { await moverConteudo(c.id, "cima"); router.refresh(); })}
-            className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-brand disabled:opacity-40"
-          >
-            <ChevronUp className="size-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Descer"
-            disabled={pending}
-            onClick={() => start(async () => { await moverConteudo(c.id, "baixo"); router.refresh(); })}
-            className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-brand disabled:opacity-40"
-          >
-            <ChevronDown className="size-4" />
-          </button>
-          <Button variant="ghost" size="sm" onClick={() => setForm({ open: true, item: c })}>
-            Editar
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDel(c)}>
-            Excluir
-          </Button>
-        </div>
-      ),
-    },
-  ];
+
+  const visiveis = useMemo(() => {
+    const termo = filtro.trim().toLowerCase();
+    if (!termo) return conteudos;
+    return conteudos.filter((c) =>
+      `${c.titulo} ${c.tipo} ${c.categoriaNome ?? ""}`.toLowerCase().includes(termo),
+    );
+  }, [conteudos, filtro]);
+
+  function mover(id: string, dir: "cima" | "baixo") {
+    start(async () => {
+      await moverConteudo(id, dir);
+      router.refresh();
+    });
+  }
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <Input
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          placeholder="Filtrar conteúdos…"
+          aria-label="Filtrar conteúdos"
+          className="sm:max-w-xs"
+        />
         <Button onClick={() => setForm({ open: true, item: null })}>
           Novo conteúdo
         </Button>
       </div>
 
-      <DataTable
-        id="conteudos"
-        columns={columns}
-        rows={conteudos}
-        getFilterText={(c) => `${c.titulo} ${c.tipo} ${c.categoriaNome ?? ""}`}
-        filterPlaceholder="Filtrar conteúdos…"
-        empty="Nenhum conteúdo cadastrado."
-      />
+      {visiveis.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          {conteudos.length === 0
+            ? "Nenhum conteúdo cadastrado."
+            : "Nenhum conteúdo com esse termo."}
+        </p>
+      ) : (
+        <ul className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {visiveis.map((c, i) => (
+            <CardConteudo
+              key={c.id}
+              c={c}
+              pending={pending}
+              primeiro={i === 0}
+              ultimo={i === visiveis.length - 1}
+              onMover={mover}
+              onEditar={() => setForm({ open: true, item: c })}
+              onExcluir={() => setDel(c)}
+              onAmpliar={() => setAmpliado(c)}
+            />
+          ))}
+        </ul>
+      )}
+
+      {ampliado?.thumbnail && (
+        <Lightbox
+          src={ampliado.thumbnail}
+          legenda={ampliado.titulo}
+          onClose={() => setAmpliado(null)}
+        />
+      )}
 
       {form.open && (
         <ConteudoFormModal
@@ -194,6 +182,132 @@ export function ConteudosManager({
         }
       />
     </>
+  );
+}
+
+/**
+ * Conteúdo como card: a thumbnail é o conteúdo em si, então ela manda na
+ * composição — ficava do tamanho de um selo na tabela.
+ */
+function CardConteudo({
+  c,
+  pending,
+  primeiro,
+  ultimo,
+  onMover,
+  onEditar,
+  onExcluir,
+  onAmpliar,
+}: {
+  c: ConteudoRow;
+  pending: boolean;
+  primeiro: boolean;
+  ultimo: boolean;
+  onMover: (id: string, dir: "cima" | "baixo") => void;
+  onEditar: () => void;
+  onExcluir: () => void;
+  onAmpliar: () => void;
+}) {
+  return (
+    <li className="group flex flex-col">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={onEditar}
+          aria-label={`Editar ${c.titulo}`}
+          className="block w-full overflow-hidden rounded-lg border border-border bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {c.thumbnail ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={c.thumbnail}
+              alt=""
+              className="aspect-video w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            />
+          ) : (
+            <span className="flex aspect-video w-full items-center justify-center text-muted-foreground">
+              <ImageOff className="size-6" aria-hidden />
+            </span>
+          )}
+        </button>
+
+        {c.thumbnail && (
+          <button
+            type="button"
+            onClick={onAmpliar}
+            aria-label={`Ver "${c.titulo}" em tela cheia`}
+            title="Ver em tela cheia"
+            className="absolute right-2 top-2 rounded-md bg-black/60 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <Maximize2 className="size-4" />
+          </button>
+        )}
+
+        <span className="absolute bottom-2 left-2 flex items-center gap-1.5">
+          <StatusBadge s={c.status} />
+          {c.destaque && (
+            <span
+              title="Em destaque"
+              className="rounded bg-black/70 px-1.5 py-0.5 text-xs text-white backdrop-blur-sm"
+            >
+              ★
+            </span>
+          )}
+        </span>
+      </div>
+
+      <div className="mt-2 flex min-w-0 flex-1 flex-col">
+        <button
+          type="button"
+          onClick={onEditar}
+          className="line-clamp-2 text-left text-sm font-medium leading-snug hover:text-brand"
+        >
+          {c.titulo}
+        </button>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {[c.tipo, c.categoriaNome].filter(Boolean).join(" · ")}
+        </p>
+
+        <div className="mt-2 flex items-center gap-1 border-t border-border/70 pt-1.5">
+          <button
+            type="button"
+            aria-label="Subir"
+            disabled={pending || primeiro}
+            onClick={() => onMover(c.id, "cima")}
+            className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-brand disabled:opacity-30"
+          >
+            <ChevronUp className="size-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Descer"
+            disabled={pending || ultimo}
+            onClick={() => onMover(c.id, "baixo")}
+            className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-brand disabled:opacity-30"
+          >
+            <ChevronDown className="size-4" />
+          </button>
+          <a
+            href={c.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Abrir link"
+            aria-label={`Abrir link de ${c.titulo}`}
+            className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-brand"
+          >
+            <ExternalLink className="size-4" />
+          </a>
+          <span className="ml-auto flex gap-1">
+            <Button variant="ghost" size="sm" onClick={onEditar}>
+              Editar
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onExcluir}>
+              Excluir
+            </Button>
+          </span>
+        </div>
+      </div>
+    </li>
   );
 }
 
