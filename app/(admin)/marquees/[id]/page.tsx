@@ -34,7 +34,7 @@ export default async function MarqueeDetailPage({
     supabase
       .from("marquee_item")
       .select(
-        "id, titulo, icon_id, icons(name, extension), tipo_nav, tela_destino_id, url_externa, ordem",
+        "id, titulo, icon_id, cor_icone, icons(name, extension), tipo_nav, tela_destino_id, url_externa, ordem",
       )
       .eq("marquee_id", id)
       .order("ordem", { ascending: true }),
@@ -47,6 +47,7 @@ export default async function MarqueeDetailPage({
     titulo: it.titulo,
     icon_id: it.icon_id,
     icon: it.icons as { name: string; extension: string } | null,
+    cor_icone: it.cor_icone,
     tipo_nav: it.tipo_nav,
     tela_destino_id: it.tela_destino_id,
     url_externa: it.url_externa,

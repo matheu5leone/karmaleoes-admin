@@ -24,6 +24,7 @@ import { ResumoErros } from "@/components/form/resumo-erros";
 import { useFormErros } from "@/lib/forms/use-form-erros";
 import { itemSchema, marqueeSchema } from "@/lib/validation/marquees";
 import { FitaMarquee } from "@/components/marquee/fita";
+import { useCoresPredefinidas } from "@/lib/marquees/usar-cores";
 
 export type EditorTela = { id: string; nome: string; status: string };
 export type IconOpt = { id: string; name: string; extension: string };
@@ -31,12 +32,28 @@ export type EditorItem = {
   id: string;
   titulo: string;
   icon_id: string | null;
+  cor_icone: string | null;
   icon: { name: string; extension: string } | null;
   tipo_nav: string;
   tela_destino_id: string | null;
   url_externa: string | null;
   ordem: number;
 };
+
+/** Pinta um ícone de arquivo: ele vira máscara e quem colore é o fundo. */
+function mascaraDoIcone(url: string, cor: string): React.CSSProperties {
+  return {
+    backgroundColor: cor,
+    maskImage: `url(${url})`,
+    WebkitMaskImage: `url(${url})`,
+    maskSize: "contain",
+    WebkitMaskSize: "contain",
+    maskRepeat: "no-repeat",
+    WebkitMaskRepeat: "no-repeat",
+    maskPosition: "center",
+    WebkitMaskPosition: "center",
+  };
+}
 
 /** Caminho do asset do ícone: /icons/<name>.<extension> (arquivos em /public/icons). */
 function iconSrc(icon: { name: string; extension: string }): string {
@@ -180,6 +197,7 @@ function PreviewFixo({ cores, itens }: { cores: Cores; itens: EditorItem[] }) {
             itens={itens.map((it) => ({
               titulo: it.titulo,
               iconeUrl: it.icon ? iconSrc(it.icon) : null,
+              corIcone: it.cor_icone,
             }))}
             corFundo={cores.fundo}
             corTexto={cores.texto}
@@ -445,12 +463,19 @@ function ItensSection({
           {(it) => (
             <div className="flex items-center gap-3">
               {it.icon ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={iconSrc(it.icon)}
-                  alt=""
-                  className="size-10 rounded-md border border-border object-contain"
-                />
+                // A lista mostra o ícone já na cor escolhida, como a fita.
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border">
+                  {it.cor_icone ? (
+                    <span
+                      aria-hidden
+                      className="size-6"
+                      style={mascaraDoIcone(iconSrc(it.icon), it.cor_icone)}
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={iconSrc(it.icon)} alt="" className="size-6 object-contain" />
+                  )}
+                </span>
               ) : (
                 <div className="size-10 rounded-md border border-dashed border-border" />
               )}
@@ -516,6 +541,78 @@ function ItensSection({
   );
 }
 
+/**
+ * Cor do ícone: a paleta sugerida mais o seletor livre, com prévia do próprio
+ * ícone já pintado — e "sem cor", que devolve o arquivo às cores originais.
+ */
+function CorDoIcone({
+  id,
+  valor,
+  onChange,
+  icone,
+}: {
+  id: string;
+  valor: string;
+  onChange: (v: string) => void;
+  icone?: IconOpt;
+}) {
+  const cores = useCoresPredefinidas();
+  const url = icone ? iconSrc(icone) : null;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-3">
+        {url && (
+          <span
+            aria-hidden
+            className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40"
+          >
+            {valor ? (
+              <span className="size-5" style={mascaraDoIcone(url, valor)} />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={url} alt="" className="size-5 object-contain" />
+            )}
+          </span>
+        )}
+        <ColorPicker id={id} value={valor} onChange={onChange} presets={[]} />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={!valor}
+          onClick={() => onChange("")}
+        >
+          Sem cor
+        </Button>
+      </div>
+
+      {cores.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {cores.map((c) => (
+            <li key={c.hex}>
+              <button
+                type="button"
+                onClick={() => onChange(c.hex)}
+                title={c.nome}
+                aria-label={c.nome}
+                aria-pressed={valor.toLowerCase() === c.hex.toLowerCase()}
+                className={cn(
+                  "size-6 rounded-sm border transition-transform hover:scale-110",
+                  valor.toLowerCase() === c.hex.toLowerCase()
+                    ? "border-brand ring-2 ring-brand/40"
+                    : "border-border",
+                )}
+                style={{ backgroundColor: c.hex }}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function ItemModal({
   marqueeId,
   telas,
@@ -535,6 +632,7 @@ function ItemModal({
 }) {
   const [titulo, setTitulo] = useState(item?.titulo ?? "");
   const [iconId, setIconId] = useState<string>(item?.icon_id ?? "");
+  const [corIcone, setCorIcone] = useState<string>(item?.cor_icone ?? "");
   const [tipoNav, setTipoNav] = useState(item?.tipo_nav ?? "interno");
   const [telaId, setTelaId] = useState(item?.tela_destino_id ?? "");
   const [url, setUrl] = useState(item?.url_externa ?? "");
@@ -550,19 +648,21 @@ function ItemModal({
       id: item?.id ?? "",
       titulo,
       icon_id: iconId || null,
+      cor_icone: corIcone || null,
       icon: icon ? { name: icon.name, extension: icon.extension } : null,
       tipo_nav: tipoNav,
       tela_destino_id: telaId || null,
       url_externa: url || null,
       ordem: item?.ordem ?? Number.MAX_SAFE_INTEGER,
     });
-  }, [titulo, iconId, tipoNav, telaId, url, icons, item, onRascunho]);
+  }, [titulo, iconId, corIcone, tipoNav, telaId, url, icons, item, onRascunho]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const dados = validar(itemSchema, {
       titulo,
       icon_id: iconId || null,
+      cor_icone: corIcone || null,
       tipo_nav: tipoNav,
       tela_destino_id: tipoNav === "interno" ? telaId || null : null,
       url_externa: tipoNav === "externo" ? url || null : null,
@@ -623,6 +723,16 @@ function ItemModal({
             ))}
           </Select>
         </Field>
+        {iconId && (
+          <Field label="Cor do ícone" htmlFor="i-cor" error={erros.cor_icone}>
+            <CorDoIcone
+              id="i-cor"
+              valor={corIcone}
+              onChange={setCorIcone}
+              icone={icons.find((ic) => ic.id === iconId)}
+            />
+          </Field>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Navegação" htmlFor="i-tipo" error={erros.tipo_nav}>
             <Select id="i-tipo" value={tipoNav} onChange={(e) => setTipoNav(e.target.value)}>

@@ -135,7 +135,7 @@ export async function getResumo(isSuper: boolean): Promise<Resumo> {
     sel(supabase, "banner_tela", "banner_id, tela_id, status"),
     sel(supabase, "marquee", "id, nome, props_visuais"),
     sel(supabase, "marquee_tela", "marquee_id, tela_id"),
-    sel(supabase, "marquee_item", "marquee_id, titulo, ordem, icon_id"),
+    sel(supabase, "marquee_item", "marquee_id, titulo, ordem, icon_id, cor_icone"),
     sel(supabase, "icons", "id, name, extension"),
     sel(supabase, "evento", "id, nome, data, local, lifecycle, status_id, enable"),
     sel(supabase, "status_evento", "id, nome"),
@@ -177,7 +177,7 @@ export async function getResumo(isSuper: boolean): Promise<Resumo> {
     lista.push({
       titulo: str(i.titulo),
       iconeUrl: i.icon_id ? (iconePorId.get(str(i.icon_id)) ?? null) : null,
-      corIcone: null,
+      corIcone: i.cor_icone ? str(i.cor_icone) : null,
     });
     itensPorMarquee.set(str(i.marquee_id), lista);
   }

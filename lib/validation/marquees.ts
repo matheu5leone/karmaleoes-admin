@@ -21,6 +21,7 @@ export const itemSchema = z
       .min(1, "Informe o título")
       .max(LIMITES.marqueeItemTitulo, excedeu(LIMITES.marqueeItemTitulo)),
     icon_id: z.string().uuid().nullable().optional(),
+    cor_icone: corHexOpcional.nullable(),
     tipo_nav: z.enum(["interno", "externo"]),
     tela_destino_id: z.string().uuid().nullable().optional(),
     url_externa: urlOpcional.nullable(),

@@ -317,6 +317,33 @@ export type Database = {
           },
         ]
       }
+      cor_predefinida: {
+        Row: {
+          created_at: string
+          hex: string
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hex: string
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hex?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       evento: {
         Row: {
           category_id: string | null
@@ -502,6 +529,7 @@ export type Database = {
       }
       marquee_item: {
         Row: {
+          cor_icone: string | null
           created_at: string
           icon_id: string | null
           id: string
@@ -514,6 +542,7 @@ export type Database = {
           url_externa: string | null
         }
         Insert: {
+          cor_icone?: string | null
           created_at?: string
           icon_id?: string | null
           id?: string
@@ -526,6 +555,7 @@ export type Database = {
           url_externa?: string | null
         }
         Update: {
+          cor_icone?: string | null
           created_at?: string
           icon_id?: string | null
           id?: string

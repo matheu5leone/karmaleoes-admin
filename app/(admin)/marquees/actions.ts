@@ -120,6 +120,8 @@ export async function salvarItem(
     marquee_id: marqueeId,
     titulo: p.data.titulo,
     icon_id: p.data.icon_id || null,
+    // Cor só faz sentido com ícone; sem ele, não guarda sujeira.
+    cor_icone: p.data.icon_id ? (p.data.cor_icone || null) : null,
     tipo_nav: p.data.tipo_nav,
     tela_destino_id:
       p.data.tipo_nav === "interno" ? p.data.tela_destino_id! : null,
