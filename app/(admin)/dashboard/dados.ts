@@ -18,7 +18,12 @@ export type TelaNoAr = {
   nome: string;
   rota: string;
   banner: { nome: string; imagem: string } | null;
-  marquees: { nome: string; itens: string[] }[];
+  marquees: {
+    nome: string;
+    corFundo: string | null;
+    corTexto: string | null;
+    itens: { titulo: string; iconeUrl: string | null; corIcone: string | null }[];
+  }[];
 };
 
 export type Pendencia = {
@@ -112,6 +117,7 @@ export async function getResumo(isSuper: boolean): Promise<Resumo> {
     marquees,
     marqueeTela,
     marqueeItens,
+    icones,
     eventos,
     statuses,
     conteudos,
@@ -127,9 +133,10 @@ export async function getResumo(isSuper: boolean): Promise<Resumo> {
     sel(supabase, "tela", "id, nome, rota, status"),
     sel(supabase, "banner", "id, nome, imagem"),
     sel(supabase, "banner_tela", "banner_id, tela_id, status"),
-    sel(supabase, "marquee", "id, nome"),
+    sel(supabase, "marquee", "id, nome, props_visuais"),
     sel(supabase, "marquee_tela", "marquee_id, tela_id"),
-    sel(supabase, "marquee_item", "marquee_id, titulo, ordem"),
+    sel(supabase, "marquee_item", "marquee_id, titulo, ordem, icon_id"),
+    sel(supabase, "icons", "id, name, extension"),
     sel(supabase, "evento", "id, nome, data, local, lifecycle, status_id, enable"),
     sel(supabase, "status_evento", "id, nome"),
     sel(supabase, "conteudo", "id, status, destaque, thumbnail"),
@@ -159,10 +166,19 @@ export async function getResumo(isSuper: boolean): Promise<Resumo> {
     if (str(a.status) === "publicado") publicadoPorTela.set(str(a.tela_id), str(a.banner_id));
   }
   const bannerPorId = new Map(banners.map((b) => [str(b.id), b]));
-  const itensPorMarquee = new Map<string, string[]>();
+  // Mesma convenção do editor: /icons/<name>.<extension> (arquivos em /public).
+  const iconePorId = new Map(
+    icones.map((ic) => [str(ic.id), `/icons/${str(ic.name)}.${str(ic.extension)}`]),
+  );
+  type ItemDaFita = TelaNoAr["marquees"][number]["itens"][number];
+  const itensPorMarquee = new Map<string, ItemDaFita[]>();
   for (const i of [...marqueeItens].sort((a, b) => num(a.ordem) - num(b.ordem))) {
     const lista = itensPorMarquee.get(str(i.marquee_id)) ?? [];
-    lista.push(str(i.titulo));
+    lista.push({
+      titulo: str(i.titulo),
+      iconeUrl: i.icon_id ? (iconePorId.get(str(i.icon_id)) ?? null) : null,
+      corIcone: null,
+    });
     itensPorMarquee.set(str(i.marquee_id), lista);
   }
   const marqueePorId = new Map(marquees.map((m) => [str(m.id), m]));
@@ -180,8 +196,14 @@ export async function getResumo(isSuper: boolean): Promise<Resumo> {
         .filter((mt) => str(mt.tela_id) === str(t.id))
         .map((mt) => {
           const m = marqueePorId.get(str(mt.marquee_id));
+          const props = (m?.props_visuais ?? {}) as {
+            cor_fundo?: string | null;
+            cor_texto?: string | null;
+          };
           return {
             nome: m ? str(m.nome) : "—",
+            corFundo: props.cor_fundo ?? null,
+            corTexto: props.cor_texto ?? null,
             itens: itensPorMarquee.get(str(mt.marquee_id)) ?? [],
           };
         }),

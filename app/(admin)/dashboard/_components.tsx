@@ -14,6 +14,7 @@ import {
 import { ShieldBadge } from "@/components/heraldry/shield-badge";
 import { cn } from "@/lib/utils";
 import type { Pendencia, Resumo, TelaNoAr } from "./dados";
+import { FitaMarquee } from "@/components/marquee/fita";
 
 // ---------------------------------------------------------------- moldura
 
@@ -176,18 +177,24 @@ export function NoAr({ telas }: { telas: TelaNoAr[] }) {
               </span>
             </div>
 
-            {/* A fita do marquee, como aparece no site. */}
+            {/* A fita de verdade, rodando como no site. */}
             {t.marquees.map((m) => (
-              <div
-                key={m.nome}
-                className="flex items-center gap-3 overflow-hidden border-t border-border bg-foreground/[0.04] px-3 py-1.5"
-              >
-                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <div key={m.nome} className="border-t border-border">
+                <p className="px-3 pt-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   {m.nome}
-                </span>
-                <span className="truncate text-xs text-foreground/80">
-                  {m.itens.length ? m.itens.join("  ·  ") : "sem itens"}
-                </span>
+                </p>
+                <FitaMarquee
+                  itens={m.itens.map((i) => ({
+                    titulo: i.titulo,
+                    iconeUrl: i.iconeUrl,
+                    corIcone: i.corIcone,
+                  }))}
+                  corFundo={m.corFundo}
+                  corTexto={m.corTexto}
+                  velocidade={40}
+                  className="m-1.5 rounded-sm"
+                  vazio="sem itens"
+                />
               </div>
             ))}
 

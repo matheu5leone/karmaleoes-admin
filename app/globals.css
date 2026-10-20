@@ -355,29 +355,33 @@
   opacity: 0.42;
 }
 
-/* Fita do preview de marquee: a trilha é duplicada, então andar metade dela
-   volta exatamente ao ponto de partida. */
-@keyframes marquee-fita {
+/* Fita do marquee ([components/marquee/fita.tsx]): a trilha se repete até
+   cobrir a janela, e o passo é a largura de UM grupo — medida no componente e
+   entregue em --fita-passo. A duração também vem de lá, para a velocidade não
+   depender de quantos itens existem. */
+@keyframes fita-marquee {
   from {
     transform: translateX(0);
   }
   to {
-    transform: translateX(-50%);
+    transform: translateX(var(--fita-passo, 0));
   }
 }
 
-.marquee-fita {
-  animation: marquee-fita 26s linear infinite;
+.fita-marquee {
+  animation-name: fita-marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
-.marquee-fita:hover {
+.fita-marquee:hover {
   animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after,
   .animate-board-node,
-  .marquee-fita {
+  .fita-marquee {
     animation: none;
   }
   .board-halo {

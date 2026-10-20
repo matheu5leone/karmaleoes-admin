@@ -23,6 +23,7 @@ import { LIMITES } from "@/lib/validation/limites";
 import { ResumoErros } from "@/components/form/resumo-erros";
 import { useFormErros } from "@/lib/forms/use-form-erros";
 import { itemSchema, marqueeSchema } from "@/lib/validation/marquees";
+import { FitaMarquee } from "@/components/marquee/fita";
 
 export type EditorTela = { id: string; nome: string; status: string };
 export type IconOpt = { id: string; name: string; extension: string };
@@ -175,7 +176,14 @@ function PreviewFixo({ cores, itens }: { cores: Cores; itens: EditorItem[] }) {
           <BotaoPin fixo={fixo} onClick={alternar} />
         </div>
         <div className="relative">
-          <MarqueePreview cores={cores} itens={itens} />
+          <FitaMarquee
+            itens={itens.map((it) => ({
+              titulo: it.titulo,
+              iconeUrl: it.icon ? iconSrc(it.icon) : null,
+            }))}
+            corFundo={cores.fundo}
+            corTexto={cores.texto}
+          />
           {preso && (
             <div className="absolute right-1.5 top-1/2 -translate-y-1/2 md:hidden">
               <BotaoPin fixo={fixo} onClick={alternar} compacto />
@@ -232,53 +240,6 @@ function BotaoPin({
       <Icone className="size-3.5" />
       {fixo ? "Fixado" : "Fixar"}
     </button>
-  );
-}
-
-/** A fita em si: itens em sequência, deslizando como no site. */
-function MarqueePreview({ cores, itens }: { cores: Cores; itens: EditorItem[] }) {
-  const fundo = cores.fundo || "#17130d";
-  const texto = cores.texto || "#f2e9d8";
-
-  return (
-    <div
-      className="overflow-hidden rounded-md border border-border"
-      style={{ backgroundColor: fundo }}
-    >
-      {itens.length === 0 ? (
-        <p className="px-4 py-3 text-center text-sm opacity-70" style={{ color: texto }}>
-          Nenhum item ainda.
-        </p>
-      ) : (
-        <div className="marquee-fita flex w-max">
-          {/* A fita é duplicada: a animação anda metade dela e volta ao início
-              sem emenda visível. A cópia é escondida dos leitores de tela. */}
-          {[0, 1].map((copia) => (
-            <ul
-              key={copia}
-              aria-hidden={copia === 1 ? true : undefined}
-              className="flex shrink-0 items-center gap-10 px-5 py-2.5"
-            >
-              {itens.map((it, i) => (
-                <li
-                  key={`${copia}-${it.id || "novo"}-${i}`}
-                  className="flex items-center gap-2 whitespace-nowrap"
-                  style={{ color: texto }}
-                >
-                  {it.icon && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={iconSrc(it.icon)} alt="" className="size-5 object-contain" />
-                  )}
-                  <span className="text-sm font-medium">
-                    {it.titulo || "Sem texto"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 
