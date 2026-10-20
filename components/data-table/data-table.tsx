@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowDownUp,
+  Download,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -13,6 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { nomeArquivo, paraCsv } from "@/lib/csv";
+import { baixarTexto } from "@/lib/baixar";
 import {
   TAMANHOS_PAGINA,
   TAMANHO_PAGINA_PADRAO,
@@ -65,6 +68,7 @@ export function DataTable<T extends { id: string }>({
   filterPlaceholder = "Filtrar…",
   empty = "Nenhum registro.",
   action,
+  csv,
 }: {
   /** Identifica a tabela para lembrar os itens por página entre visitas. */
   id?: string;
@@ -75,6 +79,8 @@ export function DataTable<T extends { id: string }>({
   empty?: ReactNode;
   /** Ação exibida na mesma linha do filtro (ex.: botão "Nova tela"). */
   action?: ReactNode;
+  /** Liga o botão de baixar CSV; o valor vira o começo do nome do arquivo. */
+  csv?: string;
 }) {
   const [q, setQ] = useState("");
   const [ordem, setOrdem] = useState<Ordem>(null);
@@ -223,7 +229,7 @@ export function DataTable<T extends { id: string }>({
 
   return (
     <div className="space-y-3">
-      {(getFilterText || action) && (
+      {(getFilterText || action || csv) && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           {getFilterText ? (
             <Input
@@ -238,7 +244,17 @@ export function DataTable<T extends { id: string }>({
           ) : (
             <span />
           )}
-          {action}
+          <div className="flex items-center gap-2">
+            {csv && (
+              <BotaoCsv
+                nome={csv}
+                colunas={colunasFiltraveis}
+                linhas={ordenadas}
+                valorDe={valorDe}
+              />
+            )}
+            {action}
+          </div>
         </div>
       )}
 
@@ -524,6 +540,49 @@ function Card<T extends { id: string }>({
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Baixa o que está na tela: todas as linhas que passaram pelos filtros e na
+ * ordem escolhida — não só a página atual. Colunas sem dado próprio (ações,
+ * miniatura) ficam de fora.
+ */
+function BotaoCsv<T>({
+  nome,
+  colunas,
+  linhas,
+  valorDe,
+}: {
+  nome: string;
+  colunas: Column<T>[];
+  linhas: T[];
+  valorDe: (c: Column<T>, r: T) => string | number;
+}) {
+  function baixar() {
+    const corpo = linhas.map((r) =>
+      colunas.map((c) => {
+        const v = valorDe(c, r);
+        return v === null || v === undefined ? "" : v;
+      }),
+    );
+    baixarTexto(
+      nomeArquivo(nome),
+      paraCsv(colunas.map((c) => c.header || c.key), corpo),
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={baixar}
+      disabled={linhas.length === 0}
+      title={`Baixar ${linhas.length} registro(s) em CSV`}
+      className="flex h-10 items-center gap-1.5 rounded-md border border-border px-3 text-sm text-muted-foreground transition-colors hover:border-brand hover:text-foreground disabled:opacity-40"
+    >
+      <Download className="size-4" />
+      <span className="hidden sm:inline">CSV</span>
+    </button>
   );
 }
 

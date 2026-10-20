@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, ChevronUp, FilePlus2, Minus, PenLine, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, FilePlus2, Minus, PenLine, Plus, Trash2 } from "lucide-react";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/form/field";
@@ -12,6 +12,10 @@ import { ShieldBadge, type Tinctura } from "@/components/heraldry/shield-badge";
 import { TAMANHOS_PAGINA } from "@/components/data-table/tamanhos";
 import { cn } from "@/lib/utils";
 import { PERIODOS, PROXIMO_PERIODO, type Periodo } from "./periodos";
+import { useToast } from "@/components/ui/toast";
+import { baixarTexto } from "@/lib/baixar";
+import { nomeArquivo } from "@/lib/csv";
+import { exportarHistorico } from "./actions";
 
 export type LogRow = {
   id: string;
@@ -223,6 +227,7 @@ export function HistoricoTabela({
           </>
         )}
         <span className="pb-2 text-sm text-muted-foreground">{total} registro{total === 1 ? "" : "s"}</span>
+        <BotaoExportar filtros={filtros} ordem={ordem} dir={dir} total={total} />
       </div>
 
       <div className="overflow-x-auto rounded-sm border border-border bg-card shadow-sm">
@@ -358,6 +363,48 @@ export function HistoricoTabela({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Baixa o histórico com os filtros da tela. A consulta roda de novo no
+ * servidor: a tabela está paginada, então o cliente só tem a página atual.
+ */
+function BotaoExportar({
+  filtros,
+  ordem,
+  dir,
+  total,
+}: {
+  filtros: { entidade: string; acao: string; autor: string; periodo: Periodo; de: string; ate: string };
+  ordem: string;
+  dir: string;
+  total: number;
+}) {
+  const toast = useToast();
+  const [pending, start] = useTransition();
+
+  return (
+    <button
+      type="button"
+      disabled={pending || total === 0}
+      onClick={() =>
+        start(async () => {
+          const r = await exportarHistorico({ ...filtros, ordem, dir });
+          if (!r.ok) return toast.error(r.error);
+          baixarTexto(nomeArquivo("historico"), r.csv);
+          toast.success(
+            r.truncado
+              ? `${r.linhas} registros exportados (limite do arquivo).`
+              : `${r.linhas} registro(s) exportado(s).`,
+          );
+        })
+      }
+      className="mb-0.5 flex h-10 items-center gap-1.5 rounded-md border border-border px-3 text-sm text-muted-foreground transition-colors hover:border-brand hover:text-foreground disabled:opacity-40"
+    >
+      <Download className="size-4" />
+      {pending ? "Gerando…" : "CSV"}
+    </button>
   );
 }
 

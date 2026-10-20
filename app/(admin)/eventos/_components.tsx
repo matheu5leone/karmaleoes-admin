@@ -229,6 +229,7 @@ export function EventosManager({
       {vista === "tabela" ? (
         <DataTable
         id="eventos"
+        csv="eventos"
           columns={columns}
           rows={eventos}
           getFilterText={(e) => `${e.nome} ${e.status_efetivo}`}
