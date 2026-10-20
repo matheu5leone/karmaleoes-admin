@@ -10,6 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  ArrowLeft,
   ChevronDown,
   Crosshair,
   Disc3,
@@ -53,18 +54,20 @@ type Pos = { x: number; y: number };
 type Setor = "rel" | "col" | "lnk";
 
 /**
- * Cada setor tem dois anéis: o **nó da categoria** (hub), mais perto do centro,
- * e os itens, que ramificam a partir dele. Setores não se cruzam, e o excedente
- * de cada um vira "+N", que abre a lista completa.
+ * Cada setor tem o **nó da categoria** (hub) mais perto do centro e os itens
+ * ramificando a partir dele. Setores não se cruzam. Quando o leque enche, os
+ * itens seguintes vão para um anel mais afastado, em vez de virar "+N" — a
+ * constelação mostra o acervo inteiro.
  */
 const SETOR = {
-  topo: {
-    angulo: -90,
+  /** Vertical: a coleção fica acima da música; as músicas, abaixo da coleção. */
+  vertical: {
     hub: { rx: 0, ry: 240 },
     item: { rx: 640, ry: 430 },
-    spread: 76,
-    passo: 22,
-    max: 6,
+    spread: 104,
+    passo: 16,
+    /** Distância entre um anel e o seguinte. */
+    anel: { rx: 170, ry: 150 },
   },
   lado: {
     // O hub fica entre o centro e os itens: raio do item - meia-largura do card
@@ -73,7 +76,7 @@ const SETOR = {
     item: { rx: 860, ry: 420 },
     spread: 80,
     passo: 24,
-    max: 6,
+    anel: { rx: 230, ry: 130 },
   },
 } as const;
 
@@ -82,21 +85,43 @@ const ponto = (anguloGrau: number, rx: number, ry: number): Pos => {
   return { x: CX + Math.cos(rad) * rx, y: CY + Math.sin(rad) * ry };
 };
 
-/** Distribui `n` nós num arco ao redor do centro (0° = direita, -90° = topo). */
-function arco(
-  n: number,
-  anguloCentral: number,
-  spreadMax: number,
-  passoGrau: number,
-  rx: number,
-  ry: number,
-): Pos[] {
+type ConfigSetor = {
+  readonly hub: { readonly rx: number; readonly ry: number };
+  readonly item: { readonly rx: number; readonly ry: number };
+  readonly spread: number;
+  readonly passo: number;
+  readonly anel: { readonly rx: number; readonly ry: number };
+};
+
+/**
+ * Distribui `n` nós no setor (0° = direita, -90° = topo, 90° = baixo). O leque
+ * comporta `floor(spread / passo) + 1` por anel; o que não cabe vai para o
+ * anel seguinte, mais afastado, meio passo deslocado para não enfileirar.
+ */
+function arco(n: number, anguloCentral: number, setor: ConfigSetor): Pos[] {
   if (n === 0) return [];
-  if (n === 1) return [ponto(anguloCentral, rx, ry)];
-  const spread = Math.min(spreadMax, passoGrau * (n - 1));
-  const inicio = anguloCentral - spread / 2;
-  const passo = spread / (n - 1);
-  return Array.from({ length: n }, (_, i) => ponto(inicio + passo * i, rx, ry));
+  const porAnel = Math.max(1, Math.floor(setor.spread / setor.passo) + 1);
+  const aneis = Math.ceil(n / porAnel);
+
+  const pos: Pos[] = [];
+  for (let a = 0; a < aneis; a++) {
+    const neste = Math.min(porAnel, n - a * porAnel);
+    const rx = setor.item.rx + a * setor.anel.rx;
+    const ry = setor.item.ry + a * setor.anel.ry;
+    if (neste === 1) {
+      pos.push(ponto(anguloCentral, rx, ry));
+      continue;
+    }
+    const spread = Math.min(setor.spread, setor.passo * (neste - 1));
+    // Anel ímpar sai meio passo torto: dois nós não ficam um atrás do outro.
+    const desvio = a % 2 === 1 ? setor.passo / 2 : 0;
+    const inicio = anguloCentral - spread / 2 + desvio;
+    const passo = spread / (neste - 1);
+    for (let i = 0; i < neste; i++) {
+      pos.push(ponto(inicio + passo * i, rx, ry));
+    }
+  }
+  return pos;
 }
 
 /** Curva suave entre dois pontos (leve arqueamento perpendicular). */
@@ -120,6 +145,15 @@ type Sel =
 
 type RemoveAlvo = { kind: "colaborador" | "link"; id: string; label: string };
 
+/** Obra que está (ou vai ficar) no centro. */
+type Raiz = { tipo: ObraTipo; id: string };
+
+/** Alvo da corrida de câmera; `chave` muda a cada pedido, para a Janela reagir. */
+type FocoCamera = { x: number; y: number; chave: string };
+
+/** Duração da corrida de câmera antes de trocar o centro. */
+const MS_CAMERA = 520;
+
 export function ObraBoardModal({
   tipo,
   obraId,
@@ -131,6 +165,10 @@ export function ObraBoardModal({
 }) {
   const router = useRouter();
   const toast = useToast();
+  /** Obra no centro da constelação — muda ao clicar num relacionado. */
+  const [raiz, setRaiz] = useState<Raiz>({ tipo, id: obraId });
+  /** Caminho percorrido, para voltar ao que estava no centro antes. */
+  const [trilha, setTrilha] = useState<(Raiz & { titulo: string })[]>([]);
   const [grafo, setGrafo] = useState<ObraGrafo | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -139,12 +177,40 @@ export function ObraBoardModal({
   const [modo, setModo] = useState<"board" | "lista">("board");
   const [painel, setPainel] = useState<"colaborador" | "link" | null>(null);
   const [del, setDel] = useState<RemoveAlvo | null>(null);
+  /** Ponto do mundo para onde a câmera deve correr antes de reenraizar. */
+  const [foco, setFoco] = useState<FocoCamera | null>(null);
 
   const carregar = useCallback(async () => {
-    const r = await getObraGrafo(tipo, obraId);
+    const r = await getObraGrafo(raiz.tipo, raiz.id);
     if (!r.ok) return setErro(r.error);
+    setErro(null);
     setGrafo(r.grafo);
-  }, [tipo, obraId]);
+  }, [raiz]);
+
+  /**
+   * Clique num relacionado: a câmera corre até ele e, terminada a corrida, ele
+   * passa a ser o centro — é o gesto de "entrar" naquele ponto da constelação.
+   */
+  function reenraizar(destino: Raiz, pos: Pos) {
+    if (!grafo) return;
+    setFoco({ ...pos, chave: `${destino.tipo}-${destino.id}-${Date.now()}` });
+    setTrilha((t) => [...t, { ...raiz, titulo: grafo.centro.titulo }]);
+    window.setTimeout(() => {
+      setSel(null);
+      setGrafo(null);
+      setFoco(null);
+      setRaiz(destino);
+    }, MS_CAMERA);
+  }
+
+  function voltar() {
+    const anterior = trilha[trilha.length - 1];
+    if (!anterior) return;
+    setTrilha((t) => t.slice(0, -1));
+    setSel(null);
+    setGrafo(null);
+    setRaiz({ tipo: anterior.tipo, id: anterior.id });
+  }
 
   useEffect(() => {
     void carregar();
@@ -181,24 +247,40 @@ export function ObraBoardModal({
       aria-label="Vínculos da obra"
       className="fixed inset-0 z-50 flex flex-col bg-card"
     >
-      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-6 py-4">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground">
-            {tipo === "musica" ? "Música" : "Coleção"} · vínculos
-          </p>
-          <h2 className="text-xl font-semibold tracking-tight">
-            {grafo?.centro.titulo ?? "Carregando…"}
-          </h2>
+      <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex min-w-0 items-start gap-2">
+          {trilha.length > 0 && (
+            <button
+              type="button"
+              onClick={voltar}
+              aria-label="Voltar para a obra anterior"
+              title={`Voltar para "${trilha[trilha.length - 1].titulo}"`}
+              className="mt-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <ArrowLeft className="size-5" />
+            </button>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground">
+              {(grafo?.centro.tipo ?? tipo) === "musica" ? "Música" : "Coleção"} ·
+              vínculos
+            </p>
+            <h2 className="truncate text-lg font-semibold tracking-tight sm:text-xl">
+              {grafo?.centro.titulo ?? "Carregando…"}
+            </h2>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {grafo && (
             <Button
               variant="ghost"
               size="sm"
-              className="hidden lg:inline-flex"
               onClick={() => setModo((m) => (m === "board" ? "lista" : "board"))}
             >
-              {modo === "board" ? "Ver como lista" : "Ver como board"}
+              <span className="hidden sm:inline">
+                {modo === "board" ? "Ver como lista" : "Ver como board"}
+              </span>
+              <span className="sm:hidden">{modo === "board" ? "Lista" : "Board"}</span>
             </Button>
           )}
           <button
@@ -222,6 +304,11 @@ export function ObraBoardModal({
           <div className="relative flex-1 overflow-y-auto">
             {modo === "board" && (
             <Board
+              // Trocar o centro remonta o board: a vista volta a enquadrar a
+              // constelação nova, em vez de ficar na mira da anterior.
+              key={raiz.id}
+              foco={foco}
+              onReenraizar={reenraizar}
               grafo={grafo}
               hover={hover}
               setHover={setHover}
@@ -229,18 +316,19 @@ export function ObraBoardModal({
               onSelect={setSel}
               onAdd={setPainel}
               onRemove={setDel}
-              onVerTudo={() => setModo("lista")}
             />
             )}
-            {/* No mobile é sempre lista; no desktop, só quando o modo é "lista". */}
-            <ListaVinculos
-              className={modo === "board" ? "lg:hidden" : undefined}
-              grafo={grafo}
-              sel={sel}
-              onSelect={setSel}
-              onAdd={setPainel}
-              onRemove={setDel}
-            />
+            {/* A lista é a outra vista, não o fallback do celular: agora a
+                constelação também roda lá. */}
+            {modo === "lista" && (
+              <ListaVinculos
+                grafo={grafo}
+                sel={sel}
+                onSelect={setSel}
+                onAdd={setPainel}
+                onRemove={setDel}
+              />
+            )}
           </div>
 
           {sel && (
@@ -309,12 +397,6 @@ export function ObraBoardModal({
 
 // ---------- Board radial (desktop) ----------
 
-/** Aplica o limite do setor: o excedente vira um único nó "+N". */
-function comLimite<T>(itens: T[], max: number): { visiveis: T[]; resto: number } {
-  if (itens.length <= max) return { visiveis: itens, resto: 0 };
-  return { visiveis: itens.slice(0, max - 1), resto: itens.length - (max - 1) };
-}
-
 function Board({
   grafo,
   hover,
@@ -323,7 +405,8 @@ function Board({
   onSelect,
   onAdd,
   onRemove,
-  onVerTudo,
+  foco,
+  onReenraizar,
 }: {
   grafo: ObraGrafo;
   hover: string | null;
@@ -332,7 +415,8 @@ function Board({
   onSelect: (s: Sel | null) => void;
   onAdd: (t: "colaborador" | "link") => void;
   onRemove: (a: RemoveAlvo) => void;
-  onVerTudo: () => void;
+  foco: FocoCamera | null;
+  onReenraizar: (destino: Raiz, pos: Pos) => void;
 }) {
   // Setores recolhidos mostram só o nó da categoria; os filhos somem do board.
   const [recolhidos, setRecolhidos] = useState<Set<Setor>>(new Set());
@@ -351,43 +435,24 @@ function Board({
     });
   }
 
-  const rel = comLimite(
-    aberto("rel") ? grafo.relacionados.itens : [],
-    SETOR.topo.max,
-  );
-  const col = comLimite(aberto("col") ? grafo.colaboradores : [], SETOR.lado.max);
-  const lnk = comLimite(aberto("lnk") ? grafo.links : [], SETOR.lado.max);
+  // Todos os itens, sem teto: o que não cabe no leque vai para o anel de fora.
+  const rel = aberto("rel") ? grafo.relacionados.itens : [];
+  const col = aberto("col") ? grafo.colaboradores : [];
+  const lnk = aberto("lnk") ? grafo.links : [];
 
-  const { topo, lado } = SETOR;
-  const hubRel = ponto(topo.angulo, topo.hub.rx, topo.hub.ry);
+  const { vertical, lado } = SETOR;
+  // A hierarquia manda na direção: coleção acima da música, músicas abaixo da
+  // coleção. Antes o relacionado ia sempre para cima, fosse o que fosse.
+  const anguloRel = grafo.centro.tipo === "musica" ? -90 : 90;
+  const sinal = anguloRel === -90 ? -1 : 1;
+  const hubRel = ponto(anguloRel, vertical.hub.rx, vertical.hub.ry);
   const hubCol = ponto(0, lado.hub.rx, lado.hub.ry);
   const hubLnk = ponto(180, lado.hub.rx, lado.hub.ry);
 
-  // Cada setor reserva posições para: itens visíveis + "+N" (se houver) + adicionar.
-  const posRel = arco(
-    rel.visiveis.length + (rel.resto ? 1 : 0),
-    topo.angulo,
-    topo.spread,
-    topo.passo,
-    topo.item.rx,
-    topo.item.ry,
-  );
-  const posCol = arco(
-    col.visiveis.length + (col.resto ? 1 : 0) + (aberto("col") ? 1 : 0),
-    0,
-    lado.spread,
-    lado.passo,
-    lado.item.rx,
-    lado.item.ry,
-  );
-  const posLink = arco(
-    lnk.visiveis.length + (lnk.resto ? 1 : 0) + (aberto("lnk") ? 1 : 0),
-    180,
-    lado.spread,
-    lado.passo,
-    lado.item.rx,
-    lado.item.ry,
-  );
+  const posRel = arco(rel.length, anguloRel, vertical);
+  // Os setores laterais reservam a última posição para o "+ Adicionar".
+  const posCol = arco(col.length + (aberto("col") ? 1 : 0), 0, lado);
+  const posLink = arco(lnk.length + (aberto("lnk") ? 1 : 0), 180, lado);
 
   // Chave da linha em destaque: o hover manda; sem hover, o item em foco.
   const focoChave =
@@ -427,8 +492,8 @@ function Board({
   };
 
   return (
-    <div className="hidden h-full min-h-[560px] px-6 py-4 lg:block">
-      <Janela limites={limites}>
+    <div className="h-full min-h-[420px] px-3 py-3 sm:min-h-[560px] sm:px-6 sm:py-4">
+      <Janela limites={limites} foco={foco}>
         <div aria-hidden className="board-grade absolute inset-0" />
         <svg
           className="absolute inset-0"
@@ -526,13 +591,22 @@ function Board({
         />
 
         {/* Relacionados (topo) — chips compactos, somente leitura */}
-        {rel.visiveis.map((r, i) => (
+        {rel.map((r, i) => (
           <NoChip
             key={r.id}
             pos={posRel[i]}
             delay={i}
             onHover={(v) => setHover(v ? `rel-${i}` : null)}
-            onClick={() => onSelect({ kind: "rel", id: r.id })}
+            onClick={() =>
+              onReenraizar(
+                // O relacionado é sempre do tipo oposto ao centro.
+                {
+                  tipo: grafo.centro.tipo === "musica" ? "colecao" : "musica",
+                  id: r.id,
+                },
+                posRel[i],
+              )
+            }
             aceso={aceso(`rel-${i}`)}
             apagado={apagado(`rel-${i}`)}
             icone={
@@ -546,17 +620,9 @@ function Board({
             subtitulo={r.subtitulo}
           />
         ))}
-        {rel.resto > 0 && (
-          <NoMais
-            pos={posRel[posRel.length - 1]}
-            n={rel.resto}
-            onHover={(v) => setHover(v ? `rel-${posRel.length - 1}` : null)}
-            onClick={onVerTudo}
-          />
-        )}
 
         {/* Colaboradores (direita) — um card por pessoa, papéis recolhíveis */}
-        {col.visiveis.map((c, i) => (
+        {col.map((c, i) => (
           <NoColaborador
             key={c.colaboradorId}
             pos={posCol[i]}
@@ -575,14 +641,6 @@ function Board({
             }
           />
         ))}
-        {col.resto > 0 && (
-          <NoMais
-            pos={posCol[col.visiveis.length]}
-            n={col.resto}
-            onHover={(v) => setHover(v ? `col-${col.visiveis.length}` : null)}
-            onClick={onVerTudo}
-          />
-        )}
         {aberto("col") && (
           <NoAdicionar
             pos={posCol[posCol.length - 1]}
@@ -593,7 +651,7 @@ function Board({
         )}
 
         {/* Plataformas (esquerda) */}
-        {lnk.visiveis.map((l, i) => (
+        {lnk.map((l, i) => (
           <NoCard
             key={l.id}
             pos={posLink[i]}
@@ -608,14 +666,6 @@ function Board({
             onRemove={() => onRemove({ kind: "link", id: l.id, label: l.plataforma })}
           />
         ))}
-        {lnk.resto > 0 && (
-          <NoMais
-            pos={posLink[lnk.visiveis.length]}
-            n={lnk.resto}
-            onHover={(v) => setHover(v ? `lnk-${lnk.visiveis.length}` : null)}
-            onClick={onVerTudo}
-          />
-        )}
         {aberto("lnk") && (
           <NoAdicionar
             pos={posLink[posLink.length - 1]}
@@ -636,9 +686,12 @@ function Board({
  */
 function Janela({
   limites,
+  foco,
   children,
 }: {
   limites: { x: number; y: number; w: number; h: number };
+  /** Ponto do mundo para onde a câmera deve correr. */
+  foco?: FocoCamera | null;
   children: React.ReactNode;
 }) {
   const janelaRef = useRef<HTMLDivElement>(null);
@@ -672,6 +725,25 @@ function Janela({
     ajustar();
   }, [ajustar]);
 
+  /**
+   * Corrida de câmera até um ponto do mundo. Quem anima é o CSS: um tween em
+   * JS re-renderizaria o board inteiro a cada quadro, e a transição ainda roda
+   * no compositor. Só o destino vira estado.
+   */
+  const [correndo, setCorrendo] = useState(false);
+  useEffect(() => {
+    const el = janelaRef.current;
+    if (!foco || !el) return;
+    const { width, height } = el.getBoundingClientRect();
+    const k = limitar(Math.max(vista.k, 1.1), ZOOM_MIN, ZOOM_MAX);
+    setCorrendo(true);
+    setVista({ k, x: width / 2 - foco.x * k, y: height / 2 - foco.y * k });
+    const t = setTimeout(() => setCorrendo(false), MS_CAMERA);
+    return () => clearTimeout(t);
+    // Só a chave dispara: `vista` entra como ponto de partida, não como gatilho.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [foco?.chave]);
+
   const zoom = useCallback((fator: number, alvo?: { x: number; y: number }) => {
     const el = janelaRef.current;
     if (!el) return;
@@ -699,6 +771,7 @@ function Janela({
 
   function aoApertar(e: React.PointerEvent) {
     if ((e.target as HTMLElement).closest("button, a")) return;
+    setCorrendo(false);
     arrasto.current = { px: e.clientX, py: e.clientY, x: vista.x, y: vista.y };
     setArrastando(true);
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -742,7 +815,8 @@ function Janela({
       onPointerCancel={aoSoltar}
       onScroll={aoRolar}
       className={cn(
-        "relative h-full w-full overflow-hidden rounded-lg border border-border/60",
+        // `touch-none`: no celular o arrasto é o gesto do board, não rolagem.
+        "relative h-full w-full touch-none overflow-hidden rounded-lg border border-border/60",
         arrastando ? "cursor-grabbing" : "cursor-grab",
       )}
     >
@@ -752,6 +826,9 @@ function Janela({
           width: MUNDO.w,
           height: MUNDO.h,
           transform: `translate(${vista.x}px, ${vista.y}px) scale(${vista.k})`,
+          transition: correndo
+            ? `transform ${MS_CAMERA}ms cubic-bezier(0.4, 0, 0.2, 1)`
+            : undefined,
         }}
       >
         {children}
@@ -1101,32 +1178,6 @@ function NoChip({
         </span>
       </button>
     </div>
-  );
-}
-
-/** Nó de excedente: abre a visão em lista com todos os vínculos. */
-function NoMais({
-  pos,
-  n,
-  onClick,
-  onHover,
-}: {
-  pos: Pos;
-  n: number;
-  onClick: () => void;
-  onHover: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      onMouseEnter={() => onHover(true)}
-      onMouseLeave={() => onHover(false)}
-      className="animate-board-node absolute z-10 w-[130px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-brand hover:text-foreground"
-      style={noEstilo(pos)}
-    >
-      +{n} mais
-    </button>
   );
 }
 
